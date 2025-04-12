@@ -1,0 +1,10 @@
+[Unit]
+Description=Set headset volume if headset was plugged
+After=sound.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/lib/systemd/scripts/set-headset-max-volume.sh
+
+[Install]
+WantedBy=multi-user.target

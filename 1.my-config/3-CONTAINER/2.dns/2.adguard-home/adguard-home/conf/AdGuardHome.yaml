@@ -1,0 +1,37 @@
+bind_host: 0.0.0.0
+bind_port: 80
+
+http:
+  address: 0.0.0.0:80
+  users:
+    - name: vinicius
+      password: ${PASSWORD}
+
+clients:
+  - name: "local"
+    ip: "192.168.0.2"
+    rate_limit: 0
+
+dns:
+  bind_host: 0.0.0.0
+  port: 53
+  bind_hosts:
+    - '127.0.0.1'
+    - '127.0.0.0'
+    - '192.168.0.1'
+    - '172.18.0.0'
+
+ratelimit: 0
+refuse_any: false
+debug_pprof: true
+cache_size: 67108864
+cache_ttl_min: 60
+cache_ttl_max: 86400
+web_session_ttl: 2
+cache_optimistic: true
+enable_dnssec: true
+
+querylog:
+  enabled: true
+  interval: 168h
+  size_memory: 1000

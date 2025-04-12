@@ -19,3 +19,12 @@
 [submodule "Elegant-grub2-themes"]
 	path = Elegant-grub2-themes
 	url = https://github.com/vinceliuice/Elegant-grub2-themes.git
+[submodule "unbound-docker"]
+	path = unbound-docker
+	url = https://github.com/MatthewVance/unbound-docker
+[submodule "docker-transmission"]
+	path = docker-transmission
+	url = https://github.com/linuxserver/docker-transmission.git
+[submodule "Kavita"]
+	path = Kavita
+	url = https://github.com/Kareadita/Kavita.git

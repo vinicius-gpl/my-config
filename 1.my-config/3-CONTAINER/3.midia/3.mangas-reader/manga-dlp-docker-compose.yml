@@ -19,7 +19,7 @@ services:
         "-l",
         "pt-br",
         "--chapters",
-        "1-112",
+        "all",
         "--format",
         "cbz",
       ]

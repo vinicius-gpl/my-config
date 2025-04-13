@@ -1,7 +1,5 @@
-name: kaizoku
-
 volumes:
-  kaizoku-db:
+  db:
   redis:
 
 networks:
@@ -25,7 +23,7 @@ services:
       - ~/.docker/Manga/Kaizoku/config:/config
       - /tmp:/logs
     depends_on:
-      kaizoku-db:
+      db:
         condition: service_healthy
     ports:
       - "3000:3000"
@@ -33,13 +31,15 @@ services:
       - kaizoku_network
 
   redis:
+    container_name: kaizoku_redis
     image: redis:7-alpine
     volumes:
       - redis:/data
     networks:
       - kaizoku_network
 
-  kaizoku-db:
+  db:
+    container_name: kaizoku_db
     image: postgres:alpine
     restart: unless-stopped
     healthcheck:
@@ -53,18 +53,19 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - TZ=America/Sao_Paulo
     volumes:
-      - kaizoku-db:/var/lib/postgresql/data
+      - db:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     networks:
       - kaizoku_network
 
   kavita:
+    container_name: kaizoku_kavita
     image: jvmilazz0/kavita:latest
     restart: unless-stopped
     volumes:
       - ~/.docker/kavita:/kavita/config
-      - ~/.docker/kavita/Manga/Library:/manga
+      - ~/.docker/Manga/Library:/manga
     ports:
       - "5000:5000"
     networks:

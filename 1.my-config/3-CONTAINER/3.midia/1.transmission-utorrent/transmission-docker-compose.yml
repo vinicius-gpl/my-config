@@ -5,13 +5,10 @@ services:
     environment:
       PUID: 1000
       PGID: 1000
-      TZ: 'America/Sao_paulo'
+      TZ: "America/Sao_paulo"
     volumes:
       - ~/.docker/transmission/data:/config
       - ~/.docker/transmission/downloads:/downloads
       - ~/.docker/transmission/watch/folder:/watch
-    ports:
-      - 9091:9091
-      - 51413:51413
-      - 51413:51413/udp
+    network_mode: host
     restart: unless-stopped

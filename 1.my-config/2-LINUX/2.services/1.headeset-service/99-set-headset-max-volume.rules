@@ -1,1 +1,1 @@
-ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="040b", ATTR{idProduct}=="0897", RUN+="/usr/lib/systemd/scripts/flag-headset-plugged.sh"
+ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="040b", ATTR{idProduct}=="0897", RUN+="/home/vinicius/.config/systemd/user/scripts/flag-headset-plugged.sh"

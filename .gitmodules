@@ -28,3 +28,6 @@
 [submodule "Kavita"]
 	path = Kavita
 	url = https://github.com/Kareadita/Kavita.git
+[submodule "manga-dlp"]
+	path = manga-dlp
+	url = https://github.com/olofvndrhr/manga-dlp

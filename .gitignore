@@ -1,0 +1,10 @@
+*.vs
+*etc-pihole
+*etc-dnsmasq.d
+*build
+*dist
+*main.spec
+*.env
+*globalStorage*
+*state*
+*redhat*

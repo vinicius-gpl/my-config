@@ -1,0 +1,33 @@
+services:
+  manga-dlp:
+    image: olofvndrhr/manga-dlp:latest
+    container_name: manga-dlp
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - manga-net
+    volumes:
+      - ~/.docker/mangas/manga-dlp/downloads:/app/downloads/
+      - ~/.docker/mangas/manga-dlp/mangas.txt:/app/mangas.txt
+      - TZ=America/Sao_Paulo
+    restart: unless-stopped
+
+  komga:
+    image: gotson/komga
+    container_name: komga
+    user: "1000:1000"
+    networks:
+      - manga-net
+    ports:
+      - "25600:25600"
+    volumes:
+      - ~/.docker/mangas/komga/config:/config
+      - ~/.docker/mangas/manga-dlp/downloads:/data
+    environment:
+      - TZ=America/Sao_Paulo
+    restart: unless-stopped
+  
+networks:
+  manga-net:
+    name: mangadlp
+    driver: bridge

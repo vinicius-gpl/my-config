@@ -5,5 +5,5 @@ manga-dlp --read /app/mangas.txt -l pt-br --chapters all --format  cbz --add-met
 ```
 
 ```sh
-manga-dlp --u {uuid/url} -l pt-br --chapters all --format  cbz --add-metadata
+manga-dlp -u {uuid/url} -l pt-br --chapters all --format  cbz --add-metadata
 ```

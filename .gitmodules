@@ -31,3 +31,6 @@
 [submodule "manga-dlp"]
 	path = manga-dlp
 	url = https://github.com/olofvndrhr/manga-dlp
+[submodule "to_davinci"]
+	path = to_davinci
+	url = https://github.com/mateusmuller/to_davinci.git

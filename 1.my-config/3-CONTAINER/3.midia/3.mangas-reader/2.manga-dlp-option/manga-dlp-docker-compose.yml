@@ -9,6 +9,7 @@ services:
     volumes:
       - ~/.docker/mangas/manga-dlp/downloads:/app/downloads/
       - ~/.docker/mangas/manga-dlp/mangas.txt:/app/mangas.txt
+    environment:
       - TZ=America/Sao_Paulo
     restart: unless-stopped
 

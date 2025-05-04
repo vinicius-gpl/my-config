@@ -1,33 +1,36 @@
-[submodule "docker-pi-hole"]
-	path = docker-pi-hole
+[submodule "references/docker-pi-hole"]
+	path = references/docker-pi-hole
 	url = https://github.com/pi-hole/docker-pi-hole.git
-[submodule "stremio-docker"]
-	path = stremio-docker
+[submodule "references/stremio-docker"]
+	path = references/stremio-docker
 	url = https://github.com/tsaridas/stremio-docker.git
-[submodule "kaizoku"]
-	path = kaizoku
+[submodule "references/kaizoku"]
+	path = references/kaizoku
 	url = https://github.com/oae/kaizoku.git
-[submodule "kitty"]
-	path = kitty
+[submodule "references/kitty"]
+	path = references/kitty
 	url = https://github.com/catppuccin/kitty.git
-[submodule "AdGuardHome"]
-	path = AdGuardHome
+[submodule "references/AdGuardHome"]
+	path = references/AdGuardHome
 	url = https://github.com/AdguardTeam/AdGuardHome.git
-[submodule "neofetch-themes"]
-	path = neofetch-themes
+[submodule "references/neofetch-themes"]
+	path = references/neofetch-themes
 	url = https://github.com/Chick2D/neofetch-themes.git
-[submodule "Elegant-grub2-themes"]
-	path = Elegant-grub2-themes
+[submodule "references/Elegant-grub2-themes"]
+	path = references/Elegant-grub2-themes
 	url = https://github.com/vinceliuice/Elegant-grub2-themes.git
-[submodule "unbound-docker"]
-	path = unbound-docker
+[submodule "references/unbound-docker"]
+	path = references/unbound-docker
 	url = https://github.com/MatthewVance/unbound-docker
-[submodule "docker-transmission"]
-	path = docker-transmission
+[submodule "references/docker-transmission"]
+	path = references/docker-transmission
 	url = https://github.com/linuxserver/docker-transmission.git
-[submodule "Kavita"]
-	path = Kavita
+[submodule "references/Kavita"]
+	path = references/Kavita
 	url = https://github.com/Kareadita/Kavita.git
-[submodule "manga-dlp"]
-	path = manga-dlp
+[submodule "references/manga-dlp"]
+	path = references/manga-dlp
 	url = https://github.com/olofvndrhr/manga-dlp
+[submodule "references/to_davinci"]
+	path = references/to_davinci
+	url = https://github.com/mateusmuller/to_davinci.git

@@ -5,7 +5,7 @@ echo "Movendo arquivos de configuração para os diretórios corretos..."
 # Diretórios de destino
 directory_to_shell="$HOME/.config/systemd/user/scripts"
 directory_to_service="$HOME/.config/systemd/user"
-directory_to_rule="/etc/udev/rules.d"
+directory_to_autostart="$HOME/.config/autostart"
 current_dir="$(pwd)"
 
 # Scripts
@@ -15,10 +15,6 @@ if [ -d "$directory_to_shell" ]; then
     cp "$current_dir/set-headset-max-volume.sh" "$directory_to_shell/" \
         && echo "✓ Copiado: set-headset-max-volume.sh" \
         || echo "✗ Erro ao copiar set-headset-max-volume.sh"
-
-    cp "$current_dir/flag-headset-plugged.sh" "$directory_to_shell/" \
-        && echo "✓ Copiado: flag-headset-plugged.sh" \
-        || echo "✗ Erro ao copiar flag-headset-plugged.sh"
 else
     echo "✗ Diretório de scripts não encontrado: $directory_to_shell"
 fi
@@ -39,18 +35,15 @@ else
     echo "✗ Diretório de serviços não encontrado: $directory_to_service"
 fi
 
-# Regra udev
-if [ -d "$directory_to_rule" ]; then
-    echo "-> Diretório de regras udev encontrado."
+# Autostart (arquivo .desktop)
+if [ -d "$directory_to_autostart" ]; then
+    echo "-> Diretório de autostart encontrado."
 
-    cp "$current_dir/99-set-headset-max-volume.rules" "$directory_to_rule/" \
-        && echo "✓ Copiado: 99-set-headset-max-volume.rules" \
-        || echo "✗ Erro ao copiar regra udev"
-
-    sudo udevadm control --reload-rules
-    sudo udevadm trigger
+    cp "$current_dir/set-headset-max-volume.desktop" "$directory_to_autostart/" \
+        && echo "✓ Copiado: set-headset-max-volume.desktop" \
+        || echo "✗ Erro ao copiar set-headset-max-volume.desktop"
 else
-    echo "✗ Diretório de regras udev não encontrado: $directory_to_rule"
+    echo "✗ Diretório de autostart não encontrado: $directory_to_autostart"
 fi
 
 # Status final

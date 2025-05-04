@@ -3,7 +3,7 @@
 
 if status is-interactive
     # Initial configs
-    neofetch
+    fastfetch
     set fish_greeting
 
     # ASDF configuration code
@@ -32,4 +32,6 @@ if status is-interactive
     --preview 'bat -n --color=always {}' 
     --bind 'focus:transform-header:file 
     --brief {}'"   
+
+    set -gx EDITOR nvim
 end

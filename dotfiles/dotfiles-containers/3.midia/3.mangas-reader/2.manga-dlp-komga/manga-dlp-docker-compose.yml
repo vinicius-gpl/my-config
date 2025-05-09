@@ -39,7 +39,7 @@ services:
       - KOMF_KOMGA_BASE_URI=http://komga:25600 
       - KOMF_KOMGA_USER=${KOMF_KOMGA_USER}
       - KOMF_KOMGA_PASSWORD=${KOMF_KOMGA_PASSWORD}
-      - KOMF_LOG_LEVEL=INFO
+      - KOMF_LOG_LEVEL=DEBUG
       - JAVA_TOOL_OPTIONS=-XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ShenandoahGCHeuristics=compact -XX:ShenandoahGuaranteedGCInterval=3600000 -XX:TrimNativeHeapInterval=3600000
     volumes:
       - ~/.docker/mangas/containers/komf:/config

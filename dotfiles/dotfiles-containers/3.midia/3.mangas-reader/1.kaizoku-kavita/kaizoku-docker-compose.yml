@@ -19,8 +19,8 @@ services:
       - PGID=1000
       - TZ=America/Sao_Paulo
     volumes:
-      - ~/.docker/Manga/Library:/data
-      - ~/.docker/Manga/Kaizoku/config:/config
+      - ~/.docker/mangas/downloads:/data
+      - ~/.docker/mangas/containers/kaizoku/config:/config
       - /tmp:/logs
     depends_on:
       db:
@@ -64,8 +64,8 @@ services:
     image: jvmilazz0/kavita:latest
     restart: unless-stopped
     volumes:
-      - ~/.docker/kavita:/kavita/config
-      - ~/.docker/Manga/Library:/manga
+      - ~/.docker/mangas/containers:/kavita/config
+      - ~/.docker/mangas/downloads:/manga
     ports:
       - "5000:5000"
     networks:

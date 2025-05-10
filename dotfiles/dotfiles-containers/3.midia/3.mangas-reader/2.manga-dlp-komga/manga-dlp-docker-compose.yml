@@ -1,7 +1,7 @@
 services:
   manga-dlp:
     image: olofvndrhr/manga-dlp:latest
-    container_name: manga-dlp
+    container_name: manga-dlp 
     security_opt:
       - no-new-privileges:true
     networks:

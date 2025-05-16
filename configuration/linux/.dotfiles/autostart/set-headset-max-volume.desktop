@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Exec=/home/vinicius/.config/systemd/user/set-headset-max-volume.service
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Name[pt_BR]=Volume no maximo alsa
+Name=Volume no maximo alsa
+Comment[pt_BR]=Aumenta o volume do amixer no maximo
+Comment=Aumenta o volume do amixer no talo 

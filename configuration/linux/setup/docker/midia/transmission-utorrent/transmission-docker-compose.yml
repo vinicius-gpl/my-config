@@ -1,0 +1,14 @@
+services:
+  transmission:
+    image: lscr.io/linuxserver/transmission:latest
+    container_name: transmission
+    environment:
+      PUID: 1000
+      PGID: 1000
+      TZ: "America/Sao_paulo"
+    volumes:
+      - ~/.docker/transmission/data:/config
+      - ~/.docker/transmission/downloads:/downloads
+      - ~/.docker/transmission/watch/folder:/watch
+    network_mode: host
+    restart: unless-stopped

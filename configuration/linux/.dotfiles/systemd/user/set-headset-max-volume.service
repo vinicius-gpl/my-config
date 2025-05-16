@@ -1,0 +1,10 @@
+[Unit]
+Description=Ajuste de volume para o Fuxi-H3
+After=pipewire.service
+
+[Service]
+ExecStart=/home/vinicius/.config/systemd/user/scripts/set-headset-max-volume.sh
+Restart=on-failure
+
+[Install]
+WantedBy=default.target

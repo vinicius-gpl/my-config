@@ -34,3 +34,6 @@
 [submodule "references/to_davinci"]
 	path = references/to_davinci
 	url = https://github.com/mateusmuller/to_davinci.git
+[submodule "references/dotfiles-ml4w"]
+	path = references/dotfiles-ml4w
+	url = https://github.com/mylinuxforwork/dotfiles.git

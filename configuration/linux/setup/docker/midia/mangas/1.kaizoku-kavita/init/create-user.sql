@@ -1,0 +1,4 @@
+CREATE ROLE kaizoku WITH LOGIN PASSWORD 'Kaizoku122';
+ALTER ROLE kaizoku CREATEDB;
+CREATE DATABASE kavita OWNER kaizoku;
+CREATE DATABASE kaizoku OWNER kaizoku;

@@ -1,0 +1,14 @@
+[Default Applications]
+text/html=google-chrome.desktop
+x-scheme-handler/http=google-chrome.desktop
+x-scheme-handler/https=google-chrome.desktop
+x-scheme-handler/about=google-chrome.desktop
+x-scheme-handler/unknown=google-chrome.desktop
+image/png=org.gnome.Loupe.desktop
+image/jpeg=org.gnome.Loupe.desktop
+image/jpg=org.gnome.Loupe.desktop
+text/plain=org.gnome.TextEditor.desktop
+
+[Added Associations]
+image/jpeg=userapp-flatpak run io.gitlab.theevilskeleton.Upscaler-NLW752.desktop;org.freedesktop.Xwayland.desktop;
+text/plain=org.gnome.TextEditor.desktop;

@@ -1,16 +1,14 @@
-if true then return {} end -- WARN: REMOVE THIS LINE TO ACTIVATE THIS FILE
+-- if true then return {} end -- NOTE: REMOVE THIS LINE TO ACTIVATE THIS FILE
 
 -- Customize Mason
 
 ---@type LazySpec
 return {
-  -- use mason-tool-installer for automatically installing Mason packages
   {
     "WhoIsSethDaniel/mason-tool-installer.nvim",
-    -- overrides `require("mason-tool-installer").setup(...)`
-    opts = {
-      -- Make sure to use the names found in `:Mason`
-      ensure_installed = {
+
+    opts = function(_, opts)
+      opts.ensure_installed = vim.tbl_extend("force", opts.ensure_installed or {}, {
         -- install language servers
         "lua-language-server",
 
@@ -22,7 +20,9 @@ return {
 
         -- install any other package
         "tree-sitter-cli",
-      },
-    },
+      })
+
+      return opts
+    end,
   },
 }

@@ -5,7 +5,7 @@ end
 return {
   "ibhagwan/fzf-lua",
   cmd = "FzfLua",
-  opts = function(_, opts)
+  opts = function(_, _)
     local fzf = require("fzf-lua")
     local config = fzf.config
     local actions = fzf.actions
@@ -163,6 +163,7 @@ return {
 
   init = function()
     LazyVim.on_very_lazy(function()
+      ---@diagnostic disable-next-line: duplicate-set-field
       vim.ui.select = function(...)
         require("lazy").load({ plugins = { "fzf-lua" } })
         local opts = LazyVim.opts("fzf-lua") or {}

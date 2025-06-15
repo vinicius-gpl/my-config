@@ -3,7 +3,7 @@
 -- Add any additional keymaps here
 
 -- PowerShell como terminal
-vim.keymap.set("n", "<leader>ft", "<cmd>ToggleTerm<CR>", { desc = "Abrir PowerShell" })
+vim.keymap.set("n", "<leader>ft", "<cmd>ToggleTerm<CR>", { desc = "Abrir (pswh)" })
 
 -- Ctrl+C copia a seleção (equivalente ao 'y' visual)
 vim.api.nvim_set_keymap("v", "<C-c>", "y", { noremap = true, silent = true })

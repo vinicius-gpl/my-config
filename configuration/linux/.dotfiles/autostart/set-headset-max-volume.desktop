@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
-Exec=/home/vinicius/.config/systemd/user/set-headset-max-volume.service
+Exec=/home/vinicius/.config/systemd/user/set-headset-max-volume.sh
 Hidden=false
 NoDisplay=false
 X-GNOME-Autostart-enabled=true

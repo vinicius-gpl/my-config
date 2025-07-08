@@ -1,0 +1,13 @@
+[
+  {
+    "context": "Workspace",
+    "bindings": {
+      "alt-shift-f": "editor::Format"
+    }
+  },
+
+  {
+    "context": "Editor && vim_mode == insert && !menu",
+    "bindings": {}
+  }
+]

@@ -37,3 +37,6 @@
 [submodule "references/dotfiles-ml4w"]
 	path = references/dotfiles-ml4w
 	url = https://github.com/mylinuxforwork/dotfiles.git
+[submodule "references/eli's-dotfiles"]
+	path = references/eli's-dotfiles
+	url = https://github.com/elifouts/Dotfiles.git

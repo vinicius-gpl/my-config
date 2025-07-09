@@ -25,6 +25,6 @@ PS1='[\u@\h \W]\$ '
 
 export XDG_CONFIG_HOME="$HOME/.config"
 
-if [ -f ~/.ssh-agent-env ]; then
-  source "$HOME/.ssh-agent-env"
+if [ -f "$HOME/.ssh-agent-env" ]; then
+  source "$HOME/.ssh-agent-env" >/dev/null
 fi

@@ -17,10 +17,10 @@ if status is-interactive
         set -gx --prepend PATH $_asdf_shims
     end
     set --erase _asdf_shims
-	 
+
     # Starship config
     starship init fish | source
-	
+
     # Fzf config
     fzf --fish | source
 
@@ -31,10 +31,16 @@ if status is-interactive
     --walker-skip .git,node_modules,target
     --preview 'bat -n --color=always {}' 
     --bind 'focus:transform-header:file 
-    --brief {}'"   
+    --brief {}'"
 
     set -gx EDITOR nvim
 
     set -gx ANDROID_SDK_HOME /home/vinicius/Android/Sdk
     set -gx ANDROID_NDK_HOME /home/vinicius/Android/Sdk/ndk/27.0.12077973
+
+    set -x XDG_CONFIG_HOME $HOME/.config
+
+    if test -f $HOME/.ssh-agent-env
+        source $HOME/.ssh-agent-env >/dev/null
+    end
 end

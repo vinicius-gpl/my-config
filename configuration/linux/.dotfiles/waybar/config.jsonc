@@ -1,5 +1,5 @@
 {
-  // "output": "DP-2",
+  "output": "DP-2",
   "layer": "top",
   "position": "top",
   "reload_style_on_change": true,
@@ -11,7 +11,7 @@
     "tooltip": false,
     "format": "",
     "on-click": "swaync-client -t -sw",
-    "escape": true
+    "escape": true,
   },
   "clock": {
     "format": "{:%I:%M:%S %p} ",
@@ -19,13 +19,13 @@
     "tooltip-format": "<tt>{calendar}</tt>",
     "calendar": {
       "format": {
-        "today": "<span color='#fAfBfC'><b>{}</b></span>"
-      }
+        "today": "<span color='#fAfBfC'><b>{}</b></span>",
+      },
     },
     "actions": {
       "on-click-right": "shift_down",
-      "on-click": "shift_up"
-    }
+      "on-click": "shift_up",
+    },
   },
   "custom/pacman": {
     "format": "󰏕 {}",
@@ -34,18 +34,18 @@
     "exec-if": "exit 0",
     "on-click": "kitty sh -c 'yay -Syu; echo Done - Press enter to exit; read'; pkill -SIGRTMIN+8 waybar",
     "signal": 8,
-    "tooltip": false
+    "tooltip": false,
   },
   "hyprland/workspaces": {
     "format": "{icon}",
     "format-icons": {
       "active": "",
       "default": "",
-      "empty": ""
+      "empty": "",
     },
     "persistent-workspaces": {
-      "*": [1, 2, 3, 4, 5]
-    }
+      "*": [1, 2, 3, 4, 5],
+    },
   },
   "network": {
     "format-wifi": "",
@@ -54,7 +54,7 @@
     "tooltip-format-disconnected": "Error",
     "tooltip-format-wifi": "{essid} ({signalStrength}%) ",
     "tooltip-format-ethernet": "{ifname} 🖧 ",
-    "on-click": "kitty --title nmtui nmtui"
+    "on-click": "kitty --title nmtui nmtui",
   },
   "bluetooth": {
     "format-on": "",
@@ -65,6 +65,6 @@
     "tooltip-format-connected": "{controller_alias}\t{controller_address}\n\n{num_connections} connected\n\n{device_enumerate}",
     "tooltip-format-enumerate-connected": "{device_alias}\n{device_address}",
     "tooltip-format-enumerate-connected-battery": "{device_alias}\n{device_address}\n{device_battery_percentage}%",
-    "on-click": "blueman-manager"
-  }
+    "on-click": "blueman-manager",
+  },
 }

@@ -19,23 +19,23 @@ main() {
     echo $selected_waybar
 
     if [[ "$selected_waybar" == "$ASSETS/experimental.png" ]]; then
-        cat $THEMES/experimental/style-experimental.css > $STYLECSS
-        cat $THEMES/experimental/config-experimental.jsonc > $CONFIG
+        cat $THEMES/experimental/style-experimental.css >$STYLECSS
+        cat $THEMES/experimental/config-experimental.jsonc >$CONFIG
         pkill waybar && waybar
 
     elif [[ "$selected_waybar" == "$ASSETS/main.png" ]]; then
-        cat $THEMES/default/style-default.css > $STYLECSS
-        cat $THEMES/default/config-default.jsonc > $CONFIG
+        cat $THEMES/default/style-default.css >$STYLECSS
+        cat $THEMES/default/config-default.jsonc >$CONFIG
         pkill waybar && waybar
 
     elif [[ "$selected_waybar" == "$ASSETS/line.png" ]]; then
-        cat $THEMES/line/style-line.css > $STYLECSS
-        cat $THEMES/line/config-line.jsonc > $CONFIG
+        cat $THEMES/line/style-line.css >$STYLECSS
+        cat $THEMES/line/config-line.jsonc >$CONFIG
         pkill waybar && waybar
 
     elif [[ "$selected_waybar" == "$ASSETS/zen.png" ]]; then
-        cat $THEMES/zen/style-zen.css > $STYLECSS
-        cat $THEMES/zen/config-zen.jsonc > $CONFIG
+        cat $THEMES/zen/style-zen.css >$STYLECSS
+        cat $THEMES/zen/config-zen.jsonc >$CONFIG
         pkill waybar && waybar
     fi
 }

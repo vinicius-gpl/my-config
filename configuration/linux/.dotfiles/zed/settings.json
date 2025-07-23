@@ -1,17 +1,18 @@
 {
   "vim_mode": false,
   "icon_theme": "Material Icon Theme",
-  "ui_font_size": 16,
-  "buffer_font_size": 16,
-  "theme": {
-    "mode": "system",
-    "light": "Catppuccin Mocha - No Italics",
-    "dark": "Catppuccin Mocha - No Italics"
-  },
+  "buffer_font_family": "FiraCode Nerd Font Propo",
+  "ui_font_size": 15,
+  "buffer_font_size": 14,
   "soft_wrap": "editor_width",
   "preferred_line_length": 80,
   "show_wrap_guides": false,
   "format_on_save": "on",
+  "theme": {
+    "mode": "dark",
+    "light": "Catppuccin Mocha - No Italics",
+    "dark": "Catppuccin Mocha - No Italics"
+  },
   "autosave": {
     "after_delay": {
       "milliseconds": 500

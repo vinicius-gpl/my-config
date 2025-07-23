@@ -1,7 +1,7 @@
 @import url("../../.cache/wal/colors-waybar.css");
 * {
     font-size: 15px;
-    font-family: "CodeNewRoman Nerd Font Propo";
+    font-family: "JetBrainsMono Nerd Font", monospace;
 }
 
 window#waybar {
@@ -86,7 +86,7 @@ tooltip label {
     background: @color2;
     border-radius: 50%;
     transition: all 0.3s;
-    min-width: 15px;
+    min-width: 22px;
 }
 
 #workspaces button:hover {
@@ -98,7 +98,7 @@ tooltip label {
 #workspaces button.active {
     border: none;
     padding: 0px 2px;
-    border-radius: 10px;
+    border-radius: 40px;
     background: @color1;
     min-width: 30px;
 }

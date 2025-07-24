@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import Quickshell.Hyprland
 import QtQuick.Layouts
 import Quickshell.Io
@@ -5,7 +7,7 @@ import Quickshell
 import QtQuick
 
 import "../modules" as Modules
-import "../colors" as Colors
+import "../theme" as Theme
 
 Variants {
     id: root
@@ -14,7 +16,7 @@ Variants {
     delegate: PanelWindow {
         id: waybar
         implicitHeight: 30
-        HyprlandWindow.opacity: 0.6
+        HyprlandWindow.opacity: 0.8
 
         property var modelData: modelData
         visible: modelData.name === "DP-2"
@@ -25,7 +27,7 @@ Variants {
             right: true
         }
 
-        Colors.ColorLoader {
+        Theme.WalManager {
             id: colorLoader
         }
 
@@ -45,7 +47,8 @@ Variants {
             Modules.CommandModule {
                 id: bluetooth
                 Layout.alignment: Qt.AlignVCenter
-                textColor: colorLoader.textColor
+
+                textColor: colorLoader.foreground
                 icon: "\udb80\udcaf"
                 command: ["blueman-manager"]
             }
@@ -53,7 +56,8 @@ Variants {
             Modules.CommandModule {
                 id: nmtui
                 Layout.alignment: Qt.AlignVCenter
-                textColor: colorLoader.textColor
+
+                textColor: colorLoader.foreground
                 icon: "\uF1EB"
                 command: ["kitty", "--title", "nmtui", "nmtui"]
             }
@@ -69,15 +73,18 @@ Variants {
                 model: Hyprland.workspaces
 
                 delegate: Modules.WorkspaceModule {
+                    required property HyprlandWorkspace modelData
+
                     Layout.alignment: Qt.AlignVCenter
 
                     idNumber: modelData.id
                     focused: modelData.focused
                     active: modelData.active
 
-                    focusedColor: colorLoader.focusedColor
-                    activeColor: colorLoader.activeColor
-                    inactiveColor: colorLoader.inactiveColor
+                    focusedColor: colorLoader.color15
+                    focusedBorderColor: colorLoader.color3
+                    activeColor: colorLoader.color15
+                    inactiveColor: colorLoader.color1
                 }
             }
 
@@ -108,16 +115,14 @@ Variants {
 
             Modules.CommandModule {
                 id: swaync
-                Layout.alignment: Qt.AlignVCenter
-                textColor: colorLoader.textColor
+                textColor: colorLoader.foreground
                 icon: "\ue690"
                 command: ["swaync-client", "-t", "-sw"]
             }
 
             Modules.DateModule {
                 id: date
-                Layout.alignment: Qt.AlignVCenter
-                textColor: colorLoader.textColor
+                textColor: colorLoader.foreground
             }
 
             RowLayout {
@@ -127,15 +132,15 @@ Variants {
                 property string updatePackages: "0"
 
                 Modules.CommandModule {
-                    textColor: colorLoader.textColor
-                    icon: "\udb80\udfd4"
+                    textColor: colorLoader.foreground
+                    icon: "\uf487"
                     command: ["kitty", "--title", "update", "sh", "-c", "yay -Syu; echo Done - Press enter to exit; read"]
                 }
 
                 Text {
-                    text: update.updatePackages === "0" ? "0" : update.updatePackages
-                    color: colorLoader.textColor
-                    font.pixelSize: 18
+                    text: update.updatePackages === "0" ? "" : update.updatePackages
+                    color: colorLoader.foreground
+                    font.pixelSize: 20
                 }
 
                 Process {
@@ -157,7 +162,7 @@ Variants {
                 }
 
                 Timer {
-                    interval: 5 * 60 * 1000
+                    interval: 2 * 60 * 1000
                     running: true
                     repeat: true
                     onTriggered: {

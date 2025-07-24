@@ -7,7 +7,7 @@ import Quickshell
 import QtQuick
 
 import "../modules" as Modules
-import "../theme" as Theme
+import "../themes" as Themes
 
 Variants {
     id: root
@@ -27,14 +27,18 @@ Variants {
             right: true
         }
 
-        Theme.WalManager {
-            id: colorLoader
+        Themes.WalManager {
+            id: colorManager
+        }
+
+        Themes.FontFamily {
+            id: fontFamily
         }
 
         Rectangle {
             id: panelBackground
             anchors.fill: parent
-            color: colorLoader.background
+            color: colorManager.background
         }
 
         RowLayout {
@@ -48,7 +52,7 @@ Variants {
                 id: bluetooth
                 Layout.alignment: Qt.AlignVCenter
 
-                textColor: colorLoader.foreground
+                textColor: colorManager.foreground
                 icon: "\udb80\udcaf"
                 command: ["blueman-manager"]
             }
@@ -57,7 +61,7 @@ Variants {
                 id: nmtui
                 Layout.alignment: Qt.AlignVCenter
 
-                textColor: colorLoader.foreground
+                textColor: colorManager.foreground
                 icon: "\uF1EB"
                 command: ["kitty", "--title", "nmtui", "nmtui"]
             }
@@ -81,10 +85,10 @@ Variants {
                     focused: modelData.focused
                     active: modelData.active
 
-                    focusedColor: colorLoader.color15
-                    focusedBorderColor: colorLoader.color3
-                    activeColor: colorLoader.color15
-                    inactiveColor: colorLoader.color1
+                    focusedColor: colorManager.color15
+                    focusedBorderColor: colorManager.color3
+                    activeColor: colorManager.color15
+                    inactiveColor: colorManager.color1
                 }
             }
 
@@ -108,21 +112,21 @@ Variants {
 
         RowLayout {
             id: rowLeft
-            spacing: 20
+            spacing: 25
             anchors.margins: 20
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
 
             Modules.CommandModule {
                 id: swaync
-                textColor: colorLoader.foreground
+                textColor: colorManager.foreground
                 icon: "\ue690"
                 command: ["swaync-client", "-t", "-sw"]
             }
 
             Modules.DateModule {
                 id: date
-                textColor: colorLoader.foreground
+                textColor: colorManager.foreground
             }
 
             RowLayout {
@@ -132,15 +136,16 @@ Variants {
                 property string updatePackages: "0"
 
                 Modules.CommandModule {
-                    textColor: colorLoader.foreground
-                    icon: "\uf487"
+                    textColor: colorManager.foreground
+                    icon: "\udb80\udfd4"
                     command: ["kitty", "--title", "update", "sh", "-c", "yay -Syu; echo Done - Press enter to exit; read"]
                 }
 
                 Text {
                     text: update.updatePackages === "0" ? "" : update.updatePackages
-                    color: colorLoader.foreground
+                    color: colorManager.foreground
                     font.pixelSize: 20
+                    font.family: fontFamily.defaultFont.family
                 }
 
                 Process {

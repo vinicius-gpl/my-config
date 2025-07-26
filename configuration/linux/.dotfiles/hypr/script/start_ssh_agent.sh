@@ -1,5 +1,5 @@
 #!/bin/bash
-
+# 
 export SSH_ASKPASS=/usr/bin/ksshaskpass
 export DISPLAY=:0
 

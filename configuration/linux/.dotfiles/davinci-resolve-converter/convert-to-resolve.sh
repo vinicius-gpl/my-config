@@ -1,7 +1,4 @@
 #!/usr/bin/env bash
-#
-# to_davinci.sh - Um simples script que faz a conversão dos vídeos para a utilização no DaVinci Resolve.
-#
 # Website:     https://4fasters.com.br
 # Autor:       Mateus Gabriel Müller
 # Créditos:    

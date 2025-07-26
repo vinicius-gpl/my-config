@@ -8,6 +8,7 @@
   "preferred_line_length": 80,
   "show_wrap_guides": false,
   "format_on_save": "on",
+  "show_completions_on_input": true,
   "theme": {
     "mode": "dark",
     "light": "Catppuccin Mocha - No Italics",
@@ -18,6 +19,41 @@
       "milliseconds": 500
     }
   },
+  // "agent": {
+  //   "default_model": {
+  //     "provider": "ollama",
+  //     "model": "phi3:mini"
+  //   }
+  // },
+  // "features": {
+  //   "edit_prediction_provider": "zed"
+  // },
+  // "edit_predictions": {
+  //   "mode": "eager",
+  //   "disabled_globs": ["**/*.pem", "**/*.key", "**/*.crt"]
+  // },
+  // "language_models": {
+  //   "ollama": {
+  //     "api_url": "http://localhost:11434",
+  //     "available_models": [
+  //       {
+  //         "name": "phi3:mini",
+  //         "display_name": "Phi3 mini",
+  //         "max_tokens": 4096
+  //       },
+  //       {
+  //         "name": "gemma:2b",
+  //         "display_name": "Gemma 2B",
+  //         "max_tokens": 4096
+  //       },
+  //       {
+  //         "name": "codellama:7b",
+  //         "display_name": "Codellama 7B",
+  //         "max_tokens": 4096
+  //       }
+  //     ]
+  //   }
+  // },
   "languages": {
     "JSON": {
       "formatter": {
@@ -67,6 +103,11 @@
           "arguments": ["-i", "4", "-ci"]
         }
       }
+    }
+  },
+  "lsp": {
+    "clangd": {
+      "arguments": ["-background-index", "-compile-commands-dir=build"]
     }
   }
 }

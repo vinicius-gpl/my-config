@@ -29,22 +29,23 @@ if status is-interactive
     export FZF_CTRL_T_OPTS="
     --style full
     --walker-skip .git,node_modules,target
-    --preview 'bat -n --color=always {}' 
-    --bind 'focus:transform-header:file 
+    --preview 'bat -n --color=always {}'
+    --bind 'focus:transform-header:file
     --brief {}'"
 
-    set -gx EDITOR nvim
-
+    # My dev setup
     set -gx ANDROID_SDK_HOME /home/vinicius/Android/Sdk
     set -gx ANDROID_NDK_HOME /home/vinicius/Android/Sdk/ndk/27.0.12077973
-
-    set -gx PATH /usr/local/texlive/2025/bin/x86_64-linux $PATH
-    set -gx MANPATH /usr/local/texlive/2025/texmf-dist/doc/man $MANPATH
-    set -gx INFOPATH /usr/local/texlive/2025/texmf-dist/doc/info $INFOPATH
-
-    set -x XDG_CONFIG_HOME $HOME/.config
 
     if test -f $HOME/.ssh-agent-env
         source $HOME/.ssh-agent-env >/dev/null
     end
+
+    # System configs
+    set -gx EDITOR nvim
+    set -x XDG_CONFIG_HOME $HOME/.config
+
+    set -gx PATH /usr/local/texlive/2025/bin/x86_64-linux $PATH
+    set -gx MANPATH /usr/local/texlive/2025/texmf-dist/doc/man $MANPATH
+    set -gx INFOPATH /usr/local/texlive/2025/texmf-dist/doc/info $INFOPATH
 end

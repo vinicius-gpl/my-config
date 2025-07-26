@@ -1,1 +1,7 @@
+build/
+.cache/
+
 .qtcreator
+logs.txt
+
+*.so

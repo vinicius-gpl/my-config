@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if pgrep -x "waybar" >/dev/null; then
-    killall "waybar"
+  killall "waybar"
 else
-    waybar &
+  waybar &
 fi

@@ -34,7 +34,6 @@ Item {
 
             onStreamFinished: {
                 try {
-                    console.log("🎨 Wal colors:\n" + stdout.text);
                     let colors = JSON.parse(stdout.text);
 
                     colorWal.background = colors.special.background || colorWal.background;

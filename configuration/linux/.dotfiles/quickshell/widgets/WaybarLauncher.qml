@@ -6,8 +6,6 @@ import Quickshell.Io
 import Quickshell
 import QtQuick
 
-import HyprShell.CppModulePlugin
-
 import "../modules" as Modules
 import "../themes" as Themes
 
@@ -149,17 +147,6 @@ Variants {
                     font.pixelSize: 20
                     font.family: fontFamily.defaultFont.family
                 }
-
-                
-                // NOTE: Implementação nativa
-                CppBackend {
-                    id: backend
-                    onValueChanged: {
-                        console.log("Novo valor gerado:", value);
-                    }
-                }
-
-                Component.onCompleted: backend.generateValue(1, 10)
 
                 Process {
                     id: checkupdate

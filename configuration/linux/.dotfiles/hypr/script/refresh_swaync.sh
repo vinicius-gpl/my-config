@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if pgrep -x "swaync" >/dev/null; then
-    killall "swaync"
+  killall "swaync"
 else
-    swaync &
+  swaync
 fi

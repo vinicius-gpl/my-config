@@ -1,7 +1,7 @@
 #!/bin/bash
 
 FILENAME="screenshot-$(date '+%Y%m%d-%H%M%S').png"
-SAVE_DIR="$HOME/Pictures/Screenshot/"
+SAVE_DIR="$HOME/Pictures/Screenshot"
 FULL_PATH="$SAVE_DIR/$FILENAME"
 TITLE_FILTER="hyprctl activewindow ~"
 CLASS_FILTER="kitty-dropterm"

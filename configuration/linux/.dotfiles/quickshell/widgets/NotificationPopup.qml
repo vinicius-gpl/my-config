@@ -1,8 +1,11 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import Quickshell
 import Quickshell.Services.Notifications
 
 import "../modules" as Modules
+import "../themes" as Themes
 
 Variants {
     id: root
@@ -21,6 +24,14 @@ Variants {
             right: true
         }
 
+        Themes.WalManager {
+            id: colorManager
+        }
+
+        Themes.FontFamily {
+            id: fontFamily
+        }
+
         NotificationServer {
             id: notificationServer
             imageSupported: true
@@ -31,10 +42,12 @@ Variants {
             onNotification: notification => {
                 notification.tracked = true;
                 console.log("Received notification:", notification.summary, notification.body);
+                console.log("Received image", notification.appIcon);
 
                 notificationListModel.append({
                     summary: notification.summary,
                     body: notification.body,
+                    icon: notification.appIcon,
                     id: notification.id
                 });
 
@@ -61,19 +74,6 @@ Variants {
                 id: notificationListModel
             }
 
-            function removeNotificationAfterTimeout(id) {
-                var timer = Qt.createQmlObject('import QtQuick 2.0; Timer { interval: 5000; repeat: false; running: true }', popup);
-                timer.triggered.connect(function () {
-                    for (var counter = 0; counter < notificationListModel.count; ++counter) {
-                        if (notificationListModel.get(counter).id === id) {
-                            notificationListModel.remove(counter);
-                            break;
-                        }
-                    }
-                    timer.destroy();
-                });
-            }
-
             ListView {
                 id: notificationListView
                 anchors.fill: parent
@@ -84,15 +84,44 @@ Variants {
                 rightMargin: 10
                 bottomMargin: 10
 
-                delegate: Modules.NotificationItem {
+                delegate: Modules.NotificationContainer {
+                    required property var model
+                    required property int index
+
+                    backgroundContainer: colorManager.background
+                    textColor: colorManager.foreground
+                    buttonColor: colorManager.color7
+
                     summary: model.summary
                     body: model.body
-                    index: index
+                    icon: model.icon
+                    itemIndex: index
 
-                    onDismissClicked: {
-                        notificationListModel.remove(index);
+                    onDismissClicked: function (itemIndex) {
+                        var listModel = notificationListView.model;
+
+                        for (var counter = 0; counter < listModel.count; ++counter) {
+                            if (listModel.get(counter).id === model.id) {
+                                listModel.remove(counter);
+                                break;
+                            }
+                        }
                     }
                 }
+            }
+
+            function removeNotificationAfterTimeout(id) {
+                var timer = Qt.createQmlObject('import QtQuick 2.0; Timer { interval: 5000; repeat: false; running: true }', popup);
+
+                timer.triggered.connect(function () {
+                    for (var counter = 0; counter < notificationListModel.count; ++counter) {
+                        if (notificationListModel.get(counter).id === id) {
+                            notificationListModel.remove(counter);
+                            break;
+                        }
+                    }
+                    timer.destroy();
+                });
             }
         }
     }

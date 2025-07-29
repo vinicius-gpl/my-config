@@ -1,32 +1,34 @@
 import Quickshell.Hyprland
 import QtQuick
 
-Rectangle {
+Item {
     id: workspaceContainer
-    width: 20
-    height: 20
-    radius: width / 2
+    implicitWidth: workspaceItem.visible ? workspaceItem.width : 0
+    implicitHeight: workspaceItem.visible ? workspaceItem.height : 0
 
     property int idNumber: 0
     property bool focused: false
     property bool active: false
 
     property color focusedColor: "green"
-    property color focusedBorderColor: "blue"
     property color activeColor: "red"
     property color inactiveColor: "gray"
 
-    visible: idNumber > 0
-    color: focused ? focusedColor : active ? activeColor : inactiveColor
+    Rectangle {
+        id: workspaceItem
+        radius: width / 2
+        anchors.centerIn: parent
+        width: workspaceContainer.focused ? 20 : workspaceContainer.active ? 20 : 16
+        height: workspaceContainer.focused ? 20 : workspaceContainer.active ? 20 : 16
+        visible: workspaceContainer.idNumber > 0
+        color: workspaceContainer.focused ? workspaceContainer.focusedColor : workspaceContainer.active ? workspaceContainer.activeColor : workspaceContainer.inactiveColor
 
-    border.width: focused ? 0 : 2
-    border.color: focused ? "transparent" : focusedBorderColor
-
-    MouseArea {
-        anchors.fill: parent
-        cursorShape: Qt.PointingHandCursor
-        onClicked: {
-            Hyprland.dispatch("workspace " + workspaceContainer.idNumber);
+        MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+            onClicked: {
+                Hyprland.dispatch("workspace " + workspaceContainer.idNumber);
+            }
         }
     }
 }

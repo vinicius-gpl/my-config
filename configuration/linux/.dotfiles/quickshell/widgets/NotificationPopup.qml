@@ -21,7 +21,6 @@ Variants {
         anchors {
             top: true
             left: true
-            right: true
         }
 
         Themes.WalManager {
@@ -43,11 +42,13 @@ Variants {
                 notification.tracked = true;
                 console.log("Received notification:", notification.summary, notification.body);
                 console.log("Received image", notification.appIcon);
+                console.log("Received desktop entry", notification.desktopEntry);
 
                 notificationListModel.append({
                     summary: notification.summary,
                     body: notification.body,
                     icon: notification.appIcon,
+                    desktopEntry: notification.desktopEntry,
                     id: notification.id
                 });
 
@@ -64,7 +65,7 @@ Variants {
             color: "transparent"
             visible: notificationListModel.count > 0
 
-            implicitWidth: 400
+            implicitWidth: 500
             implicitHeight: Math.min(notificationListView.contentHeight + 20, Screen.height * 0.8)
 
             anchor.window: toplevel
@@ -95,6 +96,7 @@ Variants {
                     summary: model.summary
                     body: model.body
                     icon: model.icon
+                    appDesktopEntry: model.desktopEntry
                     itemIndex: index
 
                     onDismissClicked: function (itemIndex) {

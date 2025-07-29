@@ -67,28 +67,37 @@ Variants {
             }
         }
 
-        RowLayout {
+        Rectangle {
             id: rowWorkspace
-            spacing: 10
+            radius: 5
+            border.width: 2
+            color: colorManager.color2
+            border.color: colorManager.color6
             anchors.centerIn: parent
-            anchors.verticalCenter: parent.verticalCenter
+            width: workspaceRow.implicitWidth + 16
+            height: workspaceRow.implicitHeight + 8
 
-            Repeater {
-                model: Hyprland.workspaces
+            Row {
+                id: workspaceRow
+                spacing: 10
+                anchors.centerIn: parent
 
-                delegate: Modules.WorkspaceModule {
-                    required property HyprlandWorkspace modelData
+                Repeater {
+                    model: Hyprland.workspaces
 
-                    Layout.alignment: Qt.AlignVCenter
+                    delegate: Modules.WorkspaceModule {
+                        anchors.verticalCenter: parent.verticalCenter
 
-                    idNumber: modelData.id
-                    focused: modelData.focused
-                    active: modelData.active
+                        required property HyprlandWorkspace modelData
 
-                    focusedColor: colorManager.color15
-                    focusedBorderColor: colorManager.color3
-                    activeColor: colorManager.color15
-                    inactiveColor: colorManager.color1
+                        idNumber: modelData.id
+                        focused: modelData.focused
+                        active: modelData.active
+
+                        focusedColor: colorManager.color15
+                        activeColor: colorManager.color15
+                        inactiveColor: colorManager.color14
+                    }
                 }
             }
 

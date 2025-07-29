@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import QtQuick.Layouts
 
 import "../themes" as Themes
@@ -11,10 +12,6 @@ Rectangle {
     color: backgroundContainer
     radius: 5
 
-    Themes.FontFamily {
-        id: fontFamily
-    }
-
     property color backgroundContainer: "#333333"
     property color textColor: "white"
     property color buttonColor: "white"
@@ -22,7 +19,30 @@ Rectangle {
     property alias summary: summary.text
     property alias body: body.text
     property alias icon: icon.source
+    property string appDesktopEntry: ""
     property int itemIndex: 0
+
+    property string desktopIconSource: ""
+
+    Themes.FontFamily {
+        id: fontFamily
+    }
+
+    Component.onCompleted: {
+        Qt.callLater(() => {
+            if (appDesktopEntry && appDesktopEntry !== "") {
+                var entry = DesktopEntries.heuristicLookup(appDesktopEntry);
+                if (entry && entry.icon !== "") {
+                    desktopIconSource = entry.icon;
+                    console.log("Resolved icon:", desktopIconSource);
+                } else {
+                    console.log("No icon in desktop entry, using appIcon:", icon);
+                }
+            } else {
+                console.log("No desktopEntry, using appIcon:", icon);
+            }
+        });
+    }
 
     RowLayout {
         id: contentLayout
@@ -32,10 +52,10 @@ Rectangle {
 
         Image {
             id: icon
-            source: notificationContainer.icon
-            Layout.preferredWidth: 60
+            Layout.preferredWidth: 130
             Layout.fillHeight: true
             fillMode: Image.PreserveAspectFit
+            source: notificationContainer.desktopIconSource !== "" ? notificationContainer.desktopIconSource : notificationContainer.icon
         }
 
         ColumnLayout {
@@ -68,8 +88,8 @@ Rectangle {
                     Text {
                         anchors.centerIn: parent
                         text: "\uf467"
-                        color: notificationContainer.textColor
-                        font.pixelSize: 18
+                        color: "black"
+                        font.pixelSize: 15
                         font.family: fontFamily.defaultFont.family
                     }
 
@@ -92,7 +112,7 @@ Rectangle {
                     text: "No body"
                     color: notificationContainer.textColor
                     wrapMode: Text.WrapAnywhere
-                    font.pixelSize: 14
+                    font.pixelSize: 12
                     anchors.fill: parent
                     verticalAlignment: Text.AlignTop
                 }

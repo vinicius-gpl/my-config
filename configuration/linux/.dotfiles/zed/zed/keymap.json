@@ -1,0 +1,18 @@
+[
+  {
+    "context": "Workspace",
+    "bindings": {
+      "ctrl-shift-t": "terminal_panel::ToggleFocus"
+    }
+  },
+  {
+    "context": "Editor",
+    "bindings": {
+      "alt-shift-f": "editor::Format"
+    }
+  },
+  {
+    "context": "Editor && vim_mode == insert && !menu",
+    "bindings": {}
+  }
+]

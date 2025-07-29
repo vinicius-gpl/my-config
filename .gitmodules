@@ -40,3 +40,6 @@
 [submodule "references/eli's-dotfiles"]
 	path = references/eli's-dotfiles
 	url = https://github.com/elifouts/Dotfiles.git
+[submodule "references/caelestia-shell"]
+	path = references/caelestia-shell
+	url = https://github.com/caelestia-dots/shell.git

@@ -1,11 +1,21 @@
 {
+  "agent": {
+    "inline_assistant_model": {
+      "provider": "zed.dev",
+      "model": "claude-sonnet-4"
+    },
+    "default_model": {
+      "provider": "copilot_chat",
+      "model": "gpt-4o"
+    }
+  },
   "vim_mode": false,
   "icon_theme": "Material Icon Theme",
   "buffer_font_family": "FiraCode Nerd Font Propo",
   "ui_font_size": 15,
   "buffer_font_size": 14,
   "soft_wrap": "editor_width",
-  "preferred_line_length": 80,
+  "preferred_line_length": 120,
   "show_wrap_guides": false,
   "format_on_save": "on",
   "show_completions_on_input": true,
@@ -103,11 +113,26 @@
           "arguments": ["-i", "4", "-ci"]
         }
       }
+    },
+    "C++": {
+      "formatter": {
+        "external": {
+          "command": "clang-format",
+          "arguments": ["-style=file"]
+        }
+      }
     }
   },
   "lsp": {
     "clangd": {
-      "arguments": ["-background-index", "-compile-commands-dir=build"]
+      "binary": {
+        "path": "/usr/bin/clangd",
+        "arguments": [
+          "-background-index",
+          "--use-dirty-headers",
+          "-compile-commands-dir=build"
+        ]
+      }
     }
   }
 }

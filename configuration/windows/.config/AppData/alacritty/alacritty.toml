@@ -1,0 +1,16 @@
+general.import = ["C:/Users/vinicius/AppData/Roaming/alacritty/catppuccin-mocha.toml"]
+
+[terminal.shell]
+program = "pwsh.exe"
+args = ["-NoLogo", "-WorkingDirectory", "~"]
+
+[font]
+normal = { family = "Cascadia Code", style = "Regular" }
+bold = { family = "Cascadia Code", style = "Bold" }
+italic = { family = "Cascadia Code", style = "Italic" }
+size = 12.0
+
+[env]
+TERM = "xterm-256color"
+
+[terminal]

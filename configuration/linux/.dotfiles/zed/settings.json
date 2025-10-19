@@ -1,111 +1,70 @@
 {
+  "vim_mode": false,
+  "icon_theme": "Material Icon Theme",
+  "buffer_font_family": "FiraCode Nerd Font Propo",
+  "ui_font_size": 13,
+  "buffer_font_size": 12,
+  "soft_wrap": "editor_width",
+  "preferred_line_length": 120,
+  "show_wrap_guides": false,
+  "format_on_save": "on",
+  "show_completions_on_input": true,
+  "autosave": {
+    "after_delay": { "milliseconds": 500 }
+  },
   "agent": {
     "inline_assistant_model": {
       "provider": "zed.dev",
       "model": "claude-sonnet-4"
     },
     "default_model": {
-      "provider": "copilot_chat",
-      "model": "gpt-4o"
+      "provider": "google",
+      "model": "gemini-2.5-pro"
     }
   },
-  "vim_mode": false,
-  "icon_theme": "Material Icon Theme",
-  "buffer_font_family": "FiraCode Nerd Font Propo",
-  "ui_font_size": 15,
-  "buffer_font_size": 14,
-  "soft_wrap": "editor_width",
-  "preferred_line_length": 120,
-  "show_wrap_guides": false,
-  "format_on_save": "on",
-  "show_completions_on_input": true,
   "theme": {
     "mode": "dark",
     "light": "Catppuccin Mocha - No Italics",
     "dark": "Catppuccin Mocha - No Italics"
   },
-  "autosave": {
-    "after_delay": {
-      "milliseconds": 500
-    }
+  "outline_panel": {
+    "button": true
   },
-  // "agent": {
-  //   "default_model": {
-  //     "provider": "ollama",
-  //     "model": "phi3:mini"
-  //   }
-  // },
-  // "features": {
-  //   "edit_prediction_provider": "zed"
-  // },
-  // "edit_predictions": {
-  //   "mode": "eager",
-  //   "disabled_globs": ["**/*.pem", "**/*.key", "**/*.crt"]
-  // },
-  // "language_models": {
-  //   "ollama": {
-  //     "api_url": "http://localhost:11434",
-  //     "available_models": [
-  //       {
-  //         "name": "phi3:mini",
-  //         "display_name": "Phi3 mini",
-  //         "max_tokens": 4096
-  //       },
-  //       {
-  //         "name": "gemma:2b",
-  //         "display_name": "Gemma 2B",
-  //         "max_tokens": 4096
-  //       },
-  //       {
-  //         "name": "codellama:7b",
-  //         "display_name": "Codellama 7B",
-  //         "max_tokens": 4096
-  //       }
-  //     ]
-  //   }
-  // },
+  "tab_bar": {
+    "show_nav_history_buttons": true,
+    "show": true
+  },
+  "tabs": {
+    "file_icons": false,
+    "git_status": false
+  },
+  "title_bar": {
+    "show_menus": false,
+    "show_branch_icon": true,
+    "show_branch_name": true
+  },
+  "diagnostics": {
+    "button": true
+  },
+  "terminal": {
+    "button": true
+  },
+  "status_bar": {
+    "cursor_position_button": false,
+    "active_language_button": true
+  },
+  "project_panel": {
+    "auto_reveal_entries": true,
+    "entry_spacing": "standard",
+    "git_status": true,
+    "dock": "left",
+    "button": true,
+    "indent_guides": { "show": "never" },
+    "scrollbar": { "show": "never" }
+  },
+
   "languages": {
-    "JSON": {
-      "formatter": {
-        "external": {
-          "command": "prettier",
-          "arguments": ["--stdin-filepath", "{buffer_path}"]
-        }
-      },
-      "prettier": {
-        "allowed": true,
-        "parser": "json"
-      }
-    },
-    "JSONC": {
-      "formatter": {
-        "external": {
-          "command": "prettier",
-          "arguments": [
-            "--stdin-filepath",
-            "{buffer_path}",
-            "--trailing-comma",
-            "none"
-          ]
-        }
-      },
-      "prettier": {
-        "allowed": true,
-        "parser": "jsonc"
-      }
-    },
-    "TypeScript": {
-      "formatter": {
-        "external": {
-          "command": "prettier",
-          "arguments": ["--stdin-filepath", "{buffer_path}"]
-        }
-      },
-      "prettier": {
-        "allowed": true,
-        "parser": "typescript"
-      }
-    },
+    // Formatter de Shell Script
     "Shell Script": {
       "formatter": {
         "external": {
@@ -114,6 +73,8 @@
         }
       }
     },
+
+    // Formatter de C++
     "C++": {
       "formatter": {
         "external": {
@@ -121,17 +82,41 @@
           "arguments": ["-style=file"]
         }
       }
+    },
+
+    // Biome (JS/TS/JSX/TSX)
+    "JavaScript": {
+      "formatter": {
+        "external": {
+          "command": "npx",
+          "arguments": ["biome", "format", "--stdin-file-path", "{buffer_path}"]
+        }
+      }
+    },
+    "TypeScript": {
+      "formatter": {
+        "external": {
+          "command": "npx",
+          "arguments": ["biome", "format", "--stdin-file-path", "{buffer_path}"]
+        }
+      }
+    },
+    "TSX": {
+      "formatter": {
+        "external": {
+          "command": "npx",
+          "arguments": ["biome", "format", "--stdin-file-path", "{buffer_path}"]
+        }
+      }
     }
   },
+
+  // CLANG
   "lsp": {
     "clangd": {
       "binary": {
         "path": "/usr/bin/clangd",
-        "arguments": [
-          "-background-index",
-          "--use-dirty-headers",
-          "-compile-commands-dir=build"
-        ]
+        "arguments": ["-background-index", "--use-dirty-headers", "-compile-commands-dir=build"]
       }
     }
   }

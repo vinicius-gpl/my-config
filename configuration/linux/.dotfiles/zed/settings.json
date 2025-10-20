@@ -1,123 +1,150 @@
 {
-  "vim_mode": false,
-  "icon_theme": "Material Icon Theme",
-  "buffer_font_family": "FiraCode Nerd Font Propo",
-  "ui_font_size": 13,
-  "buffer_font_size": 12,
-  "soft_wrap": "editor_width",
-  "preferred_line_length": 120,
-  "show_wrap_guides": false,
-  "format_on_save": "on",
-  "show_completions_on_input": true,
-  "autosave": {
-    "after_delay": { "milliseconds": 500 }
-  },
-  "agent": {
-    "inline_assistant_model": {
-      "provider": "zed.dev",
-      "model": "claude-sonnet-4"
-    },
-    "default_model": {
-      "provider": "google",
-      "model": "gemini-2.5-pro"
-    }
-  },
-  "theme": {
-    "mode": "dark",
-    "light": "Catppuccin Mocha - No Italics",
-    "dark": "Catppuccin Mocha - No Italics"
-  },
-  "outline_panel": {
-    "button": true
-  },
-  "tab_bar": {
-    "show_nav_history_buttons": true,
-    "show": true
-  },
-  "tabs": {
-    "file_icons": false,
-    "git_status": false
-  },
-  "title_bar": {
-    "show_menus": false,
-    "show_branch_icon": true,
-    "show_branch_name": true
-  },
-  "diagnostics": {
-    "button": true
-  },
-  "terminal": {
-    "button": true
-  },
-  "status_bar": {
-    "cursor_position_button": false,
-    "active_language_button": true
-  },
-  "project_panel": {
-    "auto_reveal_entries": true,
-    "entry_spacing": "standard",
-    "git_status": true,
-    "dock": "left",
-    "button": true,
-    "indent_guides": { "show": "never" },
-    "scrollbar": { "show": "never" }
-  },
+	"vim_mode": false,
+	"ui_font_size": 16,
+	"buffer_font_size": 14,
+	"soft_wrap": "editor_width",
+	"preferred_line_length": 120,
+	"show_wrap_guides": false,
+	"format_on_save": "on",
+	"show_completions_on_input": true,
+	"autosave": {
+		"after_delay": { "milliseconds": 500 }
+	},
 
-  "languages": {
-    // Formatter de Shell Script
-    "Shell Script": {
-      "formatter": {
-        "external": {
-          "command": "shfmt",
-          "arguments": ["-i", "4", "-ci"]
-        }
-      }
-    },
+	// AI
+	"agent": {
+		"inline_assistant_model": {
+			"provider": "zed.dev",
+			"model": "claude-sonnet-4"
+		},
+		"default_model": {
+			"provider": "google",
+			"model": "gemini-2.5-pro"
+		}
+	},
 
-    // Formatter de C++
-    "C++": {
-      "formatter": {
-        "external": {
-          "command": "clang-format",
-          "arguments": ["-style=file"]
-        }
-      }
-    },
+	// UI
+	"icon_theme": "Material Icon Theme",
+	"buffer_font_family": "FiraCode Nerd Font Propo",
+	"theme": {
+		"mode": "dark",
+		"light": "Catppuccin Mocha - No Italics",
+		"dark": "Catppuccin Mocha - No Italics"
+	},
+	"outline_panel": {
+		"button": true
+	},
+	"tab_bar": {
+		"show_nav_history_buttons": true,
+		"show": true
+	},
+	"tabs": {
+		"file_icons": false,
+		"git_status": false
+	},
+	"title_bar": {
+		"show_menus": false,
+		"show_branch_icon": true,
+		"show_branch_name": true
+	},
+	"diagnostics": {
+		"button": true
+	},
+	"terminal": {
+		"button": true
+	},
+	"status_bar": {
+		"cursor_position_button": false,
+		"active_language_button": true
+	},
+	"project_panel": {
+		"auto_reveal_entries": true,
+		"entry_spacing": "standard",
+		"git_status": true,
+		"indent_size": 6,
+		"dock": "left",
+		"button": true,
+		"indent_guides": { "show": "never" },
+		"scrollbar": { "show": "never" }
+	},
 
-    // Biome (JS/TS/JSX/TSX)
-    "JavaScript": {
-      "formatter": {
-        "external": {
-          "command": "npx",
-          "arguments": ["biome", "format", "--stdin-file-path", "{buffer_path}"]
-        }
-      }
-    },
-    "TypeScript": {
-      "formatter": {
-        "external": {
-          "command": "npx",
-          "arguments": ["biome", "format", "--stdin-file-path", "{buffer_path}"]
-        }
-      }
-    },
-    "TSX": {
-      "formatter": {
-        "external": {
-          "command": "npx",
-          "arguments": ["biome", "format", "--stdin-file-path", "{buffer_path}"]
-        }
-      }
-    }
-  },
+	"languages": {
+		// Formatter de Shell Script
+		"Shell Script": {
+			"formatter": {
+				"external": {
+					"command": "shfmt",
+					"arguments": ["-i", "4", "-ci"]
+				}
+			}
+		},
 
-  // CLANG
-  "lsp": {
-    "clangd": {
-      "binary": {
-        "path": "/usr/bin/clangd",
-        "arguments": ["-background-index", "--use-dirty-headers", "-compile-commands-dir=build"]
-      }
-    }
-  }
+		// Formatter de C++
+		"C++": {
+			"formatter": {
+				"external": {
+					"command": "clang-format",
+					"arguments": ["-style=file"]
+				}
+			}
+		},
+
+		// Biome (JS/TS/JSX/TSX)
+		"JavaScript": {
+			"formatter": {
+				"language_server": {
+					"name": "biome"
+				}
+			}
+		},
+		"TypeScript": {
+			"formatter": {
+				"language_server": {
+					"name": "biome"
+				}
+			}
+		},
+		"TSX": {
+			"formatter": {
+				"language_server": {
+					"name": "biome"
+				}
+			}
+		},
+		"JSON": {
+			"formatter": {
+				"language_server": {
+					"name": "biome"
+				}
+			}
+		},
+		"JSONC": {
+			"formatter": {
+				"language_server": {
+					"name": "biome"
+				}
+			}
+		},
+		"CSS": {
+			"formatter": {
+				"language_server": {
+					"name": "biome"
+				}
+			}
+		}
+	},
+
+	// CLANG
+	"lsp": {
+		"clangd": {
+			"binary": {
+				"path": "/usr/bin/clangd",
+				"arguments": [
+					"-background-index",
+					"--use-dirty-headers",
+					"-compile-commands-dir=build"
+				]
+			}
+		}
+	}
 }

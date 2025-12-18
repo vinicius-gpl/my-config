@@ -7,6 +7,7 @@
 	"show_wrap_guides": false,
 	"format_on_save": "on",
 	"show_completions_on_input": true,
+	"hidden_files": ["node_modules"],
 	"autosave": {
 		"after_delay": { "milliseconds": 500 }
 	},
@@ -97,6 +98,14 @@
 
 		// Biome (JS/TS/JSX/TSX)
 		"JavaScript": {
+			"language_servers": ["typescript-language-server", "!vtsls", "..."],
+			"formatter": {
+				"language_server": {
+					"name": "biome"
+				}
+			}
+		},
+		"Vue.js": {
 			"language_servers": ["typescript-language-server", "!vtsls", "..."],
 			"formatter": {
 				"language_server": {

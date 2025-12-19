@@ -1,38 +1,188 @@
 {
-	"languages": {
-		"Vue.js": {
-			"language_servers": [
-				"vue-language-server",
-				"eslint",
-				"!biome",
-				"!vtsls",
-				"..."
-			]
+	"vim_mode": false,
+	"ui_font_size": 16,
+	"buffer_font_size": 14,
+	"soft_wrap": "editor_width",
+	"preferred_line_length": 120,
+	"show_wrap_guides": false,
+	"format_on_save": "on",
+	"show_completions_on_input": true,
+	"hidden_files": ["node_modules"],
+	"autosave": {
+		"after_delay": { "milliseconds": 500 }
+	},
+
+	// AI
+	"agent": {
+		"inline_assistant_model": {
+			"provider": "zed.dev",
+			"model": "claude-sonnet-4"
 		},
-		"JavaScript": {
-			"language_servers": [
-				"typescript-language-server",
-				"eslint",
-				"!biome",
-				"!vtsls",
-				"..."
-			],
-			"formatter": { "language_server": { "name": "eslint" } }
-		},
-		"TypeScript": {
-			"language_servers": [
-				"typescript-language-server",
-				"eslint",
-				"!biome",
-				"!vtsls",
-				"..."
-			],
-			"formatter": { "language_server": { "name": "eslint" } }
+		"default_model": {
+			"provider": "google",
+			"model": "gemini-2.5-pro"
 		}
 	},
+
+	// UI
+	"icon_theme": "Catppuccin Latte",
+	"buffer_font_family": "FiraCode Nerd Font Propo",
+	"theme": {
+		"mode": "dark",
+		"light": "Catppuccin Mocha - No Italics",
+		"dark": "Catppuccin Mocha - No Italics"
+	},
+	"outline_panel": {
+		"button": true
+	},
+	"tab_bar": {
+		"show_nav_history_buttons": true,
+		"show": true
+	},
+	"tabs": {
+		"file_icons": false,
+		"git_status": false
+	},
+	"title_bar": {
+		"show_menus": false,
+		"show_branch_icon": true,
+		"show_branch_name": true
+	},
+	"diagnostics": {
+		"button": true
+	},
+	"terminal": {
+		"button": true
+	},
+	"status_bar": {
+		"cursor_position_button": false,
+		"active_language_button": true
+	},
+	"project_panel": {
+		"hide_hidden": true,
+		"auto_reveal_entries": true,
+		"entry_spacing": "standard",
+		"git_status": true,
+		"indent_size": 6,
+		"dock": "left",
+		"button": true,
+		"indent_guides": { "show": "never" },
+		"scrollbar": { "show": "never" }
+	},
+
 	"code_actions_on_format": {
-		"source.fixAll.eslint": true,
-		"source.fixAll.biome": false,
-		"source.organizeImports.biome": false
+		"source.organizeImports.biome": true,
+		"source.fixAll.biome": true
+	},
+
+	"languages": {
+		// Formatter de Shell Script
+		"Shell Script": {
+			"formatter": {
+				"external": {
+					"command": "shfmt",
+					"arguments": ["-i", "4", "-ci"]
+				}
+			}
+		},
+
+		// Formatter de C++
+		"C++": {
+			"formatter": {
+				"external": {
+					"command": "clang-format",
+					"arguments": ["-style=file"]
+				}
+			}
+		},
+
+		// Biome (JS/TS/JSX/TSX)
+		"JavaScript": {
+			"language_servers": ["typescript-language-server", "!vtsls", "..."],
+			"formatter": {
+				"language_server": {
+					"name": "biome"
+				}
+			}
+		},
+		"Vue.js": {
+			"language_servers": ["typescript-language-server", "!vtsls", "..."],
+			"formatter": {
+				"language_server": {
+					"name": "biome"
+				}
+			}
+		},
+		"TypeScript": {
+			"language_servers": ["typescript-language-server", "!vtsls", "..."],
+			"formatter": {
+				"language_server": {
+					"name": "biome"
+				}
+			}
+		},
+		"TSX": {
+			"language_servers": ["typescript-language-server", "!vtsls", "..."],
+			"formatter": {
+				"language_server": {
+					"name": "biome"
+				}
+			}
+		},
+		"JSON": {
+			"formatter": {
+				"language_server": {
+					"name": "biome"
+				}
+			}
+		},
+		"JSONC": {
+			"formatter": {
+				"language_server": {
+					"name": "biome"
+				}
+			}
+		},
+		"CSS": {
+			"formatter": {
+				"language_server": {
+					"name": "biome"
+				}
+			}
+		}
+	},
+
+	// LSP configs
+	"lsp": {
+		// A configuração do vtsls foi removida por ser desnecessária
+		"typescript-language-server": {
+			"settings": {
+				"preferences": {
+					"includePackageJsonAutoImports": "on",
+					"quotePreference": "auto",
+					"importModuleSpecifier": "non-relative"
+				},
+				"typescript": {
+					"updateImportsOnFileMove": {
+						"enabled": "always"
+					}
+				},
+				"javascript": {
+					"updateImportsOnFileMove": {
+						"enabled": "always"
+					}
+				}
+			}
+		},
+		"clangd": {
+			"binary": {
+				"path": "/usr/bin/clangd",
+				"arguments": [
+					"-background-index",
+					"--use-dirty-headers",
+					"-compile-commands-dir=build"
+				]
+			}
+		}
 	}
 }

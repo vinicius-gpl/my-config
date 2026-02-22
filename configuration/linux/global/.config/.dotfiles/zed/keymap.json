@@ -1,0 +1,22 @@
+[
+	{
+		"context": "Workspace",
+		"bindings": {
+			"ctrl-shift-t": "workspace::NewTerminal"
+		}
+	},
+	{
+		"context": "Terminal",
+		"bindings": {
+			"ctrl-d": ["pane::CloseActiveItem", { "close_pinned": false }],
+			"ctrl-shift-t": "workspace::NewTerminal"
+		}
+	},
+	{
+		"context": "Editor && !readonly",
+		"bindings": {
+			"alt-shift-down": "editor::AddSelectionBelow",
+			"alt-shift-up": "editor::AddSelectionAbove"
+		}
+	}
+]

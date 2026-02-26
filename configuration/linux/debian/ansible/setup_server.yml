@@ -1,14 +1,12 @@
----
 - name: Setup Debian Server
   hosts: debian_server
   become: yes
 
   vars:
-    ssh_email: "email@tcmgo.tc.br"
+    ssh_email: "saptcmgo@gmail.com"
     ssh_key_path: "~/.ssh/id_ed25519_server"
 
   tasks:
-
     # --- BASE ---
     - name: Update apt cache
       apt:

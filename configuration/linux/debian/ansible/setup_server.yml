@@ -1,16 +1,19 @@
 - name: Setup Debian Server
   hosts: debian_server
   become: yes
+
   vars:
-    ssh_email: "vinicius.gabriel.p.leitao@gmail.com"
+    ssh_email: "saptcmgo@gmail.com"
     ssh_key_path: "~/.ssh/id_ed25519_server"
 
   tasks:
-    - name: Upgrade do apt
+    # --- BASE ---
+    - name: Update apt cache
       apt:
         update_cache: yes
+        cache_valid_time: 3600
 
-    - name: Instala dependencias
+    - name: Install base dependencies
       apt:
         name:
           - ca-certificates
@@ -31,30 +34,36 @@
         deb: "{{ ansible_env.HOME }}/cloudflared.deb"
       become: true
 
-    # --- DOCKER SETUP ---
-    - name: Docker configuração
+    # --- DOCKER ---
+    - name: Define docker architecture
       set_fact:
-        docker_arch: "{{ 'amd64' if ansible_facts['architecture'] == 'x86_64' else 'arm64' if ansible_facts['architecture'] == 'aarch64' else 'armhf' }}"
+        docker_arch: >-
+          {{ 'amd64' if ansible_facts['architecture'] == 'x86_64'
+          else 'arm64' if ansible_facts['architecture'] == 'aarch64'
+          else 'armhf' }}
 
-    - name: Salva chave do repo do docker
+    - name: Ensure docker keyring directory exists
       file:
         path: /etc/apt/keyrings
         state: directory
         mode: '0755'
 
-    - name: Salva chave do repo do docker
+    - name: Download docker GPG key
       get_url:
         url: https://download.docker.com/linux/debian/gpg
         dest: /etc/apt/keyrings/docker.gpg
         mode: '0644'
 
-    - name: Adiciona o repo do docker
+    - name: Add docker repository
       apt_repository:
-        repo: "deb [arch={{ docker_arch }} signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian {{ ansible_facts['distribution_release'] }} stable"
+        repo: >-
+          deb [arch={{ docker_arch }} signed-by=/etc/apt/keyrings/docker.gpg]
+          https://download.docker.com/linux/debian
+          {{ ansible_facts['distribution_release'] }} stable
         state: present
         filename: docker
 
-    - name: Install Docker components
+    - name: Install docker components
       apt:
         name:
           - docker-ce
@@ -65,8 +74,64 @@
         state: present
         update_cache: yes
 
-    # --- EASY PANEL SETUP ---
-    - name: Configura o Easy Panel
+    - name: Ensure docker service is running
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    # --- NGINX ---
+    - name: Download nginx signing key
+      get_url:
+        url: https://nginx.org/keys/nginx_signing.key
+        dest: /usr/share/keyrings/nginx-archive-keyring.gpg
+        mode: '0644'
+
+    - name: Add nginx repository
+      apt_repository:
+        repo: >-
+          deb [signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg]
+          https://nginx.org/packages/debian
+          {{ ansible_facts['distribution_release'] }} nginx
+        state: present
+        filename: nginx
+
+    - name: Install nginx
+      apt:
+        name: nginx
+        state: present
+        update_cache: yes
+
+    - name: Ensure nginx is running
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Ensure nginx apps directory exists
+      file:
+        path: /etc/nginx/conf.d/apps
+        state: directory
+        mode: '0755'
+
+    - name: Copy main nginx configs
+      copy:
+        src: "nginx/conf.d/{{ item }}"
+        dest: "/etc/nginx/conf.d/{{ item }}"
+      loop:
+        - 00-general.conf
+        - siaap-server.conf
+        - siaap-upstream.conf
+      notify: Reload Nginx
+
+    - name: Copy app nginx config
+      copy:
+        src: "nginx/conf.d/apps/siaap.conf"
+        dest: "/etc/nginx/conf.d/apps/siaap.conf"
+      notify: Reload Nginx
+      
+    # --- EASY PANEL ---
+    - name: Deploy EasyPanel container
       docker_container:
         name: easypanel
         image: easypanel/easypanel:latest
@@ -77,69 +142,22 @@
           - /var/run/docker.sock:/var/run/docker.sock:ro
         command: setup
 
-    # --- NGINX SETUP ---
-    - name: Salva chave do repo do nginx
-      get_url:
-        url: https://nginx.org/keys/nginx_signing.key
-        dest: /usr/share/keyrings/nginx-archive-keyring.gpg
-        mode: '0644'
-
-    - name: Adiciona o repo do nginx
-      apt_repository:
-        repo: "deb [signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg] https://nginx.org/packages/debian {{ ansible_facts['distribution_release'] }} nginx"
-        state: present
-        filename: nginx
-
-    - name: Instala o nginx
-      apt:
-        name: nginx
-        state: present
-        update_cache: yes
-
-    - name: Inicia e habilita o nginx
-      service:
-        name: nginx
-        state: started
-        enabled: yes
-
-    - name: Cria o diretorio de apps do nginx
-      file:
-        path: /etc/nginx/conf.d/apps
-        state: directory
-        mode: '0755'
-
-    - name: Copia as configuracoes do nginx
-      copy:
-        src: "../nginx/conf.d/{{ item }}"
-        dest: "/etc/nginx/conf.d/{{ item }}"
-      loop:
-        - 00-general.conf
-        - siaap-server.conf
-        - siaap-upstream.conf
-      notify: Reload Nginx
-
-    - name: Copia as configuracoes do nginx
-      copy:
-        src: "../nginx/conf.d/apps/siaap.conf"
-        dest: "/etc/nginx/conf.d/apps/siaap.conf"
-      notify: Reload Nginx
-
-    # --- SSH KEY SETUP ---
-    - name: Generate SSH key
+    # --- SSH KEY ---
+    - name: Generate SSH key for remote user
       user:
         name: "{{ ansible_user }}"
+        generate_ssh_key: yes
         ssh_key_bits: 256
         ssh_key_type: ed25519
         ssh_key_file: "{{ ssh_key_path }}"
         ssh_key_comment: "{{ ssh_email }}"
-        generate_ssh_key: yes
 
-    - name: Exibe a chave publica
+    - name: Read public SSH key
       command: "cat {{ ssh_key_path }}.pub"
       register: ssh_pub_key
       changed_when: false
 
-    - name: Exibe a chave publica
+    - name: Display public SSH key
       debug:
         msg: "Add this key to GitHub: {{ ssh_pub_key.stdout }}"
 

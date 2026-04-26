@@ -1,0 +1,12 @@
+services:
+  portainer_agent_podman:
+    container_name: portainer-agent-podman
+    image: docker.io/portainer/agent:2.39.1
+    restart: always
+    privileged: true
+    ports:
+      - "9002:9001"
+    volumes:
+      - /run/user/1000/podman/podman.sock:/var/run/docker.sock
+      - /home/vinicius/.local/share/containers/storage/volumes:/var/lib/docker/volumes
+      - /:/host

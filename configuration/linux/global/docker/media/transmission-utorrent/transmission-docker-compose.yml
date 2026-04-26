@@ -6,9 +6,11 @@ services:
       PUID: 1000
       PGID: 1000
       TZ: "America/Sao_paulo"
+      TRANSMISSION_WEB_ALLOWEDORIGINS: "*"
+    ports:
+      - "9092:9091"
     volumes:
-      - ~/.docker/transmission/data:/config
-      - ~/.docker/transmission/downloads:/downloads
-      - ~/.docker/transmission/watch/folder:/watch
-    network_mode: host
+      - ~/.docker/transmission/data:/config:Z
+      - ~/.docker/transmission/downloads:/downloads:Z
+      - ~/.docker/transmission/watch/folder:/watch:Z
     restart: unless-stopped

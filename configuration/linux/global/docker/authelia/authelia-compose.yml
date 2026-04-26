@@ -1,0 +1,14 @@
+services:
+  authelia:
+    image: authelia/authelia
+    container_name: authelia
+    restart: unless-stopped
+    ports:
+      - "9091:9091"
+    volumes:
+      - ./authelia:/config
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9091/api/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5

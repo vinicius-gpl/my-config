@@ -4,7 +4,7 @@ services:
     container_name: authelia
     restart: unless-stopped
     volumes:
-      - ./authelia:/config
+      - ./config/authelia:/config
     networks:
       - proxy
     healthcheck:
@@ -40,7 +40,7 @@ services:
       - "443:443"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./dynamic:/etc/traefik/dynamic
+      - ./config/dynamic:/etc/traefik/dynamic
     networks:
       - proxy
     depends_on:

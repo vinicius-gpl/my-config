@@ -1,5 +1,0 @@
-{
-    email {$EMAIL}
-}
-
-import /etc/caddy/conf.d/*.caddy

@@ -5,7 +5,7 @@ networks:
 services:
   caddy:
     image: caddy:latest
-    container_name: acerola-proxy
+    container_name: caddy
     restart: always
     environment:
       - EMAIL=${EMAIL}

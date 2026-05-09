@@ -1,0 +1,26 @@
+monitor.{$DOMAIN} {
+    header {
+        Strict-Transport-Security "max-age=31536000;"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "no-referrer"
+        X-Frame-Options "SAMEORIGIN"
+    }
+
+    forward_auth authelia:9091 {
+        uri /api/authz/forward-auth
+        copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
+    }
+
+    reverse_proxy netdata:19999 {
+        header_up Host {host}
+        header_up X-Real-IP {remote}
+        header_up X-Forwarded-For {remote}
+    }
+
+    encode zstd gzip
+
+    log {
+        output file /data/netdata-access.log
+        format json
+    }
+}

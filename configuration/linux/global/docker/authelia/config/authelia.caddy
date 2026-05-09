@@ -1,0 +1,14 @@
+auth.{$DOMAIN} {
+    reverse_proxy authelia:9091 {
+        header_up Host {host}
+        header_up X-Real-IP {remote}
+        header_up X-Forwarded-For {remote}
+    }
+
+    encode zstd gzip
+
+    log {
+        output file /data/authelia-access.log
+        format json
+    }
+}

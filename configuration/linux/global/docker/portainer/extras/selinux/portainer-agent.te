@@ -1,0 +1,11 @@
+
+module portainer-agent 1.0;
+
+require {
+	type container_runtime_t;
+	type container_t;
+	class unix_stream_socket connectto;
+}
+
+#============= container_t ==============
+allow container_t container_runtime_t:unix_stream_socket connectto;

@@ -1,0 +1,18 @@
+networks:
+  proxy:
+    external: true
+
+services:
+  authelia:
+    image: authelia/authelia
+    container_name: authelia
+    restart: unless-stopped
+    volumes:
+      - ./config:/config
+    networks:
+      - proxy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9091/api/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5

@@ -24,4 +24,13 @@ size = 12.0
 [env]
 TERM = "xterm-256color"
 
-[terminal]
+[selection]
+semantic_escape_chars = ",│`|:\"' ()[]{}<>"
+save_to_clipboard = true
+
+[keyboard]
+bindings = [
+  { key = "C", mods = "Control|Shift", action = "Copy" },
+  { key = "V", mods = "Control|Shift", action = "Paste" },
+  { key = "Return", mods = "Shift", chars = "\u001B\r" }
+]

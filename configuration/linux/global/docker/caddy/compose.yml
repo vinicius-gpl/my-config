@@ -1,0 +1,26 @@
+networks:
+  proxy:
+    external: true
+
+services:
+  caddy:
+    image: caddy:latest
+    container_name: caddy
+    restart: always
+    environment:
+      - EMAIL=${EMAIL}
+      - DOMAIN=${DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /opt/caddy/caddyfile:/etc/caddy/Caddyfile
+      - /opt/caddy/conf.d:/etc/caddy/conf.d
+      - caddy_config:/config
+      - caddy_data:/data
+    networks:
+      - proxy
+
+volumes:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,224 @@
+---
+- name: Deploy Acerola Relay
+  hosts: relay_servers
+  vars:
+    caddy_path: "/opt/caddy"
+    netdata_path: "/opt/netdata"
+    authelia_path: "/opt/authelia"
+    portainer_path: "/opt/portainer"
+
+  tasks:
+    - name: "[base] Instalar dependências do sistema (Rocky Linux)"
+      dnf:
+        name:
+          - dnf-plugins-core
+          - firewalld
+          - curl
+        state: present
+      tags: [base]
+
+    - name: "[base] Adicionar repositório do Docker"
+      command: dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+      args:
+        creates: /etc/yum.repos.d/docker-ce.repo
+      tags: [base]
+
+    - name: "[base] Instalar Docker e plugins"
+      dnf:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+      tags: [base]
+
+    - name: "[base] Iniciar e habilitar Docker e Firewalld"
+      systemd:
+        name: "{{ item }}"
+        state: started
+        enabled: yes
+      loop:
+        - docker
+        - firewalld
+      tags: [base]
+
+    - name: "[base] Abrir portas no firewall"
+      firewalld:
+        port: "{{ item }}"
+        permanent: yes
+        state: enabled
+        immediate: yes
+      loop:
+        - 80/tcp
+        - 443/tcp
+        - 443/udp
+        - 7824/udp
+      tags: [base]
+
+    - name: "[base] Criar rede Docker compartilhada (proxy)"
+      command: docker network create proxy
+      register: proxy_network
+      failed_when:
+        - proxy_network.rc != 0
+        - '"already exists" not in proxy_network.stderr'
+      changed_when: proxy_network.rc == 0
+      tags: [always]
+
+    # === PORTAINER ===
+
+    - name: "[portainer] Criar diretório de deploy"
+      file:
+        path: "{{ portainer_path }}"
+        state: directory
+        mode: '0755'
+      tags: [portainer]
+
+    - name: "[portainer] Copiar docker-compose para o servidor"
+      copy:
+        src: "{{ playbook_dir }}/../../../../configuration/linux/global/docker/portainer/compose.yml"
+        dest: "{{ portainer_path }}/docker-compose.yml"
+        mode: '0644'
+      tags: [portainer]
+
+    - name: "[portainer] Subir containers com docker compose"
+      command: docker compose up -d
+      args:
+        chdir: "{{ portainer_path }}"
+      tags: [portainer]
+
+    # === CADDY ===
+
+    - name: "[caddy] Criar diretórios de configuração"
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - "{{ caddy_path }}"
+        - "{{ caddy_path }}/conf.d"
+      tags: [caddy]
+
+    - name: "[caddy] Verificar se caddyfile é um diretório"
+      stat:
+        path: "{{ caddy_path }}/caddyfile"
+      register: caddyfile_stat
+      tags: [caddy]
+
+    - name: "[caddy] Remover diretório caddyfile criado erroneamente pelo Docker"
+      file:
+        path: "{{ caddy_path }}/caddyfile"
+        state: absent
+      when: caddyfile_stat.stat.exists and caddyfile_stat.stat.isdir
+      tags: [caddy]
+
+    - name: "[caddy] Implantar Caddyfile principal (agregador)"
+      copy:
+        src: "{{ playbook_dir }}/../../../../configuration/linux/global/docker/caddy/config/caddyfile"
+        dest: "{{ caddy_path }}/caddyfile"
+        mode: '0644'
+      tags: [caddy]
+
+    - name: "[caddy] Implantar configs de sites (*.caddy)"
+      copy:
+        src: "{{ item }}"
+        dest: "{{ caddy_path }}/conf.d/{{ item | basename }}"
+        mode: '0644'
+      loop:
+        - "{{ playbook_dir }}/../../../../configuration/linux/global/docker/portainer/config/portainer.caddy"
+        - "{{ playbook_dir }}/../../../../configuration/linux/global/docker/authelia/config/authelia.caddy"
+        - "{{ playbook_dir }}/../../../../configuration/linux/global/docker/netdata/config/netdata.caddy"
+      tags: [caddy]
+
+    - name: "[caddy] Copiar docker-compose para o servidor"
+      copy:
+        src: "{{ playbook_dir }}/../../../../configuration/linux/global/docker/caddy/compose.yml"
+        dest: "{{ caddy_path }}/docker-compose.yml"
+        mode: '0644'
+      tags: [caddy]
+
+    - name: "[caddy] Criar arquivo .env com credenciais"
+      copy:
+        dest: "{{ caddy_path }}/.env"
+        content: |
+          EMAIL={{ email }}
+          DOMAIN={{ domain }}
+        mode: '0600'
+      tags: [caddy]
+
+    - name: "[caddy] Remover container antigo se existir"
+      command: docker rm -f caddy
+      register: rm_caddy
+      failed_when:
+        - rm_caddy.rc != 0
+        - '"No such container" not in rm_caddy.stderr'
+      changed_when: rm_caddy.rc == 0
+      tags: [caddy]
+
+    - name: "[caddy] Subir container com docker compose"
+      command: docker compose up -d --force-recreate
+      args:
+        chdir: "{{ caddy_path }}"
+      tags: [caddy]
+
+    # === AUTHELIA ===
+
+    - name: "[authelia] Criar diretórios de deploy"
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - "{{ authelia_path }}"
+        - "{{ authelia_path }}/config"
+      tags: [authelia]
+
+    - name: "[authelia] Copiar docker-compose para o servidor"
+      copy:
+        src: "{{ playbook_dir }}/../../../../configuration/linux/global/docker/authelia/compose.yml"
+        dest: "{{ authelia_path }}/docker-compose.yml"
+        mode: '0644'
+      tags: [authelia]
+
+    - name: "[authelia] Renderizar configuration.yml"
+      template:
+        src: "{{ playbook_dir }}/../../../../configuration/linux/global/docker/authelia/config/configuration.yml"
+        dest: "{{ authelia_path }}/config/configuration.yml"
+        mode: '0600'
+      tags: [authelia]
+
+    - name: "[authelia] Renderizar users.yml"
+      template:
+        src: "{{ playbook_dir }}/../../../../configuration/linux/global/docker/authelia/config/users.yml"
+        dest: "{{ authelia_path }}/config/users.yml"
+        mode: '0600'
+      tags: [authelia]
+
+    - name: "[authelia] Subir container com docker compose"
+      command: docker compose up -d --force-recreate
+      args:
+        chdir: "{{ authelia_path }}"
+      tags: [authelia]
+
+    # === NETDATA ===
+
+    - name: "[netdata] Criar diretório de deploy"
+      file:
+        path: "{{ netdata_path }}"
+        state: directory
+        mode: '0755'
+      tags: [netdata]
+
+    - name: "[netdata] Copiar docker-compose para o servidor"
+      copy:
+        src: "{{ playbook_dir }}/../../../../configuration/linux/global/docker/netdata/compose.yml"
+        dest: "{{ netdata_path }}/docker-compose.yml"
+        mode: '0644'
+      tags: [netdata]
+
+    - name: "[netdata] Subir container com docker compose"
+      command: docker compose up -d
+      args:
+        chdir: "{{ netdata_path }}"
+      tags: [netdata]

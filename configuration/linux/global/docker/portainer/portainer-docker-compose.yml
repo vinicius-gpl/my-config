@@ -4,6 +4,8 @@ networks:
     ipam:
       config:
         - subnet: 172.23.0.0/16
+  proxy:
+    external: true
 
 services:
   portainer:
@@ -13,7 +15,6 @@ services:
     restart: always
     ports:
       - "8000:8000"
-      - "9000:9000"
       - "9443:9443"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
@@ -22,6 +23,7 @@ services:
     networks:
       net:
         ipv4_address: 172.23.0.6
+      proxy:
 
   portainer_agent:
     container_name: portainer-agent

@@ -1,0 +1,141 @@
+---
+- name: Deploy Acerola Relay
+  hosts: relay_servers
+  vars:
+    portainer_path: "/opt/portainer"
+    caddy_path: "/opt/caddy"
+
+  tasks:
+    - name: "[base] Instalar dependências do sistema (Rocky Linux)"
+      dnf:
+        name:
+          - dnf-plugins-core
+          - firewalld
+          - curl
+        state: present
+
+    - name: "[base] Adicionar repositório do Docker"
+      command: dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+      args:
+        creates: /etc/yum.repos.d/docker-ce.repo
+
+    - name: "[base] Instalar Docker e plugins"
+      dnf:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+
+    - name: "[base] Iniciar e habilitar Docker e Firewalld"
+      systemd:
+        name: "{{ item }}"
+        state: started
+        enabled: yes
+      loop:
+        - docker
+        - firewalld
+
+    - name: "[base] Abrir portas no firewall"
+      firewalld:
+        port: "{{ item }}"
+        permanent: yes
+        state: enabled
+        immediate: yes
+      loop:
+        - 80/tcp
+        - 443/tcp
+        - 443/udp
+        - 7824/udp
+
+    - name: "[base] Criar rede Docker compartilhada (proxy)"
+      command: docker network create proxy
+      register: proxy_network
+      failed_when:
+        - proxy_network.rc != 0
+        - '"already exists" not in proxy_network.stderr'
+      changed_when: proxy_network.rc == 0
+
+    # === PORTAINER ===
+
+    - name: "[portainer] Criar diretório de deploy"
+      file:
+        path: "{{ portainer_path }}"
+        state: directory
+        mode: '0755'
+
+    - name: "[portainer] Copiar docker-compose para o servidor"
+      copy:
+        src: "{{ playbook_dir }}/../../../../configuration/linux/global/docker/portainer/portainer-docker-compose.yml"
+        dest: "{{ portainer_path }}/docker-compose.yml"
+        mode: '0644'
+
+    - name: "[portainer] Subir containers com docker compose"
+      command: docker compose up -d
+      args:
+        chdir: "{{ portainer_path }}"
+
+    # === CADDY ===
+
+    - name: "[caddy] Criar diretórios de configuração"
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - "{{ caddy_path }}"
+        - "{{ caddy_path }}/conf.d"
+
+    - name: "[caddy] Verificar se caddyfile é um diretório"
+      stat:
+        path: "{{ caddy_path }}/caddyfile"
+      register: caddyfile_stat
+
+    - name: "[caddy] Remover diretório caddyfile criado erroneamente pelo Docker"
+      file:
+        path: "{{ caddy_path }}/caddyfile"
+        state: absent
+      when: caddyfile_stat.stat.exists and caddyfile_stat.stat.isdir
+
+    - name: "[caddy] Implantar Caddyfile principal (agregador)"
+      copy:
+        src: "{{ playbook_dir }}/files/caddy/caddyfile"
+        dest: "{{ caddy_path }}/caddyfile"
+        mode: '0644'
+
+    - name: "[caddy] Implantar configs de sites (*.caddy)"
+      copy:
+        src: "{{ item }}"
+        dest: "{{ caddy_path }}/conf.d/{{ item | basename }}"
+        mode: '0644'
+      with_fileglob:
+        - "{{ playbook_dir }}/files/caddy/*.caddy"
+
+    - name: "[caddy] Copiar docker-compose para o servidor"
+      copy:
+        src: "{{ playbook_dir }}/../../../../configuration/linux/global/docker/caddy/caddy-docker-compose.yml"
+        dest: "{{ caddy_path }}/docker-compose.yml"
+        mode: '0644'
+
+    - name: "[caddy] Criar arquivo .env com credenciais"
+      copy:
+        dest: "{{ caddy_path }}/.env"
+        content: |
+          EMAIL={{ email }}
+          DOMAIN={{ domain }}
+        mode: '0600'
+
+    - name: "[caddy] Remover container antigo se existir"
+      command: docker rm -f acerola-proxy
+      register: rm_caddy
+      failed_when:
+        - rm_caddy.rc != 0
+        - '"No such container" not in rm_caddy.stderr'
+      changed_when: rm_caddy.rc == 0
+
+    - name: "[caddy] Subir container com docker compose"
+      command: docker compose up -d
+      args:
+        chdir: "{{ caddy_path }}"

@@ -3,7 +3,7 @@
   become: yes
 
   vars:
-    ssh_email: "saptcmgo@gmail.com"
+    ssh_email: "viniciustcmgo@gmail.com"
     ssh_key_path: "~/.ssh/id_ed25519_server"
 
   tasks:
@@ -35,13 +35,13 @@
       file:
         path: /etc/apt/keyrings
         state: directory
-        mode: '0755'
+        mode: "0755"
 
     - name: Download docker GPG key
       get_url:
         url: https://download.docker.com/linux/debian/gpg
         dest: /etc/apt/keyrings/docker.gpg
-        mode: '0644'
+        mode: "0644"
 
     - name: Add docker repository
       apt_repository:
@@ -74,7 +74,7 @@
       get_url:
         url: https://nginx.org/keys/nginx_signing.key
         dest: /usr/share/keyrings/nginx-archive-keyring.gpg
-        mode: '0644'
+        mode: "0644"
 
     - name: Add nginx repository
       apt_repository:
@@ -101,7 +101,7 @@
       file:
         path: /etc/nginx/conf.d/apps
         state: directory
-        mode: '0755'
+        mode: "0755"
 
     - name: Copy main nginx configs
       copy:
@@ -118,7 +118,7 @@
         src: "nginx/conf.d/apps/siaap.conf"
         dest: "/etc/nginx/conf.d/apps/siaap.conf"
       notify: Reload Nginx
-      
+
     # --- EASY PANEL ---
     - name: Deploy EasyPanel container
       docker_container:

@@ -266,8 +266,86 @@
       notify: Restart cockpit
       tags: [cockpit]
 
+    # === WIREGUARD ===
+
+    - name: "[wireguard] Instalar wireguard-tools"
+      dnf:
+        name: wireguard-tools
+        state: present
+      tags: [wireguard]
+
+    - name: "[wireguard] Habilitar IP forwarding"
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: '1'
+        sysctl_set: yes
+        state: present
+        reload: yes
+      tags: [wireguard]
+
+    - name: "[wireguard] Gerar chave privada do servidor"
+      shell: wg genkey > /etc/wireguard/server.key && chmod 600 /etc/wireguard/server.key
+      args:
+        creates: /etc/wireguard/server.key
+      tags: [wireguard]
+
+    - name: "[wireguard] Gerar chave pública do servidor"
+      shell: wg pubkey < /etc/wireguard/server.key > /etc/wireguard/server.pub
+      args:
+        creates: /etc/wireguard/server.pub
+      tags: [wireguard]
+
+    - name: "[wireguard] Ler chave privada do servidor"
+      slurp:
+        src: /etc/wireguard/server.key
+      register: wg_server_privkey
+      tags: [wireguard]
+
+    - name: "[wireguard] Ler chave pública do servidor"
+      slurp:
+        src: /etc/wireguard/server.pub
+      register: wg_server_pubkey
+      tags: [wireguard]
+
+    - name: "[wireguard] Exibir chave pública do servidor"
+      debug:
+        msg: |
+          Chave pública do servidor WireGuard: {{ wg_server_pubkey.content | b64decode | trim }}
+          Peers configurados: {{ wireguard_clients | map(attribute='name') | list | join(', ') }}
+      tags: [wireguard]
+
+    - name: "[wireguard] Implantar configuração wg0"
+      template:
+        src: templates/wg0.conf.j2
+        dest: /etc/wireguard/wg0.conf
+        mode: '0600'
+      vars:
+        server_private_key: "{{ wg_server_privkey.content | b64decode | trim }}"
+      notify: Restart WireGuard
+      tags: [wireguard]
+
+    - name: "[wireguard] Habilitar e iniciar wg-quick@wg0"
+      systemd:
+        name: wg-quick@wg0
+        state: started
+        enabled: yes
+      tags: [wireguard]
+
+    - name: "[wireguard] Abrir porta UDP no firewall"
+      firewalld:
+        port: 51820/udp
+        permanent: yes
+        state: enabled
+        immediate: yes
+      tags: [wireguard]
+
   handlers:
     - name: Restart cockpit
       systemd:
         name: cockpit
+        state: restarted
+
+    - name: Restart WireGuard
+      systemd:
+        name: wg-quick@wg0
         state: restarted

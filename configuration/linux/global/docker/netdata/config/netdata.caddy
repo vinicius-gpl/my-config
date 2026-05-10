@@ -1,4 +1,10 @@
 monitor.{$DOMAIN} {
+    @blocked not remote_ip 10.0.0.0/24
+
+    handle @blocked {
+        respond 403
+    }
+
     header {
         Strict-Transport-Security "max-age=31536000;"
         X-Content-Type-Options "nosniff"
@@ -13,11 +19,6 @@ monitor.{$DOMAIN} {
     }
 
     handle {
-        forward_auth authelia:9091 {
-            uri /api/authz/forward-auth
-            copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
-        }
-
         reverse_proxy netdata:19999 {
             header_up Host {host}
             header_up X-Real-IP {remote}

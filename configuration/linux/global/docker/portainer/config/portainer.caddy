@@ -1,15 +1,23 @@
 container.{$DOMAIN} {
-    header {
-        Strict-Transport-Security "max-age=31536000;"
-        X-Content-Type-Options "nosniff"
-        Referrer-Policy "no-referrer"
-        X-Frame-Options "DENY"
+    @blocked not remote_ip 10.0.0.0/24
+
+    handle @blocked {
+        respond 403
     }
 
-    reverse_proxy portainer:9000 {
-        header_up Host {host}
-        header_up X-Real-IP {remote}
-        header_up X-Forwarded-For {remote}
+    handle {
+        header {
+            Strict-Transport-Security "max-age=31536000;"
+            X-Content-Type-Options "nosniff"
+            Referrer-Policy "no-referrer"
+            X-Frame-Options "DENY"
+        }
+
+        reverse_proxy portainer:9000 {
+            header_up Host {host}
+            header_up X-Real-IP {remote}
+            header_up X-Forwarded-For {remote}
+        }
     }
 
     encode zstd gzip

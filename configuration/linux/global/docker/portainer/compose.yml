@@ -1,5 +1,6 @@
 networks:
   net:
+    name: portainer-net
     driver: bridge
     ipam:
       config:
@@ -42,3 +43,4 @@ services:
 
 volumes:
   data:
+    name: portainer-data

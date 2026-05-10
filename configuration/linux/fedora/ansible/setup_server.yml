@@ -1,6 +1,7 @@
 ---
 - name: Deploy Acerola Relay
   hosts: relay_servers
+  become: yes
   vars:
     caddy_path: "/opt/caddy"
     netdata_path: "/opt/netdata"
@@ -83,7 +84,7 @@
       tags: [portainer]
 
     - name: "[portainer] Subir containers com docker compose"
-      command: docker compose up -d
+      command: docker compose up -d --force-recreate
       args:
         chdir: "{{ portainer_path }}"
       tags: [portainer]
@@ -98,6 +99,14 @@
       loop:
         - "{{ caddy_path }}"
         - "{{ caddy_path }}/conf.d"
+        - "{{ caddy_path }}/static"
+      tags: [caddy]
+
+    - name: "[caddy] Copiar favicon SVG para static"
+      copy:
+        src: "{{ playbook_dir }}/../../../../configuration/linux/global/docker/netdata/config/netdata.svg"
+        dest: "{{ caddy_path }}/static/netdata.svg"
+        mode: '0644'
       tags: [caddy]
 
     - name: "[caddy] Verificar se caddyfile é um diretório"
@@ -129,6 +138,14 @@
         - "{{ playbook_dir }}/../../../../configuration/linux/global/docker/portainer/config/portainer.caddy"
         - "{{ playbook_dir }}/../../../../configuration/linux/global/docker/authelia/config/authelia.caddy"
         - "{{ playbook_dir }}/../../../../configuration/linux/global/docker/netdata/config/netdata.caddy"
+      tags: [caddy]
+
+    - name: "[caddy] Implantar rocky.caddy (Cockpit) - apenas Rocky Linux"
+      copy:
+        src: "{{ playbook_dir }}/../caddy/rocky.caddy"
+        dest: "{{ caddy_path }}/conf.d/rocky.caddy"
+        mode: '0644'
+      when: ansible_distribution == "Rocky"
       tags: [caddy]
 
     - name: "[caddy] Copiar docker-compose para o servidor"
@@ -218,7 +235,39 @@
       tags: [netdata]
 
     - name: "[netdata] Subir container com docker compose"
-      command: docker compose up -d
+      command: docker compose up -d --force-recreate
       args:
         chdir: "{{ netdata_path }}"
       tags: [netdata]
+
+    # === COCKPIT ===
+
+    - name: "[cockpit] Instalar cockpit"
+      dnf:
+        name: cockpit
+        state: present
+      when: ansible_distribution == "Rocky"
+      tags: [cockpit]
+
+    - name: "[cockpit] Habilitar e iniciar cockpit.socket"
+      systemd:
+        name: cockpit.socket
+        state: started
+        enabled: yes
+      when: ansible_distribution == "Rocky"
+      tags: [cockpit]
+
+    - name: "[cockpit] Configurar reverse proxy origins"
+      template:
+        src: templates/cockpit.conf.j2
+        dest: /etc/cockpit/cockpit.conf
+        mode: '0644'
+      when: ansible_distribution == "Rocky"
+      notify: Restart cockpit
+      tags: [cockpit]
+
+  handlers:
+    - name: Restart cockpit
+      systemd:
+        name: cockpit
+        state: restarted

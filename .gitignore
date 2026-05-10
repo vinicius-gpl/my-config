@@ -14,3 +14,4 @@
 /configuration/linux/global/docker/traefik/authelia/db.sqlite3
 /configuration/linux/global/docker/traefik/authelia/notification.txt
 /configuration/linux/global/docker/traefik/authelia
+/configuration/linux/fedora/ansible/hosts.ini

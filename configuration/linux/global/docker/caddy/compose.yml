@@ -16,11 +16,16 @@ services:
     volumes:
       - /opt/caddy/caddyfile:/etc/caddy/Caddyfile
       - /opt/caddy/conf.d:/etc/caddy/conf.d
-      - caddy_config:/config
-      - caddy_data:/data
+      - caddy-config:/config
+      - caddy-data:/data
+      - /opt/caddy/static:/srv/static:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - proxy
 
 volumes:
-  caddy_data:
-  caddy_config:
+  caddy-data:
+    name: caddy-data
+  caddy-config:
+    name: caddy-config

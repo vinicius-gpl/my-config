@@ -1,0 +1,10 @@
+cockpit.{$DOMAIN} {
+    reverse_proxy host.docker.internal:9090 {
+        transport http {
+            tls_insecure_skip_verify
+        }
+        header_up Host {host}
+        header_up X-Forwarded-Proto {scheme}
+        header_up X-Forwarded-For {remote}
+    }
+}

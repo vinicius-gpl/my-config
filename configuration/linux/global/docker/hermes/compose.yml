@@ -41,4 +41,5 @@ services:
 
 networks:
   hermes-net:
+    name: hermes-net
     driver: bridge

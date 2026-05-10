@@ -13,9 +13,10 @@ services:
     volumes:
       - /opt/nginx/conf.d:/etc/nginx/conf.d:ro
       - /opt/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - nginx_logs:/var/log/nginx
+      - nginx-logs:/var/log/nginx
     networks:
       - proxy
 
 volumes:
-  nginx_logs:
+  nginx-logs:
+    name: nginx-logs

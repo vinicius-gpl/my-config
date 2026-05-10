@@ -1,6 +1,6 @@
 networks:
   net:
-    name: netdata_net
+    name: netdata-net
     driver: bridge
     ipam:
       config:
@@ -20,9 +20,9 @@ services:
     security_opt:
       - apparmor:unconfined
     volumes:
-      - netdata_config:/etc/netdata
-      - netdata_lib:/var/lib/netdata
-      - netdata_cache:/var/cache/netdata
+      - netdata-config:/etc/netdata
+      - netdata-lib:/var/lib/netdata
+      - netdata-cache:/var/cache/netdata
       - /etc/passwd:/host/etc/passwd:ro
       - /etc/group:/host/etc/group:ro
       - /etc/localtime:/etc/localtime:ro
@@ -30,12 +30,19 @@ services:
       - /sys:/host/sys:ro
       - /etc/os-release:/host/etc/os-release:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - caddy-data:/caddy-logs:ro
     networks:
       net:
         ipv4_address: 172.28.0.2
       proxy:
 
 volumes:
-  netdata_config:
-  netdata_lib:
-  netdata_cache:
+  netdata-config:
+    name: netdata-config
+  netdata-lib:
+    name: netdata-lib
+  netdata-cache:
+    name: netdata-cache
+  caddy-data:
+    external: true
+    name: caddy-data

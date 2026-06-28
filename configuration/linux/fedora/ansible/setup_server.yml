@@ -4,8 +4,7 @@
   become: yes
   vars:
     caddy_path: "/opt/caddy"
-    netdata_path: "/opt/netdata"
-    authelia_path: "/opt/authelia"
+    beszel_path: "/opt/beszel"
     portainer_path: "/opt/portainer"
 
   tasks:
@@ -56,6 +55,7 @@
         - 443/tcp
         - 443/udp
         - 7824/udp
+        - 45876/tcp
       tags: [base]
 
     - name: "[base] Criar rede Docker compartilhada (proxy)"
@@ -102,13 +102,6 @@
         - "{{ caddy_path }}/static"
       tags: [caddy]
 
-    - name: "[caddy] Copiar favicon SVG para static"
-      copy:
-        src: "{{ playbook_dir }}/../../../../configuration/linux/global/docker/netdata/config/netdata.svg"
-        dest: "{{ caddy_path }}/static/netdata.svg"
-        mode: '0644'
-      tags: [caddy]
-
     - name: "[caddy] Verificar se caddyfile é um diretório"
       stat:
         path: "{{ caddy_path }}/caddyfile"
@@ -136,8 +129,6 @@
         mode: '0644'
       loop:
         - "{{ playbook_dir }}/../../../../configuration/linux/global/docker/portainer/config/portainer.caddy"
-        - "{{ playbook_dir }}/../../../../configuration/linux/global/docker/authelia/config/authelia.caddy"
-        - "{{ playbook_dir }}/../../../../configuration/linux/global/docker/netdata/config/netdata.caddy"
       tags: [caddy]
 
     - name: "[caddy] Implantar rocky.caddy (Cockpit) - apenas Rocky Linux"
@@ -179,66 +170,36 @@
         chdir: "{{ caddy_path }}"
       tags: [caddy]
 
-    # === AUTHELIA ===
 
-    - name: "[authelia] Criar diretórios de deploy"
+    # === BESZEL ===
+
+    - name: "[beszel] Criar diretório de deploy"
       file:
-        path: "{{ item }}"
+        path: "{{ beszel_path }}"
         state: directory
         mode: '0755'
-      loop:
-        - "{{ authelia_path }}"
-        - "{{ authelia_path }}/config"
-      tags: [authelia]
+      tags: [beszel]
 
-    - name: "[authelia] Copiar docker-compose para o servidor"
+    - name: "[beszel] Copiar docker-compose para o servidor"
       copy:
-        src: "{{ playbook_dir }}/../../../../configuration/linux/global/docker/authelia/compose.yml"
-        dest: "{{ authelia_path }}/docker-compose.yml"
+        src: "{{ playbook_dir }}/../../../../configuration/linux/global/docker/beszel/compose.agent.yml"
+        dest: "{{ beszel_path }}/docker-compose.yml"
         mode: '0644'
-      tags: [authelia]
+      tags: [beszel]
 
-    - name: "[authelia] Renderizar configuration.yml"
-      template:
-        src: "{{ playbook_dir }}/../../../../configuration/linux/global/docker/authelia/config/configuration.yml"
-        dest: "{{ authelia_path }}/config/configuration.yml"
+    - name: "[beszel] Criar arquivo .env com credenciais"
+      copy:
+        dest: "{{ beszel_path }}/.env"
+        content: |
+          BESZEL_KEY={{ beszel_key }}
         mode: '0600'
-      tags: [authelia]
+      tags: [beszel]
 
-    - name: "[authelia] Renderizar users.yml"
-      template:
-        src: "{{ playbook_dir }}/../../../../configuration/linux/global/docker/authelia/config/users.yml"
-        dest: "{{ authelia_path }}/config/users.yml"
-        mode: '0600'
-      tags: [authelia]
-
-    - name: "[authelia] Subir container com docker compose"
+    - name: "[beszel] Subir containers com docker compose"
       command: docker compose up -d --force-recreate
       args:
-        chdir: "{{ authelia_path }}"
-      tags: [authelia]
-
-    # === NETDATA ===
-
-    - name: "[netdata] Criar diretório de deploy"
-      file:
-        path: "{{ netdata_path }}"
-        state: directory
-        mode: '0755'
-      tags: [netdata]
-
-    - name: "[netdata] Copiar docker-compose para o servidor"
-      copy:
-        src: "{{ playbook_dir }}/../../../../configuration/linux/global/docker/netdata/compose.yml"
-        dest: "{{ netdata_path }}/docker-compose.yml"
-        mode: '0644'
-      tags: [netdata]
-
-    - name: "[netdata] Subir container com docker compose"
-      command: docker compose up -d --force-recreate
-      args:
-        chdir: "{{ netdata_path }}"
-      tags: [netdata]
+        chdir: "{{ beszel_path }}"
+      tags: [beszel]
 
     # === COCKPIT ===
 

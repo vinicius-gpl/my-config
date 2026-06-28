@@ -1,0 +1,15 @@
+# Agent - roda na VPS
+# O Hub (compose.hub.yml) roda no PC local e conecta aqui via TCP :45876
+
+services:
+  beszel-agent:
+    image: henrygd/beszel-agent:latest
+    container_name: beszel-agent
+    hostname: beszel-agent
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      LISTEN: 0.0.0.0:45876
+      KEY: "${BESZEL_KEY}"

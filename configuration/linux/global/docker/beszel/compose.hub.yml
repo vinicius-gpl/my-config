@@ -1,0 +1,19 @@
+# Hub - roda no PC local
+# Acesse em http://localhost:8090
+# Após criar conta e adicionar sistema, pegue a chave pública gerada
+# e use no .env da VPS (BESZEL_KEY)
+
+services:
+  beszel:
+    image: henrygd/beszel:latest
+    container_name: beszel
+    hostname: beszel
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8090:8090"
+    volumes:
+      - beszel-data:/beszel_data
+
+volumes:
+  beszel-data:
+    name: beszel-data

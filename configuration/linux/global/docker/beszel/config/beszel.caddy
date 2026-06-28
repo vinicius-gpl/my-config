@@ -1,0 +1,29 @@
+monitor.{$DOMAIN} {
+    @blocked not remote_ip 10.0.0.0/24
+
+    handle @blocked {
+        respond 403
+    }
+
+    header {
+        Strict-Transport-Security "max-age=31536000;"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "no-referrer"
+        X-Frame-Options "SAMEORIGIN"
+    }
+
+    handle {
+        reverse_proxy beszel:8090 {
+            header_up Host {host}
+            header_up X-Real-IP {remote}
+            header_up X-Forwarded-For {remote}
+        }
+    }
+
+    encode zstd gzip
+
+    log {
+        output file /data/beszel-access.log
+        format json
+    }
+}

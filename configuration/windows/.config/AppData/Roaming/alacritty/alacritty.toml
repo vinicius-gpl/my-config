@@ -3,8 +3,8 @@ general.import = [
 ]
 
 [terminal.shell]
-program = "pwsh.exe"
-args = ["-NoLogo", "-WorkingDirectory", "~"]
+program = "zellij.exe"
+args = ["attach", "-c", "main"]
 
 [selection]
 save_to_clipboard = true

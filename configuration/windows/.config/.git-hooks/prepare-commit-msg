@@ -1,0 +1,7 @@
+#!/bin/sh
+COMMIT_MSG_FILE=$1
+COMMIT_SOURCE=$2
+
+if [ "$COMMIT_SOURCE" = "merge" ]; then
+  sed -i '1s/^Merge /[merge]: /' "$COMMIT_MSG_FILE"
+fi

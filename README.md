@@ -26,3 +26,8 @@
 
 - Minhas modificações
   [.grub](./configuration/linux/.grub/theme)
+
+## Windows
+
+- ConPTY atualizado para o Alacritty (faz o zellij funcionar no Windows 10)
+  [alacritty-conpty](./configuration/windows/alacritty-conpty)

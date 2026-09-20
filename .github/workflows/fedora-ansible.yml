@@ -39,9 +39,31 @@ jobs:
           fi
 
       - name: Configurar chave SSH
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_PASSPHRASE: ${{ secrets.SSH_PASSPHRASE }}
+        run: |
+          mkdir -p ~/.ssh
+          eval $(ssh-agent -s)
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
+          echo "SSH_AGENT_PID=$SSH_AGENT_PID" >> "$GITHUB_ENV"
+
+          echo "$SSH_PRIVATE_KEY" | tr -d '\r' > /tmp/id_ci
+          chmod 600 /tmp/id_ci
+
+          if [ -n "$SSH_PASSPHRASE" ]; then
+            echo '#!/bin/sh' > /tmp/ssh_askpass
+            echo 'echo "$SSH_PASSPHRASE"' >> /tmp/ssh_askpass
+            chmod +x /tmp/ssh_askpass
+            DISPLAY=None SSH_ASKPASS=/tmp/ssh_askpass SSH_ASKPASS_REQUIRE=force ssh-add /tmp/id_ci
+            rm -f /tmp/ssh_askpass
+          else
+            ssh-add /tmp/id_ci
+          fi
+          rm -f /tmp/id_ci
+
+          echo "Chave SSH carregada com sucesso:"
+          ssh-add -l
 
       - name: Instalar Ansible
         run: |

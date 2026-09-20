@@ -1,0 +1,86 @@
+name: Fedora/Ansible
+
+on:
+  workflow_dispatch:
+    inputs:
+      step:
+        description: 'Selecione a etapa para executar'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - caddy
+          - portainer
+          - beszel
+          - cockpit
+          - wireguard
+          - base
+      dry_run:
+        description: 'Modo simulação (--check)?'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  ansible:
+    name: Executar Ansible (${{ github.event.inputs.step }})
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Validar segredos necessários
+        run: |
+          if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
+            echo "::error::Secret 'SSH_PRIVATE_KEY' não encontrado! Cadastre a chave privada SSH em Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+      - name: Configurar chave SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Instalar Ansible
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ansible
+
+      - name: Configurar inventário (hosts.ini)
+        run: |
+          if [ -n "${{ secrets.ANSIBLE_HOSTS_INI }}" ]; then
+            echo "${{ secrets.ANSIBLE_HOSTS_INI }}" > configuration/linux/fedora/ansible/hosts.ini
+          elif [ -f "configuration/linux/fedora/ansible/hosts.ini" ]; then
+            echo "Usando hosts.ini do repositório"
+          else
+            echo "Secret ANSIBLE_HOSTS_INI não definido. Usando inventory.ini como base..."
+            cp configuration/linux/fedora/ansible/inventory.ini configuration/linux/fedora/ansible/hosts.ini
+          fi
+          chmod 600 configuration/linux/fedora/ansible/hosts.ini
+
+      - name: Executar Playbook do Ansible
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: "False"
+          ANSIBLE_FORCE_COLOR: "True"
+        run: |
+          TAG_ARG=""
+          if [ "${{ github.event.inputs.step }}" != "all" ]; then
+            TAG_ARG="--tags ${{ github.event.inputs.step }}"
+          fi
+
+          CHECK_ARG=""
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            CHECK_ARG="--check"
+          fi
+
+          EXTRA_VARS=""
+          if [ -n "${{ secrets.ANSIBLE_BECOME_PASSWORD }}" ]; then
+            EXTRA_VARS="--extra-vars ansible_become_password=${{ secrets.ANSIBLE_BECOME_PASSWORD }}"
+          fi
+
+          ansible-playbook \
+            -i configuration/linux/fedora/ansible/hosts.ini \
+            configuration/linux/fedora/ansible/setup_server.yml \
+            $TAG_ARG $CHECK_ARG $EXTRA_VARS

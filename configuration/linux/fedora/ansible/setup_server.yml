@@ -328,6 +328,28 @@
         var: wg_status.stdout_lines
       tags: [wireguard]
 
+    - name: "[wireguard] Inspecionar zonas ativas do firewalld"
+      command: firewall-cmd --get-active-zones
+      register: fw_active_zones
+      changed_when: false
+      tags: [wireguard]
+
+    - name: "[wireguard] Exibir zonas ativas do firewalld"
+      debug:
+        var: fw_active_zones.stdout_lines
+      tags: [wireguard]
+
+    - name: "[wireguard] Inspecionar regras da zona padrão do firewalld"
+      command: firewall-cmd --list-all
+      register: fw_rules
+      changed_when: false
+      tags: [wireguard]
+
+    - name: "[wireguard] Exibir regras da zona padrão do firewalld"
+      debug:
+        var: fw_rules.stdout_lines
+      tags: [wireguard]
+
   handlers:
     - name: Restart cockpit
       systemd:

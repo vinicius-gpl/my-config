@@ -136,7 +136,7 @@
         src: "{{ playbook_dir }}/../caddy/rocky.caddy"
         dest: "{{ caddy_path }}/conf.d/rocky.caddy"
         mode: '0644'
-      when: ansible_distribution == "Rocky"
+      when: ansible_facts['distribution'] == "Rocky"
       tags: [caddy]
 
     - name: "[caddy] Copiar docker-compose para o servidor"
@@ -207,7 +207,7 @@
       dnf:
         name: cockpit
         state: present
-      when: ansible_distribution == "Rocky"
+      when: ansible_facts['distribution'] == "Rocky"
       tags: [cockpit]
 
     - name: "[cockpit] Habilitar e iniciar cockpit.socket"
@@ -215,7 +215,7 @@
         name: cockpit.socket
         state: started
         enabled: yes
-      when: ansible_distribution == "Rocky"
+      when: ansible_facts['distribution'] == "Rocky"
       tags: [cockpit]
 
     - name: "[cockpit] Configurar reverse proxy origins"
@@ -223,7 +223,7 @@
         src: templates/cockpit.conf.j2
         dest: /etc/cockpit/cockpit.conf
         mode: '0644'
-      when: ansible_distribution == "Rocky"
+      when: ansible_facts['distribution'] == "Rocky"
       notify: Restart cockpit
       tags: [cockpit]
 

@@ -285,19 +285,47 @@
       notify: Restart WireGuard
       tags: [wireguard]
 
-    - name: "[wireguard] Habilitar e iniciar wg-quick@wg0"
-      systemd:
-        name: wg-quick@wg0
-        state: started
-        enabled: yes
-      tags: [wireguard]
-
     - name: "[wireguard] Abrir porta UDP no firewall"
       firewalld:
         port: 51820/udp
         permanent: yes
         state: enabled
         immediate: yes
+      tags: [wireguard]
+
+    - name: "[wireguard] Adicionar interface wg0 à zona trusted do firewalld"
+      firewalld:
+        zone: trusted
+        interface: wg0
+        permanent: yes
+        state: enabled
+        immediate: yes
+      tags: [wireguard]
+
+    - name: "[wireguard] Habilitar masquerade no firewalld"
+      firewalld:
+        masquerade: yes
+        permanent: yes
+        state: enabled
+        immediate: yes
+      tags: [wireguard]
+
+    - name: "[wireguard] Habilitar e reiniciar wg-quick@wg0"
+      systemd:
+        name: wg-quick@wg0
+        state: restarted
+        enabled: yes
+      tags: [wireguard]
+
+    - name: "[wireguard] Verificar status da interface wg0"
+      command: wg show wg0
+      register: wg_status
+      changed_when: false
+      tags: [wireguard]
+
+    - name: "[wireguard] Exibir status da interface wg0"
+      debug:
+        var: wg_status.stdout_lines
       tags: [wireguard]
 
   handlers:

@@ -32,8 +32,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Validar segredos necessários
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
-          if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
+          if [ -z "$SSH_PRIVATE_KEY" ]; then
             echo "::error::Secret 'SSH_PRIVATE_KEY' não encontrado! Cadastre a chave privada SSH em Settings > Secrets and variables > Actions."
             exit 1
           fi
@@ -71,9 +73,11 @@ jobs:
           sudo apt-get install -y ansible
 
       - name: Configurar inventário (hosts.ini)
+        env:
+          ANSIBLE_HOSTS_INI: ${{ secrets.ANSIBLE_HOSTS_INI }}
         run: |
-          if [ -n "${{ secrets.ANSIBLE_HOSTS_INI }}" ]; then
-            echo "${{ secrets.ANSIBLE_HOSTS_INI }}" > configuration/linux/fedora/ansible/hosts.ini
+          if [ -n "$ANSIBLE_HOSTS_INI" ]; then
+            printf '%s\n' "$ANSIBLE_HOSTS_INI" > configuration/linux/fedora/ansible/hosts.ini
           elif [ -f "configuration/linux/fedora/ansible/hosts.ini" ]; then
             echo "Usando hosts.ini do repositório"
           else
@@ -86,6 +90,7 @@ jobs:
         env:
           ANSIBLE_HOST_KEY_CHECKING: "False"
           ANSIBLE_FORCE_COLOR: "True"
+          ANSIBLE_BECOME_PASSWORD: ${{ secrets.ANSIBLE_BECOME_PASSWORD }}
         run: |
           TAG_ARG=""
           if [ "${{ github.event.inputs.step }}" != "all" ]; then
@@ -98,8 +103,8 @@ jobs:
           fi
 
           EXTRA_VARS=""
-          if [ -n "${{ secrets.ANSIBLE_BECOME_PASSWORD }}" ]; then
-            EXTRA_VARS="--extra-vars ansible_become_password=${{ secrets.ANSIBLE_BECOME_PASSWORD }}"
+          if [ -n "$ANSIBLE_BECOME_PASSWORD" ]; then
+            EXTRA_VARS="--extra-vars ansible_become_password=$ANSIBLE_BECOME_PASSWORD"
           fi
 
           ansible-playbook \

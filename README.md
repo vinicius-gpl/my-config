@@ -31,3 +31,9 @@
 
 - ConPTY atualizado para o Alacritty (faz o zellij funcionar no Windows 10)
   [alacritty-conpty](./configuration/windows/alacritty-conpty)
+
+- Teclado travado em Estados Unidos-Internacional (impede o Windows de voltar para o ABNT2)
+  [keyboard-us-intl](./configuration/windows/keyboard-us-intl)
+
+- Assinatura de commits com chave SSH (liga o ssh-agent para não pedir senha a cada commit)
+  [git-ssh-signing](./configuration/windows/git-ssh-signing)

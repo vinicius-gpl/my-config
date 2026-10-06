@@ -1,0 +1,107 @@
+---
+# =============================================================================
+#  Primeiro contato com a máquina — entra por SENHA e instala sua chave SSH.
+# -----------------------------------------------------------------------------
+#  Rode assim (ele pergunta a senha do root ao subir):
+#
+#      cd configuration/linux/rocky/ansible
+#      ansible-playbook -i hosts.ini host_init.yml
+#
+#  Depois que ele terminar, o acesso é por chave e o setup_server.yml entra
+#  normal, sem pedir nada:
+#
+#      ansible-playbook -i hosts.ini setup_server.yml
+#
+#  PRÉ-REQUISITO: o Ansible precisa do sshpass para autenticar por senha.
+#      Fedora/Rocky : sudo dnf install sshpass
+#      Debian/Ubuntu: sudo apt install sshpass
+#      macOS        : brew install hudochenkov/sshpass/sshpass
+#  Sem ele o erro é "you must install the sshpass program".
+#
+#  A chave que vai ser instalada é a de admin_ssh_key_file (default
+#  ~/.ssh/id_ed25519.pub). Mude no inventário se a sua for outra.
+# =============================================================================
+- name: Host init (primeiro acesso por senha)
+  hosts: rocky_servers
+  # Já entramos como root; não há o que escalar.
+  become: no
+  # Os fatos são coletados mais abaixo, depois de garantir o Python.
+  gather_facts: no
+
+  vars_prompt:
+    - name: ansible_password
+      prompt: "Senha do root (SSH)"
+      private: yes
+
+  vars:
+    # Máquina nova = host key desconhecida. accept-new grava na primeira
+    # conexão e passa a verificar nas seguintes (TOFU, igual a digitar "yes").
+    ansible_ssh_common_args: "-o StrictHostKeyChecking=accept-new"
+    admin_ssh_key_file: "~/.ssh/id_ed25519.pub"
+
+  tasks:
+    - name: "[init] Garantir o Python (pré-requisito dos módulos do Ansible)"
+      # raw não precisa de Python do outro lado — é o único jeito de rodar
+      # isso antes de ele existir. O Rocky já traz python3; a linha só cobre
+      # instalação minimal onde não veio.
+      raw: test -e /usr/bin/python3 || dnf -y install python3
+      register: init_python
+      changed_when: "'Complete!' in init_python.stdout"
+
+    - name: "[init] Coletar fatos"
+      setup:
+
+    - name: "[init] Instalar a chave pública no root"
+      authorized_key:
+        user: root
+        key: "{{ lookup('file', admin_ssh_key_file) }}"
+        state: present
+      tags: [ssh]
+
+    - name: "[init] Definir hostname"
+      hostname:
+        name: "{{ server_hostname }}"
+      when: server_hostname is defined
+      tags: [hostname]
+
+    - name: "[init] Definir timezone"
+      command: "timedatectl set-timezone {{ server_timezone | default('America/Sao_Paulo') }}"
+      register: init_tz
+      changed_when: init_tz.rc == 0
+      when: ansible_facts['date_time']['tz'] | default('') != (server_timezone | default('America/Sao_Paulo'))
+      tags: [timezone]
+
+    - name: "[init] Atualizar o sistema"
+      # Desligado por padrão: num servidor já em uso, um dnf update completo
+      # não é coisa para rodar sem querer. Ligue com update_system=true.
+      dnf:
+        name: "*"
+        state: latest
+      when: update_system | default(false) | bool
+      tags: [update]
+
+    - name: "[init] Desligar login por senha no sshd"
+      # TAMBÉM desligado por padrão, e por um motivo prático: se a chave acima
+      # não for a certa, isto te tranca fora da máquina. Antes de ligar,
+      # confirme em outro terminal que "ssh root@IP" entra sem pedir senha.
+      copy:
+        dest: /etc/ssh/sshd_config.d/99-no-password.conf
+        content: |
+          PasswordAuthentication no
+          PermitRootLogin prohibit-password
+        mode: '0600'
+      when: disable_password_auth | default(false) | bool
+      notify: Restart sshd
+      tags: [harden]
+
+    - name: "[init] Próximo passo"
+      debug:
+        msg:
+          - "Chave instalada. Confirme o acesso: ssh root@{{ inventory_hostname }}"
+          - "Depois: ansible-playbook -i hosts.ini setup_server.yml"
+
+  handlers:
+    - name: Restart sshd
+      systemd:
+        name: sshd
+        state: restarted

@@ -1,0 +1,271 @@
+---
+- name: Deploy Rocky Server
+  hosts: rocky_servers
+  become: yes
+  vars:
+    coolify_path: "/opt/coolify"
+    coolify_data_path: "/data/coolify"
+    supabase_path: "/opt/supabase"
+    beszel_path: "/opt/beszel"
+
+  tasks:
+    - name: "[base] Instalar dependências do sistema (Rocky Linux)"
+      dnf:
+        name:
+          - dnf-plugins-core
+          - firewalld
+          - curl
+        state: present
+      tags: [base]
+
+    - name: "[base] Adicionar repositório do Docker"
+      command: dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+      args:
+        creates: /etc/yum.repos.d/docker-ce.repo
+      tags: [base]
+
+    - name: "[base] Instalar Docker e plugins"
+      dnf:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+      tags: [base]
+
+    - name: "[base] Iniciar e habilitar Docker e Firewalld"
+      systemd:
+        name: "{{ item }}"
+        state: started
+        enabled: yes
+      loop:
+        - docker
+        - firewalld
+      tags: [base]
+
+    - name: "[base] Abrir portas no firewall"
+      # Só o traefik do Coolify (80/443) e o agente do Beszel ficam públicos.
+      # Painel do Coolify (8000), websocket (6001/6002), Kong do Supabase
+      # (8001) e Cockpit (9090) continuam fechados: ou entram por um domínio
+      # no traefik do Coolify, ou por túnel SSH.
+      firewalld:
+        port: "{{ item }}"
+        permanent: yes
+        state: enabled
+        immediate: yes
+      loop:
+        - 80/tcp
+        - 443/tcp
+        - 443/udp
+        - 45876/tcp
+      tags: [base]
+
+    - name: "[base] Criar rede Docker compartilhada (proxy)"
+      command: docker network create proxy
+      register: proxy_network
+      failed_when:
+        - proxy_network.rc != 0
+        - '"already exists" not in proxy_network.stderr'
+      changed_when: proxy_network.rc == 0
+      tags: [always]
+
+    # === COOLIFY ===
+
+    - name: "[coolify] Criar diretório de deploy"
+      file:
+        path: "{{ coolify_path }}"
+        state: directory
+        mode: '0755'
+      tags: [coolify]
+
+    - name: "[coolify] Criar árvore /data/coolify"
+      # Mesmo preparo do scripts/install.sh oficial. O caminho precisa ser
+      # idêntico aqui e dentro do container: o Coolify escreve os compose das
+      # apps e do proxy em /data/coolify, e quem resolve os bind mounts desses
+      # compose é o daemon do host.
+      file:
+        path: "{{ coolify_data_path }}/{{ item.path }}"
+        state: directory
+        owner: '9999'
+        group: root
+        mode: "{{ item.mode }}"
+      loop:
+        - { path: "", mode: '0755' }
+        - { path: "ssh", mode: '0700' }
+        - { path: "ssh/keys", mode: '0700' }
+        - { path: "ssh/mux", mode: '0700' }
+        - { path: "applications", mode: '0755' }
+        - { path: "databases", mode: '0755' }
+        - { path: "services", mode: '0755' }
+        - { path: "backups", mode: '0755' }
+        - { path: "webhooks-during-maintenance", mode: '0755' }
+        - { path: "logs", mode: '0755' }
+        - { path: "proxy", mode: '0755' }
+        - { path: "proxy/dynamic", mode: '0755' }
+        - { path: "source", mode: '0755' }
+      loop_control:
+        label: "{{ coolify_data_path }}/{{ item.path }}"
+      tags: [coolify]
+
+    - name: "[coolify] Gerar chave SSH que o Coolify usa para administrar o host"
+      # Precisa existir ANTES do primeiro boot: o ProductionSeeder procura um
+      # arquivo com '@host.docker.internal' em storage/app/ssh/keys e só então
+      # cria a private key id=0, que é a que o servidor "localhost" referencia.
+      # Sem ela no lugar, a UI devolve 500 com
+      # "Call to a member function getPublicKey() on null".
+      command: ssh-keygen -t ed25519 -a 100 -f {{ coolify_data_path }}/ssh/keys/id.root@host.docker.internal -q -N '' -C coolify
+      args:
+        creates: "{{ coolify_data_path }}/ssh/keys/id.root@host.docker.internal"
+      tags: [coolify]
+
+    - name: "[coolify] Ajustar dono e modo do par de chaves"
+      file:
+        path: "{{ coolify_data_path }}/ssh/keys/{{ item.name }}"
+        owner: '9999'
+        group: root
+        mode: "{{ item.mode }}"
+      loop:
+        - { name: "id.root@host.docker.internal", mode: '0600' }
+        - { name: "id.root@host.docker.internal.pub", mode: '0644' }
+      loop_control:
+        label: "{{ item.name }}"
+      tags: [coolify]
+
+    - name: "[coolify] Ler chave pública gerada"
+      slurp:
+        src: "{{ coolify_data_path }}/ssh/keys/id.root@host.docker.internal.pub"
+      register: coolify_hostkey_pub
+      tags: [coolify]
+
+    - name: "[coolify] Autorizar a chave no root do host"
+      # O Coolify administra servidores por SSH. Aqui o servidor é a própria
+      # máquina — host.docker.internal:host-gateway no compose. É o que o
+      # instalador oficial faz.
+      authorized_key:
+        user: root
+        key: "{{ coolify_hostkey_pub.content | b64decode | trim }}"
+        state: present
+      tags: [coolify]
+
+    - name: "[coolify] Copiar docker-compose para o servidor"
+      copy:
+        src: "{{ playbook_dir }}/../../../../configuration/linux/global/docker/coolify/compose.yml"
+        dest: "{{ coolify_path }}/docker-compose.yml"
+        mode: '0644'
+      tags: [coolify]
+
+    - name: "[coolify] Criar arquivo .env com credenciais"
+      template:
+        src: templates/coolify.env.j2
+        dest: "{{ coolify_path }}/.env"
+        mode: '0600'
+      tags: [coolify]
+
+    - name: "[coolify] Subir containers com docker compose"
+      command: docker compose up -d --force-recreate
+      args:
+        chdir: "{{ coolify_path }}"
+      tags: [coolify]
+
+    # === SUPABASE ===
+
+    - name: "[supabase] Criar diretório de deploy"
+      file:
+        path: "{{ supabase_path }}"
+        state: directory
+        mode: '0755'
+      tags: [supabase]
+
+    - name: "[supabase] Implantar configs (kong, init do banco, edge functions)"
+      copy:
+        src: "{{ playbook_dir }}/../../../../configuration/linux/global/docker/supabase/config/"
+        dest: "{{ supabase_path }}/config/"
+        mode: '0644'
+        directory_mode: '0755'
+      tags: [supabase]
+
+    - name: "[supabase] Copiar docker-compose para o servidor"
+      copy:
+        src: "{{ playbook_dir }}/../../../../configuration/linux/global/docker/supabase/compose.yml"
+        dest: "{{ supabase_path }}/docker-compose.yml"
+        mode: '0644'
+      tags: [supabase]
+
+    - name: "[supabase] Criar arquivo .env com credenciais"
+      template:
+        src: templates/supabase.env.j2
+        dest: "{{ supabase_path }}/.env"
+        mode: '0600'
+      tags: [supabase]
+
+    - name: "[supabase] Subir containers com docker compose"
+      # supabase_profiles=extras liga realtime, imgproxy e edge functions.
+      command: docker compose up -d --force-recreate
+      args:
+        chdir: "{{ supabase_path }}"
+      environment:
+        COMPOSE_PROFILES: "{{ supabase_profiles | default('') }}"
+      tags: [supabase]
+
+    # === BESZEL ===
+
+    - name: "[beszel] Criar diretório de deploy"
+      file:
+        path: "{{ beszel_path }}"
+        state: directory
+        mode: '0755'
+      tags: [beszel]
+
+    - name: "[beszel] Copiar docker-compose para o servidor"
+      copy:
+        src: "{{ playbook_dir }}/../../../../configuration/linux/global/docker/beszel/compose.agent.yml"
+        dest: "{{ beszel_path }}/docker-compose.yml"
+        mode: '0644'
+      tags: [beszel]
+
+    - name: "[beszel] Criar arquivo .env com credenciais"
+      copy:
+        dest: "{{ beszel_path }}/.env"
+        content: |
+          BESZEL_KEY={{ beszel_key }}
+        mode: '0600'
+      tags: [beszel]
+
+    - name: "[beszel] Subir containers com docker compose"
+      command: docker compose up -d --force-recreate
+      args:
+        chdir: "{{ beszel_path }}"
+      tags: [beszel]
+
+    # === COCKPIT ===
+
+    - name: "[cockpit] Instalar cockpit"
+      dnf:
+        name: cockpit
+        state: present
+      tags: [cockpit]
+
+    - name: "[cockpit] Habilitar e iniciar cockpit.socket"
+      systemd:
+        name: cockpit.socket
+        state: started
+        enabled: yes
+      tags: [cockpit]
+
+    - name: "[cockpit] Configurar reverse proxy origins"
+      # Sem Caddy, quem publica cockpit.{{ domain }} é o traefik do Coolify,
+      # apontando para host.docker.internal:9090.
+      template:
+        src: templates/cockpit.conf.j2
+        dest: /etc/cockpit/cockpit.conf
+        mode: '0644'
+      notify: Restart cockpit
+      tags: [cockpit]
+
+  handlers:
+    - name: Restart cockpit
+      systemd:
+        name: cockpit
+        state: restarted

@@ -1,0 +1,212 @@
+# =============================================================================
+#  coolify/compose.yml  --  PAINEL DE DEPLOY (PaaS self-hosted)
+# -----------------------------------------------------------------------------
+#  Coolify e um "Heroku/Vercel self-hosted": conecta num servidor, faz build de
+#  repositorio Git ou sobe compose, e cuida de dominio, SSL e variaveis.
+#
+#  Segue o compose oficial do projeto:
+#    https://github.com/coollabsio/coolify/blob/main/docker-compose.yml
+#    https://github.com/coollabsio/coolify/blob/main/docker-compose.prod.yml
+#    https://github.com/coollabsio/coolify/blob/main/scripts/install.sh
+#
+#  DIFERENCAS EM RELACAO AO coolify-compose.yml DO TESTLAB (Windows)
+#  ---------------------------------------------------------------
+#  Alem do nome do projeto e dos secrets, duas coisas sairam:
+#
+#    coolify-init  -- o preparo de /data/coolify (mkdir, ssh-keygen, chown
+#                     9999:root) virou tarefa do Ansible, no bloco [coolify]
+#                     do setup_server.yml. E o mesmo preparo que o install.sh
+#                     oficial faz antes de subir a stack.
+#
+#    coolify-host  -- so existia porque o Windows nao tem sshd no host. Aqui
+#                     o host E Rocky Linux: o Coolify entra por SSH no proprio
+#                     servidor (host.docker.internal -> host-gateway) e o
+#                     Ansible coloca a chave publica no authorized_keys do
+#                     root. E exatamente o caminho do instalador oficial.
+#
+#  E o /data/coolify virou bind mount em vez de volume nomeado, tambem como no
+#  instalador oficial: o Coolify escreve ali os compose das apps e do proxy, e
+#  quem resolve os bind mounts desses compose e o DAEMON do host -- os dois
+#  lados precisam ver o mesmo caminho.
+#
+#  PORTAS
+#  ------
+#  O traefik que o Coolify gera ocupa 80, 443, 443/udp e 8080 (dashboard dele).
+#  Por isso o painel fica na 8000 -- o default oficial -- e nao na 8080, que
+#  colidiria com o traefik e deixaria o proxy no ar sem rede nenhuma.
+#  O Supabase, que normalmente usaria a 8000, foi para a 8001 (ver
+#  KONG_HTTP_PORT em templates/supabase.env.j2).
+# =============================================================================
+name: coolify
+
+services:
+
+  # ===========================================================================
+  #  APLICACAO  (Laravel: UI, API, fila de jobs)
+  # ===========================================================================
+  coolify:
+    image: ghcr.io/coollabsio/coolify:${COOLIFY_VERSION}
+    container_name: coolify
+    restart: unless-stopped
+    working_dir: /var/www/html
+    depends_on:
+      coolify-db:
+        condition: service_healthy
+      coolify-redis:
+        condition: service_healthy
+      coolify-realtime:
+        condition: service_healthy
+    environment:
+      APP_ENV: production
+      APP_NAME: ${COOLIFY_APP_NAME}
+      APP_ID: ${COOLIFY_APP_ID}
+      APP_KEY: ${COOLIFY_APP_KEY}
+      APP_URL: ${COOLIFY_URL}
+      APP_DEBUG: "false"
+      SELF_HOSTED: "true"
+      AUTOUPDATE: ${COOLIFY_AUTOUPDATE}
+      SSL_MODE: ${COOLIFY_SSL_MODE}
+
+      # ---- Banco proprio do Coolify ----
+      DB_CONNECTION: pgsql
+      DB_HOST: coolify-db
+      DB_PORT: "5432"
+      DB_DATABASE: coolify
+      DB_USERNAME: coolify
+      DB_PASSWORD: ${COOLIFY_DB_PASSWORD}
+
+      # ---- Cache / fila ----
+      REDIS_HOST: coolify-redis
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: ${COOLIFY_REDIS_PASSWORD}
+      QUEUE_CONNECTION: redis
+      CACHE_DRIVER: redis
+      SESSION_DRIVER: redis
+
+      # ---- Websocket ----
+      # Igual ao install.sh oficial: so os tres segredos. NAO definir
+      # PUSHER_HOST/PORT/SCHEME -- PUSHER_HOST e o endereco que o NAVEGADOR
+      # usa, entao apontar para um nome de container quebra a UI com
+      # "Cannot connect to real-time service". O lado servidor usa
+      # PUSHER_BACKEND_HOST, cujo default ja e coolify-realtime.
+      PUSHER_APP_ID: ${COOLIFY_PUSHER_APP_ID}
+      PUSHER_APP_KEY: ${COOLIFY_PUSHER_APP_KEY}
+      PUSHER_APP_SECRET: ${COOLIFY_PUSHER_APP_SECRET}
+
+      # ---- Usuario root, criado no primeiro boot pelo RootUserSeeder ----
+      # O seeder valida: e-mail com dominio que resolva em DNS e senha com
+      # maiuscula, minuscula, numero, simbolo e fora de vazamentos conhecidos.
+      # Nao respeitar as regras = usuario nao criado = sem como entrar.
+      ROOT_USERNAME: ${COOLIFY_ROOT_USERNAME}
+      ROOT_USER_EMAIL: ${COOLIFY_ROOT_EMAIL}
+      ROOT_USER_PASSWORD: ${COOLIFY_ROOT_PASSWORD}
+
+      PHP_MEMORY_LIMIT: ${COOLIFY_PHP_MEMORY_LIMIT}
+      PHP_FPM_PM_CONTROL: dynamic
+      PHP_FPM_PM_START_SERVERS: "1"
+      PHP_FPM_PM_MIN_SPARE_SERVERS: "1"
+      PHP_FPM_PM_MAX_SPARE_SERVERS: "10"
+    # E por aqui que o Coolify entra por SSH no proprio host para rodar docker.
+    # O servidor "localhost" que ele cria no primeiro boot aponta para este nome.
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    ports:
+      - "${COOLIFY_HTTP_PORT}:8080"
+    # Mesmos pontos de montagem do docker-compose.prod.yml oficial.
+    volumes:
+      - /data/coolify/ssh:/var/www/html/storage/app/ssh
+      - /data/coolify/applications:/var/www/html/storage/app/applications
+      - /data/coolify/databases:/var/www/html/storage/app/databases
+      - /data/coolify/services:/var/www/html/storage/app/services
+      - /data/coolify/backups:/var/www/html/storage/app/backups
+      - /data/coolify/webhooks-during-maintenance:/var/www/html/storage/app/webhooks-during-maintenance
+      - /data/coolify/logs:/var/www/html/storage/logs
+    networks: [coolify]
+    healthcheck:
+      test: curl --fail http://127.0.0.1:8080/api/health || exit 1
+      interval: 5s
+      retries: 24
+      start_period: 1m
+      timeout: 2s
+
+  # ===========================================================================
+  #  BANCO DO COOLIFY  (nao confundir com o Postgres do Supabase)
+  # ===========================================================================
+  coolify-db:
+    image: postgres:15-alpine
+    container_name: coolify-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: coolify
+      POSTGRES_PASSWORD: ${COOLIFY_DB_PASSWORD}
+      POSTGRES_DB: coolify
+    volumes:
+      - coolify-db-data:/var/lib/postgresql/data
+    networks: [coolify]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U coolify -d coolify"]
+      interval: 5s
+      retries: 10
+      timeout: 2s
+
+  # ===========================================================================
+  #  CACHE / FILA
+  # ===========================================================================
+  coolify-redis:
+    image: redis:7-alpine
+    container_name: coolify-redis
+    restart: unless-stopped
+    command: redis-server --save 20 1 --loglevel warning --requirepass ${COOLIFY_REDIS_PASSWORD}
+    environment:
+      REDIS_PASSWORD: ${COOLIFY_REDIS_PASSWORD}
+    volumes:
+      - coolify-redis-data:/data
+    networks: [coolify]
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a $$REDIS_PASSWORD ping | grep -q PONG"]
+      interval: 5s
+      retries: 10
+      timeout: 2s
+
+  # ===========================================================================
+  #  WEBSOCKET + TERMINAL WEB
+  # -----------------------------------------------------------------------
+  #  Obrigatorio, como no compose oficial: a UI do Coolify abre um websocket
+  #  para ca. Sem ele o painel avisa "Cannot connect to real-time service".
+  #  As portas 6001/6002 precisam estar alcancaveis pelo NAVEGADOR, nao pelo
+  #  container -- ou seja, pelo mesmo endereco por onde voce abre o painel.
+  # ===========================================================================
+  coolify-realtime:
+    image: ghcr.io/coollabsio/coolify-realtime:1.0.19
+    container_name: coolify-realtime
+    restart: unless-stopped
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    environment:
+      APP_NAME: ${COOLIFY_APP_NAME}
+      SOKETI_DEBUG: "false"
+      SOKETI_DEFAULT_APP_ID: ${COOLIFY_PUSHER_APP_ID}
+      SOKETI_DEFAULT_APP_KEY: ${COOLIFY_PUSHER_APP_KEY}
+      SOKETI_DEFAULT_APP_SECRET: ${COOLIFY_PUSHER_APP_SECRET}
+      SOKETI_HOST: 0.0.0.0
+    ports:
+      - "${COOLIFY_REALTIME_WS_PORT}:6001"
+      - "${COOLIFY_REALTIME_TERM_PORT}:6002"
+    volumes:
+      - /data/coolify/ssh:/var/www/html/storage/app/ssh
+    networks: [coolify]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:6001/ready && wget -qO- http://127.0.0.1:6002/ready || exit 1"]
+      interval: 5s
+      retries: 10
+      timeout: 2s
+
+volumes:
+  coolify-db-data:
+    name: coolify-db-data
+  coolify-redis-data:
+    name: coolify-redis-data
+
+networks:
+  coolify:
+    name: ${COOLIFY_NETWORK_NAME}

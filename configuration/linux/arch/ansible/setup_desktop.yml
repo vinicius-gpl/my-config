@@ -1,0 +1,285 @@
+---
+# =============================================================================
+#  Arch Linux — desktop Hyprland
+# -----------------------------------------------------------------------------
+#  Instala o que os dotfiles de configuration/linux/global/.config/.dotfiles
+#  esperam encontrar e linka essas configs no ~/.config.
+#
+#  Roda na PRÓPRIA máquina (os dotfiles vêm do repositório local, por symlink):
+#
+#      cd configuration/linux/arch/ansible
+#      sudo -v && ansible-playbook -i inventory.ini setup_desktop.yml -K
+#
+#  O "sudo -v" antes não é enfeite: o yay escala privilégios por conta própria
+#  e sudo não tem tty rodando por dentro do Ansible. Ver o bloco [yay].
+#
+#  Blocos (= tags): base, yay, pkgs, dotfiles, shell
+#
+#  Diferente do fedora/ e do rocky/, este playbook NÃO usa "become: yes" no
+#  play inteiro: o makepkg se recusa a rodar como root e os dotfiles precisam
+#  ir para o home do usuário, não para /root. A escalada é por task.
+# =============================================================================
+- name: Setup Arch Desktop
+  hosts: arch_desktops
+
+  vars:
+    dotfiles_src: "{{ playbook_dir }}/../../../../configuration/linux/global/.config/.dotfiles"
+
+    # O que linkar em ~/.config. Nome = pasta/arquivo dentro de .dotfiles/.
+    dotfiles_config_links:
+      - fastfetch
+      - fish
+      - hypr
+      - kitty
+      - lazygit
+      - mise
+      - nvim
+      - ohmyposh
+      - starship.toml
+      - wezterm
+      - zed
+
+    # -------------------------------------------------------------------------
+    #  Pacotes dos repositórios oficiais (pacman)
+    # -------------------------------------------------------------------------
+    pacman_packages:
+      # --- Sessão Hyprland ---
+      - hyprland
+      - hyprlock
+      - hypridle
+      - hyprpicker
+      - xdg-desktop-portal-hyprland
+      - polkit-gnome
+      - qt5-wayland
+      - qt6-wayland
+      - grim
+      - slurp
+      - wl-clipboard
+      # --- Terminais e editores ---
+      - kitty
+      - neovim
+      # --- Shell e prompt ---
+      - fish
+      - starship
+      # --- CLI que os dotfiles chamam ---
+      - fastfetch
+      - lazygit
+      - fzf
+      - bat
+      - eza
+      - ripgrep
+      - fd
+      - jq
+      - unzip
+      - wget
+      - man-db
+      # --- Áudio, mídia, brilho ---
+      - pipewire
+      - pipewire-pulse
+      - pipewire-alsa
+      - wireplumber
+      - pavucontrol
+      - playerctl
+      - brightnessctl
+      # --- Arquivos ---
+      - thunar
+      - thunar-volman
+      - gvfs
+      - file-roller
+      # --- Fontes ---
+      - noto-fonts
+      - noto-fonts-emoji
+      - noto-fonts-cjk
+      - ttf-jetbrains-mono-nerd
+      - ttf-nerd-fonts-symbols
+
+    # -------------------------------------------------------------------------
+    #  Pacotes do AUR (yay)
+    # -------------------------------------------------------------------------
+    #  O yay resolve repositório oficial TAMBÉM, então um pacote desta lista
+    #  que tenha migrado para o extra continua instalando normal. O contrário
+    #  não vale: nome que só existe no AUR dentro de pacman_packages quebra com
+    #  "target not found". Se der esse erro, mova o nome para cá.
+    #
+    #  Estão aqui por isso: os que vivem no AUR e os que migram de repositório
+    #  de vez em quando (swww, swaync, ncspot, mise, zed, wezterm).
+    aur_packages:
+      - google-chrome
+      - caelestia-shell
+      - pyprland
+      - hyprshot
+      - wlogout
+      - swww
+      - swaync
+      - oh-my-posh-bin
+      - mise
+      - zed
+      - wezterm
+      - bottom
+      - ncspot
+      - asciiquarium
+
+  tasks:
+
+    # =========================================================================
+    #  BASE
+    # =========================================================================
+    - name: "[base] Atualizar o sistema"
+      # O Arch não suporta upgrade parcial: instalar pacote novo contra um
+      # sistema desatualizado é o caminho mais curto para quebrar libs. Pular
+      # isto (system_upgrade=false) é a opção arriscada, não o contrário.
+      pacman:
+        update_cache: yes
+        upgrade: "{{ system_upgrade | default(true) | bool }}"
+      become: yes
+      tags: [base]
+
+    - name: "[base] Instalar dependências de build"
+      pacman:
+        name:
+          - base-devel
+          - git
+        state: present
+      become: yes
+      tags: [base]
+
+    # =========================================================================
+    #  YAY
+    # =========================================================================
+    - name: "[yay] Permitir pacman sem senha para o grupo wheel"
+      # OPT-IN, desligado por padrão. O yay chama "sudo pacman" por conta
+      # própria, e sudo não tem tty quando roda por dentro do Ansible. Saídas:
+      #   1. rodar "sudo -v" imediatamente antes do ansible-playbook — o
+      #      --sudoloop do yay mantém a credencial viva dali em diante;
+      #   2. ligar pacman_nopasswd=true e deixar esta regra no sudoers.
+      # A 2 é mais cômoda e menos segura: quem está no wheel passa a instalar
+      # qualquer pacote sem senha. Decisão sua, por isso não vem ligada.
+      copy:
+        dest: /etc/sudoers.d/10-pacman-nopasswd
+        content: "%wheel ALL=(root) NOPASSWD: /usr/bin/pacman\n"
+        mode: '0440'
+        validate: 'visudo -cf %s'
+      become: yes
+      when: pacman_nopasswd | default(false) | bool
+      tags: [yay]
+
+    - name: "[yay] Verificar se o yay já existe"
+      stat:
+        path: /usr/bin/yay
+      register: yay_bin
+      tags: [yay]
+
+    - name: "[yay] Clonar yay-bin do AUR"
+      git:
+        repo: https://aur.archlinux.org/yay-bin.git
+        dest: "{{ ansible_user_dir }}/.cache/yay-bin"
+        version: master
+      when: not yay_bin.stat.exists
+      tags: [yay]
+
+    - name: "[yay] Compilar o pacote"
+      # makepkg -s (sem o -i) de propósito: com -i ele chama sudo sozinho e
+      # trava sem tty. Aqui ele só compila, como usuário comum — e o pacman
+      # da task seguinte instala, com o become do Ansible.
+      command: makepkg -sf --noconfirm
+      args:
+        chdir: "{{ ansible_user_dir }}/.cache/yay-bin"
+      when: not yay_bin.stat.exists
+      tags: [yay]
+
+    - name: "[yay] Localizar o pacote gerado"
+      find:
+        paths: "{{ ansible_user_dir }}/.cache/yay-bin"
+        patterns: "yay-bin-*.pkg.tar.*"
+      register: yay_pkg
+      when: not yay_bin.stat.exists
+      tags: [yay]
+
+    - name: "[yay] Instalar o yay"
+      pacman:
+        name: "{{ yay_pkg.files | map(attribute='path') | list }}"
+        state: present
+      become: yes
+      when: not yay_bin.stat.exists
+      tags: [yay]
+
+    # =========================================================================
+    #  PACOTES
+    # =========================================================================
+    - name: "[pkgs] Instalar pacotes dos repositórios oficiais"
+      pacman:
+        name: "{{ pacman_packages }}"
+        state: present
+      become: yes
+      tags: [pkgs]
+
+    - name: "[pkgs] Instalar pacotes do AUR"
+      # --needed pula o que já está instalado; --sudoloop mantém viva a
+      # credencial de sudo que o "sudo -v" criou antes do playbook.
+      command: "yay -S --needed --noconfirm --sudoloop {{ aur_packages | join(' ') }}"
+      register: yay_install
+      changed_when: "'there is nothing to do' not in yay_install.stdout | lower"
+      tags: [pkgs]
+
+    # =========================================================================
+    #  DOTFILES
+    # =========================================================================
+    - name: "[dotfiles] Garantir ~/.config"
+      file:
+        path: "{{ ansible_user_dir }}/.config"
+        state: directory
+        mode: '0755'
+      tags: [dotfiles]
+
+    - name: "[dotfiles] Checar o que já existe no destino"
+      stat:
+        path: "{{ ansible_user_dir }}/.config/{{ item }}"
+      loop: "{{ dotfiles_config_links }}"
+      register: dotfiles_existing
+      tags: [dotfiles]
+
+    - name: "[dotfiles] Guardar config existente que não é symlink"
+      # Sem isto o link sobrescreveria silenciosamente a config atual da
+      # máquina. O que já é symlink não é copiado: é só um link antigo.
+      command: "mv {{ item.stat.path }} {{ item.stat.path }}.bak-{{ ansible_date_time.epoch }}"
+      loop: "{{ dotfiles_existing.results }}"
+      when: item.stat.exists and not item.stat.islnk
+      loop_control:
+        label: "{{ item.item }}"
+      tags: [dotfiles]
+
+    - name: "[dotfiles] Linkar as configs do repositório em ~/.config"
+      file:
+        src: "{{ (dotfiles_src ~ '/' ~ item) | realpath }}"
+        dest: "{{ ansible_user_dir }}/.config/{{ item }}"
+        state: link
+        force: yes
+      loop: "{{ dotfiles_config_links }}"
+      tags: [dotfiles]
+
+    - name: "[dotfiles] Linkar o .bashrc"
+      file:
+        src: "{{ (dotfiles_src ~ '/.bashrc') | realpath }}"
+        dest: "{{ ansible_user_dir }}/.bashrc"
+        state: link
+        force: yes
+      tags: [dotfiles]
+
+    # =========================================================================
+    #  SHELL
+    # =========================================================================
+    - name: "[shell] Definir o fish como shell de login"
+      user:
+        name: "{{ ansible_user_id }}"
+        shell: /usr/bin/fish
+      become: yes
+      when: set_fish_as_shell | default(true) | bool
+      tags: [shell]
+
+    - name: "[shell] Próximos passos"
+      debug:
+        msg:
+          - "Sessão: saia e entre de novo (o shell mudou), ou rode: dbus-launch Hyprland"
+          - "Plugin dynamic-cursors do autostart.conf precisa do hyprpm, de dentro de uma sessão Hyprland:"
+          - "  hyprpm add https://github.com/VirtCode/hypr-dynamic-cursors && hyprpm enable dynamic-cursors && hyprpm reload -n"
+          - "Configs antigas, se havia alguma, ficaram como *.bak-{{ ansible_date_time.epoch }} em ~/.config"

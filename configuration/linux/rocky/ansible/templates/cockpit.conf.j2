@@ -1,4 +1,6 @@
 [WebService]
-Origins = https://cockpit.{{ domain }} wss://cockpit.{{ domain }}
+# Servidor local, acessado direto por https://IP:9090. Origins só é consultado
+# quando há reverse proxy na frente; deixar o IP aqui cobre os dois casos.
+Origins = https://{{ inventory_hostname }}:9090 wss://{{ inventory_hostname }}:9090
 ProtocolHeader = X-Forwarded-Proto
 AllowUnencrypted = true

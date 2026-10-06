@@ -46,10 +46,21 @@
       tags: [base]
 
     - name: "[base] Abrir portas no firewall"
-      # Só o traefik do Coolify (80/443) e o agente do Beszel ficam públicos.
-      # Painel do Coolify (8000), websocket (6001/6002), Kong do Supabase
-      # (8001) e Cockpit (9090) continuam fechados: ou entram por um domínio
-      # no traefik do Coolify, ou por túnel SSH.
+      # Servidor local, atrás do NAT da rede: estas portas só são alcançáveis
+      # de dentro da LAN, e sem DNS apontando para cá não há proxy com domínio
+      # para esconder nada atrás. Então os painéis entram direto pelo IP.
+      #
+      #   80, 443, 443/udp  traefik do Coolify (para quando houver app publicada)
+      #   8000              painel do Coolify
+      #   6001, 6002        websocket e terminal web do Coolify -- o NAVEGADOR
+      #                     abre essas, não o container. Sem elas a UI avisa
+      #                     "Cannot connect to real-time service".
+      #   8001              Kong do Supabase (API + Studio)
+      #   9090              Cockpit
+      #   45876             agente do Beszel
+      #
+      # A 8080 fica de fora de propósito: é o dashboard do traefik do Coolify.
+      # O Postgres (5432) também: só por túnel SSH.
       firewalld:
         port: "{{ item }}"
         permanent: yes
@@ -59,6 +70,11 @@
         - 80/tcp
         - 443/tcp
         - 443/udp
+        - 8000/tcp
+        - 6001/tcp
+        - 6002/tcp
+        - 8001/tcp
+        - 9090/tcp
         - 45876/tcp
       tags: [base]
 
@@ -254,9 +270,9 @@
         enabled: yes
       tags: [cockpit]
 
-    - name: "[cockpit] Configurar reverse proxy origins"
-      # Sem Caddy, quem publica cockpit.{{ domain }} é o traefik do Coolify,
-      # apontando para host.docker.internal:9090.
+    - name: "[cockpit] Configurar origins"
+      # Acesso direto em https://IP:9090. Origins só importa se um dia houver
+      # reverse proxy na frente.
       template:
         src: templates/cockpit.conf.j2
         dest: /etc/cockpit/cockpit.conf

@@ -65,10 +65,12 @@
       tags: [hostname]
 
     - name: "[init] Definir timezone"
-      command: "timedatectl set-timezone {{ server_timezone | default('America/Sao_Paulo') }}"
-      register: init_tz
-      changed_when: init_tz.rc == 0
-      when: ansible_facts['date_time']['tz'] | default('') != (server_timezone | default('America/Sao_Paulo'))
+      # Módulo em vez de "timedatectl set-timezone": o fato date_time.tz
+      # devolve a abreviação (-03), nunca "America/Sao_Paulo", então a
+      # comparação dava sempre diferente e a task se reportava como changed em
+      # toda execução. O módulo compara o valor certo.
+      timezone:
+        name: "{{ server_timezone | default('America/Sao_Paulo') }}"
       tags: [timezone]
 
     - name: "[init] Atualizar o sistema"

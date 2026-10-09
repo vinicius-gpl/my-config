@@ -34,12 +34,20 @@ prompt() {
 }
 
 function has_command() {
-  command -v -- "$1 >/dev/null"
+  command -v -- "$1" >/dev/null
 }
+
+# Pasta do script, para o tema ser achado de qualquer lugar
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 prompt -w "Verificando se foi executado com root...\n"
 
 if [ "$UID" -eq "$ROOT_UID" ]; then
+
+  if [[ ! -f "${SCRIPT_DIR}/${THEME_NAME}/theme.txt" ]]; then
+    prompt -e "[ Error! ] -> Thema não encontrado em ${SCRIPT_DIR}/${THEME_NAME}"
+    exit 1
+  fi
 
   # Cria a pasta do thema
   prompt -i "Verificando se a pasta do thema existe...\n"
@@ -48,12 +56,15 @@ if [ "$UID" -eq "$ROOT_UID" ]; then
 
   # Copia o thema para pasta do grub
   prompt -i "Instalando o thema ${THEME_NAME}...\n"
-  cp -a ${THEME_NAME}/* ${THEME_DIR}/${THEME_NAME}
+  cp -a "${SCRIPT_DIR}/${THEME_NAME}/." "${THEME_DIR}/${THEME_NAME}"
 
   prompt -i "Coloca o thema no arquivo do grub...\n"
   cp -an /etc/default/grub /etc/default/grub.bak
   grep "GRUB_THEME=" /etc/default/grub >/dev/null 2>&1 && sed -i '/GRUB_THEME=/d' /etc/default/grub
   echo "GRUB_THEME=\"${THEME_DIR}/${THEME_NAME}/theme.txt\"" >>/etc/default/grub
+
+  # WARN: Com o terminal em modo console o grub ignora o thema
+  sed -i 's/^GRUB_TERMINAL_OUTPUT=/#&/' /etc/default/grub
 
   # Atualiza a config do grub grub-mkconfig
   prompt -i "Grub config...\n"
@@ -65,16 +76,26 @@ if [ "$UID" -eq "$ROOT_UID" ]; then
     grub2-mkconfig -o /boot/grub2/grub.cfg
   elif has_command dnf || has_command rpm-ostree; then
 
-    # Verifica se o EFI do grub tá disponivel no fedora ou demais distros
-    # WARN: Fedora tem o grub instalado diferente
-    if [[ -f /boot/efi/EFI/fedora/grub.cfg ]]; then
+    # WARN: Fedora tem o grub instalado diferente, o grub.cfg do EFI é só um
+    # wrapper e o grub2-mkconfig se recusa a sobrescrever ele
+    if [[ -f /boot/grub2/grub.cfg ]]; then
+      prompt -s "Procurando config do grub /boot/grub2/grub.cfg...\n"
+      grub2-mkconfig -o /boot/grub2/grub.cfg
+
+    elif [[ -f /boot/efi/EFI/fedora/grub.cfg ]]; then
       prompt -s "Procurando config do grub /boot/efi/EFI/fedora/grub.cfg...\n"
       grub2-mkconfig -o /boot/efi/EFI/fedora/grub.cfg
 
-    elif [[ -f /boot/grub2/grub.cfg ]]; then
-      prompt -s "Procurando config do grub boot/grub2/grub.cfg...\n"
-      grub2-mkconfig -o /boot/grub2/grub.cfg
+    else
+      false
     fi
+  else
+    false
+  fi
+
+  if [ $? -ne 0 ]; then
+    prompt -e "[ Error! ] -> Thema copiado, mas o grub.cfg não foi atualizado"
+    exit 1
   fi
 
   prompt -s "\n Instalado! \n"

@@ -19,11 +19,14 @@ O script [`enable-ssh-signing.sh`](./enable-ssh-signing.sh) faz, em ordem:
    ignora a chave nesse caso).
 2. Garante um agente SSH:
    - se `SSH_AUTH_SOCK` já aponta para um agente vivo (GNOME, KDE, etc.), usa ele;
-   - senão liga o `ssh-agent` pelo systemd do usuário (`ssh-agent.socket`, ou uma
-     `ssh-agent.service` criada em `~/.config/systemd/user` se a distro não trouxer a
-     unit) e grava o `SSH_AUTH_SOCK` em `~/.config/environment.d/ssh-agent.conf`.
-3. Testa uma assinatura pelo agente; se falhar, guarda a chave com `ssh-add` (pede a
-   senha da chave uma vez).
+   - senão liga um pelo systemd do usuário, de preferência o `gcr-ssh-agent.socket`
+     (o do chaveiro); sem ele, o `ssh-agent.socket`, ou uma `ssh-agent.service` criada
+     em `~/.config/systemd/user` se a distro não trouxer a unit. O `SSH_AUTH_SOCK` vai
+     para `~/.config/environment.d/ssh-agent.conf`.
+3. Guarda a senha da chave no chaveiro do login (`secret-tool`), depois de conferir que
+   ela abre a chave. Pede a senha **uma vez**, no terminal; se já houver uma senha
+   errada salva, ela é substituída. A partir daí o agente destrava a chave sozinho a
+   cada login, sem janela e sem `ssh-add`.
 4. Configura o git global:
 
    | Configuração | Valor |
@@ -38,14 +41,27 @@ O script [`enable-ssh-signing.sh`](./enable-ssh-signing.sh) faz, em ordem:
 
 Ele pula o que já estiver feito, então pode ser rodado de novo.
 
-## Diferença para o Windows: depois de reiniciar
+## Depois de reiniciar
 
-O agente do Windows grava a chave no disco. No Linux depende do agente:
+Igual ao Windows: nada a fazer. O chaveiro do login abre junto com o login (PAM, via
+GDM/SDDM com `pam_gnome_keyring`) e o `gcr-ssh-agent` busca a senha da chave nele.
 
-| Agente | Depois do boot |
-| --- | --- |
-| Com chaveiro (GNOME `gcr-ssh-agent`, KDE com `ksshaskpass`) | Na primeira assinatura abre uma janela pedindo a senha; marque a opção de destravar automaticamente no login e ela não é mais pedida |
-| `ssh-agent` puro (o que o script liga) | A chave fica só na memória: rode `ssh-add` uma vez após cada boot |
+Duas exceções:
+
+- **Login automático (sem digitar a senha do usuário):** o chaveiro não abre sozinho e
+  a primeira assinatura pede a senha do chaveiro.
+- **Sem `gnome-keyring` + `gcr` + `secret-tool`:** o script cai no `ssh-agent` puro, que
+  guarda a chave só na memória e precisa de `ssh-add` após cada boot. Ele avisa no fim.
+
+## Se um commit ou o script travar
+
+O `gcr-ssh-agent` não responde nunca mais quando a senha salva no chaveiro está errada
+(por exemplo, digitada errada na janela do GNOME com "destravar automaticamente"
+marcado). Rodar o script de novo corrige a senha salva; para soltar o que ficou preso:
+
+```bash
+systemctl --user restart gcr-ssh-agent.service
+```
 
 ## Uso
 

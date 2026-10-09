@@ -3,9 +3,10 @@
 # Configura o git para assinar commits com a chave SSH, sem pedir senha a cada commit.
 #
 # Garante um agente SSH ativo em todo login (usa o do desktop se já houver um, senão
-# liga um pelo systemd do usuário), guarda a chave nele e configura a assinatura SSH no
-# git global. No fim copia a chave pública para a área de transferência, para cadastrar
-# no GitHub como Signing Key.
+# liga um pelo systemd do usuário), guarda a senha da chave no chaveiro do login para o
+# agente destravar a chave sozinho a cada login, e configura a assinatura SSH no git
+# global. No fim copia a chave pública para a área de transferência, para cadastrar no
+# GitHub como Signing Key.
 #
 # Uso:
 #   ./enable-ssh-signing.sh                 # chave padrão: ~/.ssh/id_ed25519
@@ -13,10 +14,11 @@
 
 set -euo pipefail
 
-KEY_PATH="${1:-$HOME/.ssh/id_ed25519}"
+# Caminho absoluto: é por ele que o agente procura a senha no chaveiro
+KEY_PATH="$(realpath -s -- "${1:-$HOME/.ssh/id_ed25519}")"
 PUB_PATH="$KEY_PATH.pub"
 ALLOWED_SIGNERS="$HOME/.ssh/allowed_signers"
-AGENT_SOCK="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/ssh-agent.socket"
+RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 
 ok() { echo "[ok] $*"; }
 info() { echo "[..] $*"; }
@@ -54,7 +56,11 @@ else
   has_command systemctl && systemctl --user show-environment >/dev/null 2>&1 ||
     die "Sem agente SSH e sem systemd de usuário para ligar um."
 
-  if systemctl --user cat ssh-agent.socket >/dev/null 2>&1; then
+  # Prefere o agente com chaveiro: é o único que destrava a chave sozinho no login
+  if has_command secret-tool && systemctl --user cat gcr-ssh-agent.socket >/dev/null 2>&1; then
+    systemctl --user enable --now gcr-ssh-agent.socket
+    AGENT_SOCK_NAME=gcr/ssh
+  elif systemctl --user cat ssh-agent.socket >/dev/null 2>&1; then
     systemctl --user enable --now ssh-agent.socket
   else
     # Distro sem a unit pronta: cria uma equivalente
@@ -76,9 +82,10 @@ EOF
 
   # Sessões gráficas e serviços do usuário herdam daqui a partir do próximo login
   mkdir -p "$HOME/.config/environment.d"
-  echo 'SSH_AUTH_SOCK=${XDG_RUNTIME_DIR}/ssh-agent.socket' >"$HOME/.config/environment.d/ssh-agent.conf"
-  systemctl --user set-environment "SSH_AUTH_SOCK=$AGENT_SOCK"
-  export SSH_AUTH_SOCK="$AGENT_SOCK"
+  AGENT_SOCK_NAME="${AGENT_SOCK_NAME:-ssh-agent.socket}"
+  echo "SSH_AUTH_SOCK=\${XDG_RUNTIME_DIR}/$AGENT_SOCK_NAME" >"$HOME/.config/environment.d/ssh-agent.conf"
+  export SSH_AUTH_SOCK="$RUNTIME_DIR/$AGENT_SOCK_NAME"
+  systemctl --user set-environment "SSH_AUTH_SOCK=$SSH_AUTH_SOCK"
 
   for _ in 1 2 3 4 5; do
     [[ "$(agent_status)" != 2 ]] && break
@@ -89,20 +96,62 @@ EOF
   NEW_AGENT=1
 fi
 
-# ---- 2. Chave no agente (pede a senha da chave uma vez) ----
+# ---- 2. Chave destravada no agente (pede a senha da chave uma vez, e nunca mais) ----
 # Assina pelo agente (-U), do mesmo jeito que o git vai fazer. Só listar com ssh-add -l
 # não basta: agentes com chaveiro (GNOME/KDE) listam a chave mesmo ainda travada.
+# O limite de tempo existe porque o gcr-ssh-agent não responde nunca mais se a senha
+# salva no chaveiro estiver errada.
 agent_signs() {
-  echo teste | ssh-keygen -Y sign -U -n git -f "$PUB_PATH" >/dev/null 2>&1
+  echo teste | timeout 15 ssh-keygen -Y sign -U -n git -f "$PUB_PATH" >/dev/null 2>&1
 }
 
-if agent_signs; then
+key_opens_with() {
+  ssh-keygen -y -P "$1" -f "$KEY_PATH" >/dev/null 2>&1
+}
+
+# Agentes do GNOME (gcr-ssh-agent e o antigo do gnome-keyring) buscam a senha da chave
+# no chaveiro do login por este atributo, e o chaveiro abre junto com o login
+KEYRING_ATTR=(unique "ssh-store:$KEY_PATH")
+
+agent_uses_keyring() {
+  [[ "${SSH_AUTH_SOCK:-}" == */gcr/ssh || "${SSH_AUTH_SOCK:-}" == */keyring/ssh ]] && has_command secret-tool
+}
+
+if key_opens_with ""; then
+  agent_signs || ssh-add "$KEY_PATH" || die "ssh-add falhou; a chave não foi adicionada."
+  ok "Chave sem senha: nada para destravar"
+elif agent_uses_keyring; then
+  saved="$(secret-tool lookup "${KEYRING_ATTR[@]}" 2>/dev/null || true)"
+  if [[ -n "$saved" ]] && key_opens_with "$saved"; then
+    ok "Senha da chave já está no chaveiro do login"
+  else
+    [[ -n "$saved" ]] && info "A senha salva no chaveiro está errada, vai ser substituída"
+    pass=""
+    for _ in 1 2 3; do
+      read -rsp "Senha da chave $KEY_PATH: " pass
+      echo
+      key_opens_with "$pass" && break
+      echo "[!!] Senha incorreta"
+      pass=""
+    done
+    [[ -n "$pass" ]] || die "Senha da chave não confirmada; nada foi salvo."
+    # Só é guardada depois de conferida com a chave
+    printf %s "$pass" | secret-tool store --label="Unlock password for: $(awk '{print $3}' "$PUB_PATH")" "${KEYRING_ATTR[@]}" ||
+      die "Não foi possível guardar a senha no chaveiro."
+    unset pass
+    ok "Senha da chave guardada no chaveiro do login"
+  fi
+  unset saved
+  agent_signs || die "O agente não conseguiu assinar com a chave."
+  ok "Agente destrava a chave sozinho a cada login"
+elif agent_signs; then
   ok "Chave já está destravada no agente"
 else
   info "Adicionando a chave ao agente (digite a senha da chave):"
   ssh-add "$KEY_PATH" || die "ssh-add falhou; a chave não foi adicionada."
   agent_signs || die "O agente não conseguiu assinar com a chave."
   ok "Chave guardada no agente"
+  NO_KEYRING=1
 fi
 
 # ---- 3. Git: assinatura SSH ----
@@ -144,6 +193,11 @@ if [[ -n "${NEW_AGENT:-}" ]]; then
   echo
   echo "O agente novo vale para sessões abertas a partir do próximo login. Em shells que"
   echo "não herdam o ambiente do systemd (TTY, SSH), adicione ao rc do shell:"
-  echo "  export SSH_AUTH_SOCK=\"\$XDG_RUNTIME_DIR/ssh-agent.socket\""
-  echo "Esse agente guarda a chave só na memória: rode 'ssh-add' uma vez após cada boot."
+  echo "  export SSH_AUTH_SOCK=\"\$XDG_RUNTIME_DIR/$AGENT_SOCK_NAME\""
+fi
+if [[ -n "${NO_KEYRING:-}" ]]; then
+  echo
+  echo "[!!] Sem chaveiro: este agente guarda a chave só na memória e ela precisa de"
+  echo "     'ssh-add' após cada boot. Instale gnome-keyring, gcr e libsecret (secret-tool)"
+  echo "     e rode de novo para a chave destravar sozinha no login."
 fi

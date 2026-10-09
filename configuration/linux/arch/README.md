@@ -85,7 +85,7 @@ Foi lida dos próprios dotfiles, não escolhida a dedo:
 | `.bashrc` | `eza`, `starship`, `asciiquarium`, `bottom` (`btm`), `ncspot`, `neovim` |
 | `fish/config.fish` | `oh-my-posh`, `fzf`, `bat`, `fastfetch`, `neovim` |
 | `mise/config.toml` | `mise` |
-| diretórios de `.dotfiles/` | `lazygit`, `wezterm`, `zed` |
+| diretórios de `.dotfiles/` | `lazygit`, `wezterm`, `zed`, `zellij` |
 
 Duas coisas do `fish/config.fish` ficaram **de fora** por não serem gerenciáveis
 daqui: o `brew shellenv` do Linuxbrew (instalador próprio) e os caminhos de

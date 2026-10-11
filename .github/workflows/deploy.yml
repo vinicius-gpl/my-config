@@ -10,8 +10,7 @@ on:
         type: choice
         options:
           - acerola
-          - homelab
-          - siaap
+          - oracle
       step:
         description: 'Selecione o app/etapa para executar'
         required: true
@@ -49,15 +48,13 @@ jobs:
           ENV_SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           ENV_PASSPHRASE: ${{ secrets.SSH_PASSPHRASE }}
           ACEROLA_KEY: ${{ secrets.ACEROLA_ANSIBLE_SSH_PRIVATE_KEY || secrets.ACEROLA_SSH_PRIVATE_KEY || secrets.FEDORA_ANSIBLE_SSH_PRIVATE_KEY || secrets.FEDORA_SSH_PRIVATE_KEY }}
-          HOMELAB_KEY: ${{ secrets.HOMELAB_ANSIBLE_SSH_PRIVATE_KEY || secrets.HOMELAB_SSH_PRIVATE_KEY || secrets.ROCKY_ANSIBLE_SSH_PRIVATE_KEY || secrets.ROCKY_SSH_PRIVATE_KEY }}
-          SIAAP_KEY: ${{ secrets.SIAAP_ANSIBLE_SSH_PRIVATE_KEY || secrets.SIAAP_SSH_PRIVATE_KEY }}
+          ORACLE_KEY: ${{ secrets.ORACLE_ANSIBLE_SSH_PRIVATE_KEY || secrets.ORACLE_SSH_PRIVATE_KEY || secrets.ROCKY_ANSIBLE_SSH_PRIVATE_KEY || secrets.ROCKY_SSH_PRIVATE_KEY }}
         run: |
           SSH_KEY="$ENV_SSH_KEY"
           if [ -z "$SSH_KEY" ]; then
             case "$TARGET_SERVER" in
               acerola) SSH_KEY="$ACEROLA_KEY" ;;
-              homelab) SSH_KEY="$HOMELAB_KEY" ;;
-              siaap)   SSH_KEY="$SIAAP_KEY" ;;
+              oracle)  SSH_KEY="$ORACLE_KEY" ;;
             esac
           fi
 
@@ -98,8 +95,7 @@ jobs:
           TARGET_SERVER: ${{ github.event.inputs.server }}
           ENV_HOSTS_INI: ${{ secrets.ANSIBLE_HOSTS_INI || secrets.HOSTS_INI }}
           ACEROLA_HOSTS: ${{ secrets.ACEROLA_ANSIBLE_HOSTS_INI || secrets.FEDORA_ANSIBLE_HOSTS_INI }}
-          HOMELAB_HOSTS: ${{ secrets.HOMELAB_ANSIBLE_HOSTS_INI || secrets.ROCKY_ANSIBLE_HOSTS_INI }}
-          SIAAP_HOSTS: ${{ secrets.SIAAP_ANSIBLE_HOSTS_INI }}
+          ORACLE_HOSTS: ${{ secrets.ORACLE_ANSIBLE_HOSTS_INI || secrets.ROCKY_ANSIBLE_HOSTS_INI }}
         run: |
           mkdir -p configuration/ansible
           HOSTS_CONTENT="$ENV_HOSTS_INI"
@@ -107,8 +103,7 @@ jobs:
           if [ -z "$HOSTS_CONTENT" ]; then
             case "$TARGET_SERVER" in
               acerola) HOSTS_CONTENT="$ACEROLA_HOSTS" ;;
-              homelab) HOSTS_CONTENT="$HOMELAB_HOSTS" ;;
-              siaap)   HOSTS_CONTENT="$SIAAP_HOSTS" ;;
+              oracle)  HOSTS_CONTENT="$ORACLE_HOSTS" ;;
             esac
           fi
 
@@ -134,15 +129,13 @@ jobs:
           TARGET_SERVER: ${{ github.event.inputs.server }}
           ENV_BECOME_PASS: ${{ secrets.ANSIBLE_BECOME_PASSWORD || secrets.BECOME_PASSWORD }}
           ACEROLA_BECOME_PASS: ${{ secrets.ACEROLA_ANSIBLE_BECOME_PASSWORD || secrets.FEDORA_ANSIBLE_BECOME_PASSWORD }}
-          HOMELAB_BECOME_PASS: ${{ secrets.HOMELAB_ANSIBLE_BECOME_PASSWORD || secrets.ROCKY_ANSIBLE_BECOME_PASSWORD }}
-          SIAAP_BECOME_PASS: ${{ secrets.SIAAP_ANSIBLE_BECOME_PASSWORD }}
+          ORACLE_BECOME_PASS: ${{ secrets.ORACLE_ANSIBLE_BECOME_PASSWORD || secrets.ROCKY_ANSIBLE_BECOME_PASSWORD }}
         run: |
           BECOME_PASS="$ENV_BECOME_PASS"
           if [ -z "$BECOME_PASS" ]; then
             case "$TARGET_SERVER" in
               acerola) BECOME_PASS="$ACEROLA_BECOME_PASS" ;;
-              homelab) BECOME_PASS="$HOMELAB_BECOME_PASS" ;;
-              siaap)   BECOME_PASS="$SIAAP_BECOME_PASS" ;;
+              oracle)  BECOME_PASS="$ORACLE_BECOME_PASS" ;;
             esac
           fi
 

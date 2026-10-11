@@ -181,9 +181,10 @@ jobs:
           fi
 
           EXTRA_VARS=""
+          export BECOME_PASS
           if [ -n "$BECOME_PASS" ]; then
             umask 077
-            python3 -c 'import json, os; json.dump({"ansible_become_password": os.environ["BECOME_PASS"]}, open("/tmp/become.json", "w"))'
+            BECOME_PASS="$BECOME_PASS" python3 -c 'import json, os; json.dump({"ansible_become_password": os.environ["BECOME_PASS"]}, open("/tmp/become.json", "w"))'
             EXTRA_VARS="--extra-vars @/tmp/become.json"
           fi
           trap 'rm -f /tmp/become.json' EXIT

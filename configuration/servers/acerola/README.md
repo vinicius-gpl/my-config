@@ -31,9 +31,6 @@ Edite o arquivo `inventory.ini` (ou cadastre no GitHub Secrets como `ACEROLA_ANS
 178.105.95.169 ansible_user=root ansible_ssh_forward_agent=true \
   domain=acerola.app \
   email=contact@acerola.app \
-  wg_host=178.105.95.169 \
-  wg_password=SUA_SENHA_DO_PAINEL_VPN \
-  wg_allowed_ips="10.0.0.0/24, 178.105.95.169/32" \
   beszel_key="ssh-ed25519 CHAVE_PUBLICA_DO_HUB_ORACLE" \
   netbird_setup_key="SETUP_KEY_GERADA_NO_NETBIRD_ORACLE" \
   netbird_mgmt_url=https://netbird.SEU_DOMINIO_ORACLE.com
@@ -50,10 +47,9 @@ ansible-playbook -i configuration/servers/acerola/inventory.ini configuration/an
 O playbook provisiona automaticamente:
 
 - **Docker** + plugins e repositório oficial
-- **Firewalld** com portas `80/tcp`, `443/tcp`, `443/udp`, `51820/udp`, `7824/udp`
+- **Firewalld** com portas `80/tcp`, `443/tcp`, `443/udp`, `7824/udp`
 - **Rede Docker** `proxy` compartilhada entre os containers
-- **Portainer** em `container.DOMINIO`
-- **Beszel Agent** para monitoramento do servidor
-- **Cockpit** (apenas Rocky Linux) em `cockpit.DOMINIO`
-- **WireGuard (wg-easy)** em `vpn.DOMINIO` (com Web UI e QR Code)
+- **Portainer Agent** (porta 9001) para gerenciamento centralizado via Oracle
+- **Beszel Agent** para envio de métricas ao Beszel Hub (Oracle)
+- **NetBird Client** conectado à malha Zero Trust do Oracle
 - **Caddy** como proxy reverso com TLS automático

@@ -27,12 +27,16 @@ ansible -i ansible/hosts.ini relay_servers -m ping
 Edite o arquivo `inventory.ini` (ou cadastre no GitHub Secrets como `ACEROLA_ANSIBLE_HOSTS_INI` / `ANSIBLE_HOSTS_INI` no Environment `acerola`):
 
 ```ini
-[relay_servers]
-IP_DO_SERVIDOR ansible_user=root ansible_ssh_forward_agent=true \
-  email=SEU_EMAIL \
-  domain=SEU_DOMINIO \
-  beszel_key=CHAVE_PUBLICA_GERADA_PELO_HUB \
-  wg_password=SUA_SENHA_DO_PAINEL_VPN
+[servers]
+178.105.95.169 ansible_user=root ansible_ssh_forward_agent=true \
+  domain=acerola.app \
+  email=contact@acerola.app \
+  wg_host=178.105.95.169 \
+  wg_password=SUA_SENHA_DO_PAINEL_VPN \
+  wg_allowed_ips="10.0.0.0/24, 178.105.95.169/32" \
+  beszel_key="ssh-ed25519 CHAVE_PUBLICA_DO_HUB_ORACLE" \
+  netbird_setup_key="SETUP_KEY_GERADA_NO_NETBIRD_ORACLE" \
+  netbird_mgmt_url=https://netbird.SEU_DOMINIO_ORACLE.com
 ```
 
 ---

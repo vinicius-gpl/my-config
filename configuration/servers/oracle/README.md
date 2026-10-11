@@ -8,7 +8,9 @@ Edite o arquivo `inventory.ini` ou cadastre a secret `ORACLE_ANSIBLE_HOSTS_INI` 
 
 ```ini
 [servers]
-IP_DO_SERVIDOR_ORACLE ansible_user=root ansible_ssh_forward_agent=true email=seu_email@dominio.com domain=seu-dominio.com beszel_key=CHAVE_PUBLICA_GERADA_PELO_HUB
+IP_DO_SERVIDOR_ORACLE ansible_user=ubuntu ansible_become=true ansible_ssh_forward_agent=true \
+  domain=seusite.com \
+  email=seu_email@dominio.com
 ```
 
 ## Deploy via GitHub Actions

@@ -13,23 +13,15 @@ O deploy utiliza a arquitetura moderna combinada do NetBird:
 
 ---
 
-## 🔑 Autenticação e GitHub OAuth
+## 🔑 Autenticação e Usuários
 
-O NetBird moderno já vem com um **Identity Provider (IdP) embarcado** por padrão, sem exigir containers extras.
+O NetBird moderno possui um **Identity Provider (IdP) embarcado** (Dex) nativo com gerenciamento local de usuários por e-mail e senha, sem exigir provedores externos.
 
-### Como vincular com GitHub OAuth:
-1. No seu GitHub, acesse: **Settings > Developer Settings > OAuth Apps > New OAuth App**:
-   * **Application name:** `NetBird Self-Hosted`
-   * **Homepage URL:** `https://netbird.seu-dominio.com`
-   * **Authorization callback URL:** `https://netbird.seu-dominio.com/oauth2/callback`
-2. Clique em **Register application**.
-3. Copie o **Client ID** e gere um **Client Secret**.
-4. Acesse seu painel NetBird em `https://netbird.seu-dominio.com`.
-5. Vá em **Settings** > **Identity Providers** > **Add Provider**:
-   * Selecione **GitHub** (ou Generic OIDC).
-   * Cole o **Client ID** e o **Client Secret**.
-   * Salve as configurações.
-6. A partir desse momento, qualquer membro autorizado pode se autenticar nos aplicativos NetBird diretamente com a conta do GitHub!
+### Primeiro Acesso:
+1. Ao acessar `https://netbird.seu-dominio.com` pela primeira vez, o assistente solicitará a criação da sua conta de Administrador inicial (e-mail e senha).
+2. Após o login, você tem acesso total ao painel.
+3. Para gerenciar usuários, acesse **Team > Users** e convide novos membros ou crie novas credenciais.
+4. Para conectar servidores automaticamente (sem login interativo), gere uma chave em **Setup Keys**.
 
 ---
 
@@ -70,4 +62,4 @@ ansible-playbook -i configuration/servers/oracle/inventory.ini configuration/ans
 2. Nas configurações do app (Settings / Advanced):
    * Troque a URL de gerenciamento para o seu servidor: `https://netbird.seu-dominio.com`.
 3. Clique em **Connect** / **Login**.
-4. Faça login com o seu usuário ou via GitHub OAuth. O dispositivo será pareado instantaneamente!
+4. Faça login com o seu usuário e senha. O dispositivo será pareado instantaneamente!

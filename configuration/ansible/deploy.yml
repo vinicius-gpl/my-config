@@ -11,6 +11,7 @@
     coolify_path: "/opt/coolify"
     coolify_data_path: "/data/coolify"
     supabase_path: "/opt/supabase"
+    beszel_hub_path: "/opt/beszel-hub"
 
   tasks:
     # =========================================================================
@@ -495,6 +496,52 @@
       args:
         chdir: "{{ beszel_path }}"
       tags: [beszel]
+
+    # =========================================================================
+    # === BESZEL HUB ===
+    # =========================================================================
+
+    - name: "[beszel-hub] Criar diretório de deploy do Hub"
+      file:
+        path: "{{ beszel_hub_path }}"
+        state: directory
+        mode: '0755'
+      tags: [beszel-hub, beszel_hub]
+
+    - name: "[beszel-hub] Copiar docker-compose do Beszel Hub"
+      copy:
+        src: "{{ apps_dir }}/beszel/compose.hub.yml"
+        dest: "{{ beszel_hub_path }}/docker-compose.yml"
+        mode: '0644'
+      tags: [beszel-hub, beszel_hub]
+
+    - name: "[beszel-hub] Abrir porta do Beszel Hub no firewall (8090)"
+      firewalld:
+        port: 8090/tcp
+        permanent: yes
+        state: enabled
+        immediate: yes
+      failed_when: false
+      tags: [beszel-hub, beszel_hub]
+
+    - name: "[beszel-hub] Implantar configuração beszel.caddy (se caddy existir)"
+      copy:
+        src: "{{ apps_dir }}/beszel/config/beszel.caddy"
+        dest: "{{ caddy_path }}/conf.d/beszel.caddy"
+        mode: '0644'
+      failed_when: false
+      tags: [beszel-hub, beszel_hub]
+
+    - name: "[beszel-hub] Recarregar Caddy para aplicar monitor.{{ domain | default('') }}"
+      command: docker exec caddy caddy reload --config /etc/caddy/Caddyfile
+      failed_when: false
+      tags: [beszel-hub, beszel_hub]
+
+    - name: "[beszel-hub] Subir container do Beszel Hub"
+      command: docker compose up -d --force-recreate
+      args:
+        chdir: "{{ beszel_hub_path }}"
+      tags: [beszel-hub, beszel_hub]
 
     # =========================================================================
     # === COCKPIT ===

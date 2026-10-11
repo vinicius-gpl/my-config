@@ -38,13 +38,22 @@ configuration/
 
 ## 🚀 Como fazer Deploy via GitHub Actions
 
-O repositório utiliza **um único workflow unificado** ([`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)).
+O repositório conta com dois workflows dedicados:
+* **[Ansible Deploy](.github/workflows/deploy.yml):** Para provisionamento e subida de containers.
+* **[Ansible Clean](.github/workflows/clean.yml):** Para parar e remover serviços específicos em servidores alvo com total controle.
 
-Para executar um deploy:
+### Deploy de Serviços:
 1. Vá na aba **Actions** > **Ansible Deploy** > **Run workflow**.
 2. Selecione o **servidor alvo**: `acerola` ou `oracle`.
-3. Selecione a **etapa / app**: `all`, `base`, `wireguard`, `netbird`, `caddy`, `portainer`, `coolify`, `supabase`, `beszel`, `beszel-hub`, `cockpit`.
+3. Selecione a **etapa / app**: `all`, `base`, `wireguard`, `netbird`, `caddy`, `portainer`, `portainer-agent`, `coolify`, `supabase`, `beszel`, `beszel-hub`, `cockpit`.
 4. Clique em **Run workflow**.
+
+### Limpeza / Remoção Controlada de Serviços:
+1. Vá na aba **Actions** > **Ansible Clean** > **Run workflow**.
+2. Selecione o **servidor alvo**: `acerola` ou `oracle`.
+3. Selecione o **serviço para deitar**: `dashboards` (Beszel Hub + Portainer Server), `beszel-hub`, `portainer`, `portainer-agent`, `beszel-agent`, `wireguard`, `netbird`, `caddy`, `cockpit` ou `prune`.
+4. Marque se deseja apagar os volumes de dados persistentes (`remove_volumes`).
+5. Clique em **Run workflow**.
 
 ### Autenticação no GitHub (Environments)
 Você pode cadastrar as credenciais em **Settings > Environments** criando um ambiente para cada servidor (`acerola` e `oracle`):

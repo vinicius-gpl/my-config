@@ -394,6 +394,40 @@
       tags: [portainer]
 
     # =========================================================================
+    # === PORTAINER AGENT (PARA WORKERS / HETZNER) ===
+    # =========================================================================
+
+    - name: "[portainer-agent] Criar diretório de deploy do Portainer Agent"
+      file:
+        path: "{{ portainer_path }}"
+        state: directory
+        mode: '0755'
+      tags: [portainer-agent, portainer_agent]
+
+    - name: "[portainer-agent] Copiar docker-compose do Portainer Agent"
+      copy:
+        src: "{{ apps_dir }}/portainer/compose.agent.yml"
+        dest: "{{ portainer_path }}/docker-compose.yml"
+        mode: '0644'
+      tags: [portainer-agent, portainer_agent]
+
+    - name: "[portainer-agent] Abrir porta do Portainer Agent (9001) no firewall"
+      firewalld:
+        port: 9001/tcp
+        permanent: yes
+        state: enabled
+        immediate: yes
+      failed_when: false
+      tags: [portainer-agent, portainer_agent]
+
+    - name: "[portainer-agent] Subir container do Portainer Agent"
+      command: docker compose up -d --force-recreate
+      args:
+        chdir: "{{ portainer_path }}"
+      tags: [portainer-agent, portainer_agent]
+
+
+    # =========================================================================
     # === COOLIFY ===
     # =========================================================================
 

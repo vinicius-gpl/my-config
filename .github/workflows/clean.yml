@@ -1,0 +1,196 @@
+name: Ansible Clean
+run-name: Clean em ${{ inputs.server }} (${{ inputs.target }})
+
+on:
+  workflow_dispatch:
+    inputs:
+      server:
+        description: 'Servidor alvo (acerola | oracle)'
+        required: true
+        default: 'acerola'
+        type: choice
+        options:
+          - acerola
+          - oracle
+      target:
+        description: 'Serviço para parar e remover'
+        required: true
+        default: 'dashboards'
+        type: choice
+        options:
+          - dashboards
+          - beszel-hub
+          - portainer
+          - portainer-agent
+          - beszel-agent
+          - wireguard
+          - netbird
+          - caddy
+          - cockpit
+          - prune
+      remove_volumes:
+        description: 'Apagar volumes de dados persistentes?'
+        required: false
+        default: false
+        type: boolean
+      dry_run:
+        description: 'Modo simulação (--check)?'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  clean:
+    name: Clean em ${{ github.event.inputs.server }} (${{ github.event.inputs.target }})
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.server }}
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar chaves SSH e segredos
+        env:
+          TARGET_SERVER: ${{ github.event.inputs.server }}
+          ENV_SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          ENV_PASSPHRASE: ${{ secrets.SSH_PASSPHRASE }}
+          ACEROLA_KEY: ${{ secrets.ACEROLA_ANSIBLE_SSH_PRIVATE_KEY || secrets.ACEROLA_SSH_PRIVATE_KEY || secrets.FEDORA_ANSIBLE_SSH_PRIVATE_KEY || secrets.FEDORA_SSH_PRIVATE_KEY }}
+          ORACLE_KEY: ${{ secrets.ORACLE_ANSIBLE_SSH_PRIVATE_KEY || secrets.ORACLE_SSH_PRIVATE_KEY || secrets.ROCKY_ANSIBLE_SSH_PRIVATE_KEY || secrets.ROCKY_SSH_PRIVATE_KEY }}
+          ACEROLA_PASSPHRASE: ${{ secrets.ACEROLA_SSH_PASSPHRASE || secrets.FEDORA_SSH_PASSPHRASE }}
+          ORACLE_PASSPHRASE: ${{ secrets.ORACLE_SSH_PASSPHRASE || secrets.ROCKY_SSH_PASSPHRASE }}
+        run: |
+          SSH_KEY="$ENV_SSH_KEY"
+          if [ -z "$SSH_KEY" ]; then
+            case "$TARGET_SERVER" in
+              acerola) SSH_KEY="$ACEROLA_KEY" ;;
+              oracle)  SSH_KEY="$ORACLE_KEY" ;;
+            esac
+          fi
+
+          PASSPHRASE="$ENV_PASSPHRASE"
+          if [ -z "$PASSPHRASE" ]; then
+            case "$TARGET_SERVER" in
+              acerola) PASSPHRASE="$ACEROLA_PASSPHRASE" ;;
+              oracle)  PASSPHRASE="$ORACLE_PASSPHRASE" ;;
+            esac
+          fi
+
+          if [ -z "$SSH_KEY" ]; then
+            echo "::error::Chave SSH não encontrada para o servidor '$TARGET_SERVER'! Cadastre 'SSH_PRIVATE_KEY' no Environment ou '${TARGET_SERVER^^}_SSH_PRIVATE_KEY' nas Secrets."
+            exit 1
+          fi
+
+          mkdir -p ~/.ssh
+          eval $(ssh-agent -s)
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
+          echo "SSH_AGENT_PID=$SSH_AGENT_PID" >> "$GITHUB_ENV"
+
+          # Normaliza quebras de linha literais caso a secret tenha sido salva com "\n" ou com CRLF
+          if echo "$SSH_KEY" | grep -q '\\n'; then
+            SSH_KEY=$(printf '%b' "$SSH_KEY")
+          fi
+
+          printf '%s\n' "$SSH_KEY" | tr -d '\r' > /tmp/id_ci
+          chmod 600 /tmp/id_ci
+
+          if ! grep -q -- "-----BEGIN" /tmp/id_ci; then
+            echo "::error::A chave SSH fornecida não é uma chave privada válida (falta o cabeçalho '-----BEGIN ...')! Verifique se você não copiou a chave pública (.pub) por engano no GitHub Secrets."
+            rm -f /tmp/id_ci
+            exit 1
+          fi
+
+          export PASSPHRASE
+          if [ -n "$PASSPHRASE" ]; then
+            printf '#!/bin/sh\nexec printf "%%s\\n" "$PASSPHRASE"\n' > /tmp/ssh_askpass
+            chmod 700 /tmp/ssh_askpass
+            if ! DISPLAY=None SSH_ASKPASS=/tmp/ssh_askpass SSH_ASKPASS_REQUIRE=force ssh-add /tmp/id_ci; then
+              echo "::error::Falha ao desbloquear a chave SSH com a passphrase fornecida! Verifique o segredo 'SSH_PASSPHRASE' ou '${TARGET_SERVER^^}_SSH_PASSPHRASE'."
+              rm -f /tmp/ssh_askpass /tmp/id_ci
+              exit 1
+            fi
+            rm -f /tmp/ssh_askpass
+          else
+            if ! ssh-add /tmp/id_ci; then
+              echo "::error::Falha ao carregar a chave SSH! Se a sua chave foi gerada com senha (passphrase), cadastre a secret 'SSH_PASSPHRASE' ou '${TARGET_SERVER^^}_SSH_PASSPHRASE'. Se não possui senha, confirme se a chave privada está completa."
+              rm -f /tmp/id_ci
+              exit 1
+            fi
+          fi
+          rm -f /tmp/id_ci
+
+          echo "Chave SSH carregada com sucesso:"
+          ssh-add -l
+
+      - name: Instalar Ansible
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ansible
+
+      - name: Configurar inventário (hosts.ini)
+        env:
+          TARGET_SERVER: ${{ github.event.inputs.server }}
+          ENV_HOSTS_INI: ${{ secrets.ANSIBLE_HOSTS_INI || secrets.HOSTS_INI }}
+          ACEROLA_HOSTS: ${{ secrets.ACEROLA_ANSIBLE_HOSTS_INI || secrets.FEDORA_ANSIBLE_HOSTS_INI }}
+          ORACLE_HOSTS: ${{ secrets.ORACLE_ANSIBLE_HOSTS_INI || secrets.ROCKY_ANSIBLE_HOSTS_INI }}
+        run: |
+          mkdir -p configuration/ansible
+          HOSTS_CONTENT="$ENV_HOSTS_INI"
+
+          if [ -z "$HOSTS_CONTENT" ]; then
+            case "$TARGET_SERVER" in
+              acerola) HOSTS_CONTENT="$ACEROLA_HOSTS" ;;
+              oracle)  HOSTS_CONTENT="$ORACLE_HOSTS" ;;
+            esac
+          fi
+
+          if [ -n "$HOSTS_CONTENT" ]; then
+            printf '%s\n' "$HOSTS_CONTENT" > configuration/ansible/hosts.ini
+          elif [ -f "configuration/servers/${TARGET_SERVER}/hosts.ini" ]; then
+            echo "Usando hosts.ini local do servidor ${TARGET_SERVER}..."
+            cp "configuration/servers/${TARGET_SERVER}/hosts.ini" configuration/ansible/hosts.ini
+          elif [ -f "configuration/servers/${TARGET_SERVER}/inventory.ini" ]; then
+            echo "Usando inventory.ini local do servidor ${TARGET_SERVER}..."
+            cp "configuration/servers/${TARGET_SERVER}/inventory.ini" configuration/ansible/hosts.ini
+          else
+            echo "::error::Nenhum inventário encontrado para o servidor '${TARGET_SERVER}'!"
+            exit 1
+          fi
+
+          chmod 600 configuration/ansible/hosts.ini
+
+      - name: Executar Playbook de Limpeza (clean.yml)
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: "False"
+          ANSIBLE_FORCE_COLOR: "True"
+          TARGET_SERVER: ${{ github.event.inputs.server }}
+          ENV_BECOME_PASS: ${{ secrets.ANSIBLE_BECOME_PASSWORD || secrets.BECOME_PASSWORD }}
+          ACEROLA_BECOME_PASS: ${{ secrets.ACEROLA_ANSIBLE_BECOME_PASSWORD || secrets.FEDORA_ANSIBLE_BECOME_PASSWORD }}
+          ORACLE_BECOME_PASS: ${{ secrets.ORACLE_ANSIBLE_BECOME_PASSWORD || secrets.ROCKY_ANSIBLE_BECOME_PASSWORD }}
+        run: |
+          BECOME_PASS="$ENV_BECOME_PASS"
+          if [ -z "$BECOME_PASS" ]; then
+            case "$TARGET_SERVER" in
+              acerola) BECOME_PASS="$ACEROLA_BECOME_PASS" ;;
+              oracle)  BECOME_PASS="$ORACLE_BECOME_PASS" ;;
+            esac
+          fi
+
+          CHECK_ARG=""
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            CHECK_ARG="--check"
+          fi
+
+          EXTRA_VARS="-e remove_volumes=${{ github.event.inputs.remove_volumes }}"
+          export BECOME_PASS
+          if [ -n "$BECOME_PASS" ]; then
+            umask 077
+            BECOME_PASS="$BECOME_PASS" python3 -c 'import json, os; json.dump({"ansible_become_password": os.environ["BECOME_PASS"]}, open("/tmp/become.json", "w"))'
+            EXTRA_VARS="$EXTRA_VARS --extra-vars @/tmp/become.json"
+          fi
+          trap 'rm -f /tmp/become.json' EXIT
+
+          ansible-playbook \
+            -i configuration/ansible/hosts.ini \
+            configuration/ansible/clean.yml \
+            --tags "${{ github.event.inputs.target }}" \
+            $CHECK_ARG $EXTRA_VARS

@@ -10,7 +10,7 @@ networks:
 
 services:
   netdata:
-    image: netdata/netdata:latest
+    image: netdata/netdata:stable
     container_name: netdata
     hostname: netdata
     restart: always

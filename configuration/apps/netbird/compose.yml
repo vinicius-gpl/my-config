@@ -4,7 +4,7 @@ networks:
 
 services:
   netbird-dashboard:
-    image: netbirdio/dashboard:latest
+    image: netbirdio/dashboard:v0.80.0
     container_name: netbird-dashboard
     restart: unless-stopped
     networks:
@@ -18,7 +18,7 @@ services:
         max-file: "2"
 
   netbird-server:
-    image: netbirdio/netbird:latest
+    image: netbirdio/netbird:v0.80.0
     container_name: netbird-server
     restart: unless-stopped
     networks:

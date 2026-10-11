@@ -431,6 +431,19 @@
         chdir: "{{ portainer_path }}"
       tags: [portainer]
 
+    - name: "[portainer] Implantar configuração portainer.caddy (se caddy existir)"
+      copy:
+        src: "{{ apps_dir }}/portainer/config/portainer.caddy"
+        dest: "{{ caddy_path }}/conf.d/portainer.caddy"
+        mode: '0644'
+      failed_when: false
+      tags: [portainer]
+
+    - name: "[portainer] Recarregar Caddy para aplicar container.{{ domain | default('') }}"
+      command: docker exec caddy caddy reload --config /etc/caddy/Caddyfile
+      failed_when: false
+      tags: [portainer]
+
     # =========================================================================
     # === PORTAINER AGENT (PARA WORKERS / HETZNER) ===
     # =========================================================================

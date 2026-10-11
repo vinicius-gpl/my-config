@@ -85,7 +85,7 @@
       loop:
         - docker
         - firewalld
-      when: ansible_os_family == 'RedHat' and (docker_check.rc != 0 or 'base' in ansible_run_tags or 'all' in ansible_run_tags)
+      when: ansible_os_family == 'RedHat'
       tags: [base, always]
 
     - name: "[base] Instalar dependências e Docker (Família Debian: Ubuntu/Debian)"
@@ -154,6 +154,13 @@
         - 45876/tcp
       failed_when: false
       tags: [base]
+
+    - name: "[base] Aguardar socket do Docker estar ativo"
+      wait_for:
+        path: /var/run/docker.sock
+        state: present
+        timeout: 20
+      tags: [base, proxy, always]
 
     - name: "[base] Criar rede Docker compartilhada (proxy)"
       command: docker network create proxy

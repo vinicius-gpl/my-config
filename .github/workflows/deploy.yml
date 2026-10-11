@@ -49,12 +49,22 @@ jobs:
           ENV_PASSPHRASE: ${{ secrets.SSH_PASSPHRASE }}
           ACEROLA_KEY: ${{ secrets.ACEROLA_ANSIBLE_SSH_PRIVATE_KEY || secrets.ACEROLA_SSH_PRIVATE_KEY || secrets.FEDORA_ANSIBLE_SSH_PRIVATE_KEY || secrets.FEDORA_SSH_PRIVATE_KEY }}
           ORACLE_KEY: ${{ secrets.ORACLE_ANSIBLE_SSH_PRIVATE_KEY || secrets.ORACLE_SSH_PRIVATE_KEY || secrets.ROCKY_ANSIBLE_SSH_PRIVATE_KEY || secrets.ROCKY_SSH_PRIVATE_KEY }}
+          ACEROLA_PASSPHRASE: ${{ secrets.ACEROLA_SSH_PASSPHRASE || secrets.FEDORA_SSH_PASSPHRASE }}
+          ORACLE_PASSPHRASE: ${{ secrets.ORACLE_SSH_PASSPHRASE || secrets.ROCKY_SSH_PASSPHRASE }}
         run: |
           SSH_KEY="$ENV_SSH_KEY"
           if [ -z "$SSH_KEY" ]; then
             case "$TARGET_SERVER" in
               acerola) SSH_KEY="$ACEROLA_KEY" ;;
               oracle)  SSH_KEY="$ORACLE_KEY" ;;
+            esac
+          fi
+
+          PASSPHRASE="$ENV_PASSPHRASE"
+          if [ -z "$PASSPHRASE" ]; then
+            case "$TARGET_SERVER" in
+              acerola) PASSPHRASE="$ACEROLA_PASSPHRASE" ;;
+              oracle)  PASSPHRASE="$ORACLE_PASSPHRASE" ;;
             esac
           fi
 
@@ -71,9 +81,9 @@ jobs:
           echo "$SSH_KEY" | tr -d '\r' > /tmp/id_ci
           chmod 600 /tmp/id_ci
 
-          if [ -n "$ENV_PASSPHRASE" ]; then
+          if [ -n "$PASSPHRASE" ]; then
             echo '#!/bin/sh' > /tmp/ssh_askpass
-            echo 'echo "$ENV_PASSPHRASE"' >> /tmp/ssh_askpass
+            echo 'echo "$PASSPHRASE"' >> /tmp/ssh_askpass
             chmod +x /tmp/ssh_askpass
             DISPLAY=None SSH_ASKPASS=/tmp/ssh_askpass SSH_ASKPASS_REQUIRE=force ssh-add /tmp/id_ci
             rm -f /tmp/ssh_askpass

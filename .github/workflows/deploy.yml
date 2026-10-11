@@ -1,0 +1,170 @@
+name: Server Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      server:
+        description: 'Selecione o servidor alvo'
+        required: true
+        default: 'acerola'
+        type: choice
+        options:
+          - acerola
+          - homelab
+          - siaap
+      step:
+        description: 'Selecione o app/etapa para executar'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - base
+          - wireguard
+          - caddy
+          - portainer
+          - coolify
+          - supabase
+          - beszel
+          - cockpit
+      dry_run:
+        description: 'Modo simulação (--check)?'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  deploy:
+    name: Deploy em ${{ github.event.inputs.server }} (${{ github.event.inputs.step }})
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.server }}
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar chaves SSH e segredos
+        env:
+          TARGET_SERVER: ${{ github.event.inputs.server }}
+          ENV_SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          ENV_PASSPHRASE: ${{ secrets.SSH_PASSPHRASE }}
+          ACEROLA_KEY: ${{ secrets.ACEROLA_ANSIBLE_SSH_PRIVATE_KEY || secrets.ACEROLA_SSH_PRIVATE_KEY || secrets.FEDORA_ANSIBLE_SSH_PRIVATE_KEY || secrets.FEDORA_SSH_PRIVATE_KEY }}
+          HOMELAB_KEY: ${{ secrets.HOMELAB_ANSIBLE_SSH_PRIVATE_KEY || secrets.HOMELAB_SSH_PRIVATE_KEY || secrets.ROCKY_ANSIBLE_SSH_PRIVATE_KEY || secrets.ROCKY_SSH_PRIVATE_KEY }}
+          SIAAP_KEY: ${{ secrets.SIAAP_ANSIBLE_SSH_PRIVATE_KEY || secrets.SIAAP_SSH_PRIVATE_KEY }}
+        run: |
+          SSH_KEY="$ENV_SSH_KEY"
+          if [ -z "$SSH_KEY" ]; then
+            case "$TARGET_SERVER" in
+              acerola) SSH_KEY="$ACEROLA_KEY" ;;
+              homelab) SSH_KEY="$HOMELAB_KEY" ;;
+              siaap)   SSH_KEY="$SIAAP_KEY" ;;
+            esac
+          fi
+
+          if [ -z "$SSH_KEY" ]; then
+            echo "::error::Chave SSH não encontrada para o servidor '$TARGET_SERVER'! Cadastre 'SSH_PRIVATE_KEY' no Environment ou '${TARGET_SERVER^^}_SSH_PRIVATE_KEY' nas Secrets."
+            exit 1
+          fi
+
+          mkdir -p ~/.ssh
+          eval $(ssh-agent -s)
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
+          echo "SSH_AGENT_PID=$SSH_AGENT_PID" >> "$GITHUB_ENV"
+
+          echo "$SSH_KEY" | tr -d '\r' > /tmp/id_ci
+          chmod 600 /tmp/id_ci
+
+          if [ -n "$ENV_PASSPHRASE" ]; then
+            echo '#!/bin/sh' > /tmp/ssh_askpass
+            echo 'echo "$ENV_PASSPHRASE"' >> /tmp/ssh_askpass
+            chmod +x /tmp/ssh_askpass
+            DISPLAY=None SSH_ASKPASS=/tmp/ssh_askpass SSH_ASKPASS_REQUIRE=force ssh-add /tmp/id_ci
+            rm -f /tmp/ssh_askpass
+          else
+            ssh-add /tmp/id_ci
+          fi
+          rm -f /tmp/id_ci
+
+          echo "Chave SSH carregada com sucesso:"
+          ssh-add -l
+
+      - name: Instalar Ansible
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ansible
+
+      - name: Configurar inventário (hosts.ini)
+        env:
+          TARGET_SERVER: ${{ github.event.inputs.server }}
+          ENV_HOSTS_INI: ${{ secrets.ANSIBLE_HOSTS_INI || secrets.HOSTS_INI }}
+          ACEROLA_HOSTS: ${{ secrets.ACEROLA_ANSIBLE_HOSTS_INI || secrets.FEDORA_ANSIBLE_HOSTS_INI }}
+          HOMELAB_HOSTS: ${{ secrets.HOMELAB_ANSIBLE_HOSTS_INI || secrets.ROCKY_ANSIBLE_HOSTS_INI }}
+          SIAAP_HOSTS: ${{ secrets.SIAAP_ANSIBLE_HOSTS_INI }}
+        run: |
+          mkdir -p configuration/ansible
+          HOSTS_CONTENT="$ENV_HOSTS_INI"
+
+          if [ -z "$HOSTS_CONTENT" ]; then
+            case "$TARGET_SERVER" in
+              acerola) HOSTS_CONTENT="$ACEROLA_HOSTS" ;;
+              homelab) HOSTS_CONTENT="$HOMELAB_HOSTS" ;;
+              siaap)   HOSTS_CONTENT="$SIAAP_HOSTS" ;;
+            esac
+          fi
+
+          if [ -n "$HOSTS_CONTENT" ]; then
+            printf '%s\n' "$HOSTS_CONTENT" > configuration/ansible/hosts.ini
+          elif [ -f "configuration/servers/${TARGET_SERVER}/hosts.ini" ]; then
+            echo "Usando hosts.ini local do servidor ${TARGET_SERVER}..."
+            cp "configuration/servers/${TARGET_SERVER}/hosts.ini" configuration/ansible/hosts.ini
+          elif [ -f "configuration/servers/${TARGET_SERVER}/inventory.ini" ]; then
+            echo "Usando inventory.ini local do servidor ${TARGET_SERVER}..."
+            cp "configuration/servers/${TARGET_SERVER}/inventory.ini" configuration/ansible/hosts.ini
+          else
+            echo "::error::Nenhum inventário encontrado para o servidor '${TARGET_SERVER}'!"
+            exit 1
+          fi
+
+          chmod 600 configuration/ansible/hosts.ini
+
+      - name: Executar Playbook
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: "False"
+          ANSIBLE_FORCE_COLOR: "True"
+          TARGET_SERVER: ${{ github.event.inputs.server }}
+          ENV_BECOME_PASS: ${{ secrets.ANSIBLE_BECOME_PASSWORD || secrets.BECOME_PASSWORD }}
+          ACEROLA_BECOME_PASS: ${{ secrets.ACEROLA_ANSIBLE_BECOME_PASSWORD || secrets.FEDORA_ANSIBLE_BECOME_PASSWORD }}
+          HOMELAB_BECOME_PASS: ${{ secrets.HOMELAB_ANSIBLE_BECOME_PASSWORD || secrets.ROCKY_ANSIBLE_BECOME_PASSWORD }}
+          SIAAP_BECOME_PASS: ${{ secrets.SIAAP_ANSIBLE_BECOME_PASSWORD }}
+        run: |
+          BECOME_PASS="$ENV_BECOME_PASS"
+          if [ -z "$BECOME_PASS" ]; then
+            case "$TARGET_SERVER" in
+              acerola) BECOME_PASS="$ACEROLA_BECOME_PASS" ;;
+              homelab) BECOME_PASS="$HOMELAB_BECOME_PASS" ;;
+              siaap)   BECOME_PASS="$SIAAP_BECOME_PASS" ;;
+            esac
+          fi
+
+          TAG_ARG=""
+          if [ "${{ github.event.inputs.step }}" != "all" ]; then
+            TAG_ARG="--tags ${{ github.event.inputs.step }}"
+          fi
+
+          CHECK_ARG=""
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            CHECK_ARG="--check"
+          fi
+
+          EXTRA_VARS=""
+          if [ -n "$BECOME_PASS" ]; then
+            umask 077
+            python3 -c 'import json, os; json.dump({"ansible_become_password": os.environ["BECOME_PASS"]}, open("/tmp/become.json", "w"))'
+            EXTRA_VARS="--extra-vars @/tmp/become.json"
+          fi
+          trap 'rm -f /tmp/become.json' EXIT
+
+          ansible-playbook \
+            -i configuration/ansible/hosts.ini \
+            configuration/ansible/deploy.yml \
+            $TAG_ARG $CHECK_ARG $EXTRA_VARS

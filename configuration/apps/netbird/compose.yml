@@ -28,6 +28,7 @@ services:
     volumes:
       - ./config.yaml:/etc/netbird/config.yaml:ro
       - /opt/netbird/data:/var/lib/netbird
+    command: ["--config", "/etc/netbird/config.yaml"]
     environment:
       - NETBIRD_CONFIG=/etc/netbird/config.yaml
     logging:

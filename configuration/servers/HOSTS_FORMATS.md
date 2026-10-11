@@ -108,6 +108,19 @@ IP_DO_SERVIDOR ansible_user=root domain=meudominio.com email=admin@meudominio.co
 
 ---
 
+## 6. Formato: Cliente NetBird (Ingressar Nó na VPN)
+> Instala e conecta o cliente NetBird automaticamente usando a Setup Key gerada no painel web.
+
+```ini
+[servers]
+IP_DO_SERVIDOR ansible_user=root domain=acerola.app netbird_setup_key="CHAVE_SETUP_KEY_DO_PAINEL"
+```
+
+* `netbird_setup_key`: A chave gerada no menu **Setup Keys** do seu painel NetBird.
+* `netbird_mgmt_url`: *(Opcional)* URL de gerenciamento da sua VPN. Se omitido, assume `https://netbird.{{ domain }}`.
+
+---
+
 ## 🛠️ Geradores Rápidos de Segredos
 
 Se precisar gerar chaves aleatórias no terminal para colocar no `hosts.ini`:

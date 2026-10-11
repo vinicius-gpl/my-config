@@ -25,6 +25,7 @@ on:
           - beszel-agent
           - wireguard
           - netbird
+          - netbird-client
           - caddy
           - cockpit
           - prune

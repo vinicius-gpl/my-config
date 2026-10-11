@@ -771,6 +771,41 @@
       tags: [netbird]
 
     # =========================================================================
+    # === NETBIRD CLIENT (PARA INGRESSAR NÓS NA VPN) ===
+    # =========================================================================
+
+    - name: "[netbird-client] Verificar se NetBird Client já está instalado"
+      command: which netbird
+      register: netbird_cli_check
+      failed_when: false
+      changed_when: false
+      tags: [netbird-client, netbird_client]
+
+    - name: "[netbird-client] Instalar NetBird Client oficial (se não instalado)"
+      shell: curl -fsSL https://pkgs.netbird.io/install.sh | sh
+      when: netbird_cli_check.rc != 0
+      tags: [netbird-client, netbird_client]
+
+    - name: "[netbird-client] Iniciar e habilitar serviço do NetBird"
+      systemd:
+        name: netbird
+        state: started
+        enabled: yes
+      tags: [netbird-client, netbird_client]
+
+    - name: "[netbird-client] Conectar ao servidor NetBird com Setup Key"
+      command: >
+        netbird up
+        --management-url "{{ netbird_mgmt_url | default('https://netbird.' + domain) }}"
+        --setup-key "{{ netbird_setup_key }}"
+      when: netbird_setup_key is defined and (netbird_setup_key | length > 0)
+      register: netbird_connect_result
+      changed_when: "'Connected' in netbird_connect_result.stdout or netbird_connect_result.rc == 0"
+      failed_when: false
+      tags: [netbird-client, netbird_client]
+
+
+    # =========================================================================
     # === COCKPIT ===
     # =========================================================================
 

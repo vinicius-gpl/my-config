@@ -380,6 +380,8 @@
         - "{{ apps_dir }}/portainer/config/portainer.caddy"
         - "{{ apps_dir }}/wireguard/config/wireguard.caddy"
         - "{{ apps_dir }}/cockpit/cockpit.caddy"
+        - "{{ apps_dir }}/netbird/config/netbird.caddy"
+        - "{{ apps_dir }}/beszel/config/beszel.caddy"
       failed_when: false
       tags: [caddy]
 
@@ -787,7 +789,15 @@
       failed_when: false
       tags: [netbird]
 
-    - name: "[netbird] Implantar configuração netbird.caddy (se caddy existir)"
+    - name: "[netbird] Garantir que diretório conf.d do Caddy existe"
+      file:
+        path: "{{ caddy_path }}/conf.d"
+        state: directory
+        mode: '0755'
+      failed_when: false
+      tags: [netbird]
+
+    - name: "[netbird] Implantar configuração netbird.caddy"
       copy:
         src: "{{ apps_dir }}/netbird/config/netbird.caddy"
         dest: "{{ caddy_path }}/conf.d/netbird.caddy"

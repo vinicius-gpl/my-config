@@ -222,7 +222,7 @@
       copy:
         dest: "{{ wireguard_path }}/.env"
         content: |
-          WG_HOST={{ domain | default(ansible_host) }}
+          WG_HOST={{ wg_host | default(domain) | default(ansible_host) }}
           PASSWORD_HASH={{ final_wg_hash }}
         mode: '0600'
       tags: [wireguard]

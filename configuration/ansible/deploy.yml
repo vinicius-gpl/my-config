@@ -847,7 +847,7 @@
       tags: [netbird-client, netbird_client]
 
     - name: "[netbird-client] Instalar NetBird Client oficial (se não instalado)"
-      shell: curl -fsSL https://pkgs.netbird.io/install.sh | sh
+      shell: curl -fsSL https://pkgs.netbird.io/install.sh | env USE_BIN_INSTALL=true sh
       when: netbird_cli_check.rc != 0
       tags: [netbird-client, netbird_client]
 

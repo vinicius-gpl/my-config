@@ -24,7 +24,7 @@ ansible -i ansible/hosts.ini relay_servers -m ping
 
 ## Configurar Inventário
 
-Edite o arquivo `ansible/hosts.ini` (ou cadastre no GitHub Secrets como `FEDORA_ANSIBLE_HOSTS_INI`):
+Edite o arquivo `inventory.ini` (ou cadastre no GitHub Secrets como `ACEROLA_ANSIBLE_HOSTS_INI` / `ANSIBLE_HOSTS_INI` no Environment `acerola`):
 
 ```ini
 [relay_servers]
@@ -40,7 +40,7 @@ IP_DO_SERVIDOR ansible_user=root ansible_ssh_forward_agent=true \
 ## Executar o Playbook
 
 ```bash
-ansible-playbook -i ansible/hosts.ini ansible/setup_server.yml
+ansible-playbook -i configuration/servers/acerola/inventory.ini configuration/ansible/deploy.yml
 ```
 
 O playbook provisiona automaticamente:

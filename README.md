@@ -9,9 +9,8 @@ Repositório central de configurações, automações de infraestrutura e dotfil
 ```text
 configuration/
 ├── servers/             # 🖥️ Inventários e variáveis por SERVIDOR (independente de distro)
-│   ├── acerola/         # Servidor Relay público (Caddy, WireGuard, Portainer, Beszel)
-│   ├── homelab/         # Servidor Homelab / Local (Coolify, Supabase, Beszel, Cockpit)
-│   └── siaap/           # Servidor SIAAP (Debian / Nginx)
+│   ├── acerola/         # Servidor Acerola
+│   └── oracle/          # Servidor Oracle
 │
 ├── apps/                # 📦 Catálogo de APPS (Docker Compose + configs prontas)
 │   ├── wireguard/       # wg-easy com suporte a host network e QR Code
@@ -42,17 +41,17 @@ O repositório utiliza **um único workflow unificado** ([`.github/workflows/dep
 
 Para executar um deploy:
 1. Vá na aba **Actions** > **Server Deploy** > **Run workflow**.
-2. Selecione o **servidor alvo**: `acerola`, `homelab` ou `siaap`.
+2. Selecione o **servidor alvo**: `acerola` ou `oracle`.
 3. Selecione a **etapa / app**: `all`, `base`, `wireguard`, `caddy`, `portainer`, `coolify`, `supabase`, `beszel`, `cockpit`.
 4. Clique em **Run workflow**.
 
 ### Autenticação no GitHub (Environments)
-Você pode cadastrar as credenciais em **Settings > Environments** criando um ambiente para cada servidor (`acerola`, `homelab`, `siaap`):
+Você pode cadastrar as credenciais em **Settings > Environments** criando um ambiente para cada servidor (`acerola` e `oracle`):
 - `SSH_PRIVATE_KEY`
 - `ANSIBLE_HOSTS_INI`
 - `ANSIBLE_BECOME_PASSWORD`
 
-*(Se não usar Environments, o workflow também aceita secrets com prefixo do servidor, ex: `ACEROLA_ANSIBLE_HOSTS_INI`).*
+*(Se não usar Environments, o workflow também aceita secrets com prefixo do servidor, ex: `ACEROLA_ANSIBLE_HOSTS_INI` ou `ORACLE_ANSIBLE_HOSTS_INI`).*
 
 ---
 

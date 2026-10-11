@@ -152,6 +152,7 @@
         - 80/tcp
         - 443/tcp
         - 443/udp
+        - 8000/tcp
         - 7824/udp
         - 45876/tcp
       failed_when: false
@@ -438,6 +439,15 @@
         src: "{{ apps_dir }}/portainer/config/portainer.caddy"
         dest: "{{ caddy_path }}/conf.d/portainer.caddy"
         mode: '0644'
+      failed_when: false
+      tags: [portainer]
+
+    - name: "[portainer] Abrir porta do Edge Tunnel (8000) no firewall"
+      firewalld:
+        port: 8000/tcp
+        permanent: yes
+        state: enabled
+        immediate: yes
       failed_when: false
       tags: [portainer]
 

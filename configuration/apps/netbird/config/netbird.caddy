@@ -1,0 +1,24 @@
+netbird.{$DOMAIN} {
+    encode zstd gzip
+
+    # Rotas nativas gRPC (Signal e Management)
+    @grpc header Content-Type application/grpc*
+    reverse_proxy @grpc h2c://netbird-server:80
+
+    # Rotas de WebSocket, API, Relay e Autenticação
+    @backend path /relay* /ws-proxy/* /api/* /oauth2/* /signalexchange.SignalExchange/* /management.ManagementService/*
+    reverse_proxy @backend netbird-server:80 {
+        header_up Host {host}
+        header_up X-Real-IP {remote}
+        header_up X-Forwarded-For {remote}
+        header_up X-Forwarded-Proto {scheme}
+    }
+
+    # Dashboard Web (todo o restante)
+    reverse_proxy /* netbird-dashboard:80
+
+    log {
+        output file /data/netbird-access.log
+        format json
+    }
+}

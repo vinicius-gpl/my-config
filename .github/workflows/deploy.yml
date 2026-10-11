@@ -27,6 +27,7 @@ on:
           - supabase
           - beszel
           - beszel-hub
+          - netbird
           - cockpit
       dry_run:
         description: 'Modo simulação (--check)?'

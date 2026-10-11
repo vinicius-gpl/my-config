@@ -161,6 +161,26 @@
         reload: yes
       tags: [wireguard]
 
+    - name: "[wireguard] Carregar módulos do kernel para iptables nat (exigidos pelo wg-quick)"
+      modprobe:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - ip_tables
+        - iptable_nat
+      failed_when: false
+      tags: [wireguard]
+
+    - name: "[wireguard] Persistir módulos do kernel em /etc/modules-load.d/wireguard.conf"
+      copy:
+        dest: /etc/modules-load.d/wireguard.conf
+        content: |
+          ip_tables
+          iptable_nat
+        mode: '0644'
+      failed_when: false
+      tags: [wireguard]
+
     - name: "[wireguard] Criar diretórios de deploy"
       file:
         path: "{{ item }}"

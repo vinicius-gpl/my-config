@@ -1,10 +1,4 @@
 monitor.{$DOMAIN} {
-    @blocked not remote_ip 10.0.0.0/24
-
-    handle @blocked {
-        respond 403
-    }
-
     header {
         Strict-Transport-Security "max-age=31536000;"
         X-Content-Type-Options "nosniff"

@@ -160,6 +160,7 @@ jobs:
         env:
           ANSIBLE_HOST_KEY_CHECKING: "False"
           ANSIBLE_FORCE_COLOR: "True"
+          ANSIBLE_SSH_ARGS: "-o ServerAliveInterval=15 -o ServerAliveCountMax=20 -o TCPKeepAlive=yes -o ControlMaster=auto -o ControlPersist=60s"
           TARGET_SERVER: ${{ github.event.inputs.server }}
           ENV_BECOME_PASS: ${{ secrets.ANSIBLE_BECOME_PASSWORD || secrets.BECOME_PASSWORD }}
           ACEROLA_BECOME_PASS: ${{ secrets.ACEROLA_ANSIBLE_BECOME_PASSWORD || secrets.FEDORA_ANSIBLE_BECOME_PASSWORD }}

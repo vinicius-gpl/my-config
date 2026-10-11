@@ -8,10 +8,11 @@ Edite o arquivo `inventory.ini` ou cadastre a secret `ORACLE_ANSIBLE_HOSTS_INI` 
 
 ```ini
 [servers]
-IP_DO_SERVIDOR_ORACLE ansible_user=ubuntu ansible_become=true ansible_ssh_forward_agent=true \
+IP_DO_SERVIDOR_ORACLE ansible_user=rocky ansible_become=true ansible_ssh_forward_agent=true \
   domain=seusite.com \
   email=seu_email@dominio.com
 ```
+*(Se sua imagem Oracle usar o usuário padrão da Oracle, use `ansible_user=opc`)*
 
 ## Deploy via GitHub Actions
 

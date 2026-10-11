@@ -26,6 +26,27 @@
       changed_when: false
       tags: [always]
 
+    - name: "[base] Garantir 2GB de Swap ativo em servidores com pouca RAM (Rocky Linux / Oracle Micro)"
+      shell: |
+        if [ ! -f /swapfile ] || [ $(stat -c %s /swapfile 2>/dev/null || echo 0) -lt 1048576000 ]; then
+          dd if=/dev/zero of=/swapfile bs=1M count=2048 status=none
+          chmod 0600 /swapfile
+          mkswap /swapfile
+        fi
+        swapon /swapfile 2>/dev/null || true
+      when: (ansible_swaptotal_mb | default(0) < 512) and (ansible_memtotal_mb | default(2048) < 2048)
+      tags: [base, always]
+
+    - name: "[base] Persistir swapfile no /etc/fstab"
+      mount:
+        name: none
+        src: /swapfile
+        fstype: swap
+        opts: sw
+        state: present
+      when: (ansible_swaptotal_mb | default(0) < 512) and (ansible_memtotal_mb | default(2048) < 2048)
+      tags: [base, always]
+
     - name: "[base] Instalar dependências (Família RedHat: Fedora/Rocky/CentOS)"
       dnf:
         name:

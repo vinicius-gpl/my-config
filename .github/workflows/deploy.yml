@@ -1,10 +1,11 @@
-name: Server Deploy
+name: Ansible Deploy
+run-name: Deploy em ${{ inputs.server }} (${{ inputs.step }})
 
 on:
   workflow_dispatch:
     inputs:
       server:
-        description: 'Selecione o servidor alvo'
+        description: 'Servidor alvo (acerola | oracle)'
         required: true
         default: 'acerola'
         type: choice
@@ -12,7 +13,7 @@ on:
           - acerola
           - oracle
       step:
-        description: 'Selecione o app/etapa para executar'
+        description: 'App / Etapa para executar'
         required: true
         default: 'all'
         type: choice

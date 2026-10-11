@@ -904,6 +904,19 @@
       failed_when: false
       tags: [cockpit]
 
+    - name: "[cockpit] Implantar configuração cockpit.caddy (se caddy existir)"
+      copy:
+        src: "{{ apps_dir }}/cockpit/cockpit.caddy"
+        dest: "{{ caddy_path }}/conf.d/cockpit.caddy"
+        mode: '0644'
+      failed_when: false
+      tags: [cockpit]
+
+    - name: "[cockpit] Recarregar Caddy para aplicar cockpit.{{ domain | default('') }}"
+      command: docker exec caddy caddy reload --config /etc/caddy/Caddyfile
+      failed_when: false
+      tags: [cockpit]
+
   handlers:
     - name: Restart cockpit
       systemd:

@@ -42,16 +42,19 @@ O repositório utiliza **um único workflow unificado** ([`.github/workflows/dep
 Para executar um deploy:
 1. Vá na aba **Actions** > **Server Deploy** > **Run workflow**.
 2. Selecione o **servidor alvo**: `acerola` ou `oracle`.
-3. Selecione a **etapa / app**: `all`, `base`, `wireguard`, `caddy`, `portainer`, `coolify`, `supabase`, `beszel`, `cockpit`.
+3. Selecione a **etapa / app**: `all`, `base`, `wireguard`, `caddy`, `portainer`, `coolify`, `supabase`, `beszel`, `beszel-hub`, `cockpit`.
 4. Clique em **Run workflow**.
 
 ### Autenticação no GitHub (Environments)
 Você pode cadastrar as credenciais em **Settings > Environments** criando um ambiente para cada servidor (`acerola` e `oracle`):
 - `SSH_PRIVATE_KEY`
-- `ANSIBLE_HOSTS_INI`
-- `ANSIBLE_BECOME_PASSWORD`
+- `ANSIBLE_HOSTS_INI` (veja modelos em [`configuration/servers/HOSTS_FORMATS.md`](configuration/servers/HOSTS_FORMATS.md))
+- `SSH_PASSPHRASE` (opcional)
+- `ANSIBLE_BECOME_PASSWORD` (opcional)
 
 *(Se não usar Environments, o workflow também aceita secrets com prefixo do servidor, ex: `ACEROLA_ANSIBLE_HOSTS_INI` ou `ORACLE_ANSIBLE_HOSTS_INI`).*
+
+Consulte o [**Guia de Formatos de Inventário (`HOSTS_FORMATS.md`)**](configuration/servers/HOSTS_FORMATS.md) para todos os modelos prontos de `hosts.ini`.
 
 ---
 

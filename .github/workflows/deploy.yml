@@ -25,6 +25,7 @@ on:
           - coolify
           - supabase
           - beszel
+          - beszel-hub
           - cockpit
       dry_run:
         description: 'Modo simulação (--check)?'

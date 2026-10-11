@@ -1,0 +1,182 @@
+---
+- name: Clean / Teardown Server Services
+  hosts: all
+  become: yes
+  vars:
+    caddy_path: "/opt/caddy"
+    beszel_path: "/opt/beszel"
+    beszel_hub_path: "/opt/beszel-hub"
+    portainer_path: "/opt/portainer"
+    wireguard_path: "/opt/wireguard"
+    coolify_path: "/opt/coolify"
+    supabase_path: "/opt/supabase"
+    netbird_path: "/opt/netbird"
+    remove_volumes: "{{ remove_volumes | default(false) }}"
+
+  tasks:
+    # =========================================================================
+    # === BESZEL HUB ===
+    # =========================================================================
+    - name: "[beszel-hub] Parar e remover container do Beszel Hub"
+      command: docker rm -f beszel
+      failed_when: false
+      tags: [beszel-hub, beszel_hub, dashboards]
+
+    - name: "[beszel-hub] Remover diretório de deploy do Beszel Hub"
+      file:
+        path: "{{ beszel_hub_path }}"
+        state: absent
+      tags: [beszel-hub, beszel_hub, dashboards]
+
+    - name: "[beszel-hub] Remover volume beszel-data (se solicitado)"
+      command: docker volume rm beszel-data
+      failed_when: false
+      when: remove_volumes | bool
+      tags: [beszel-hub, beszel_hub, dashboards]
+
+    - name: "[beszel-hub] Remover configuração Caddy do Beszel Hub"
+      file:
+        path: "{{ caddy_path }}/conf.d/beszel.caddy"
+        state: absent
+      tags: [beszel-hub, beszel_hub, dashboards]
+
+    # =========================================================================
+    # === BESZEL AGENT ===
+    # =========================================================================
+    - name: "[beszel-agent] Parar e remover container do Beszel Agent"
+      command: docker rm -f beszel-agent
+      failed_when: false
+      tags: [beszel-agent, beszel_agent]
+
+    - name: "[beszel-agent] Remover diretório de deploy do Beszel Agent"
+      file:
+        path: "{{ beszel_path }}"
+        state: absent
+      tags: [beszel-agent, beszel_agent]
+
+    # =========================================================================
+    # === PORTAINER SERVER ===
+    # =========================================================================
+    - name: "[portainer] Parar e remover container do Portainer Server"
+      command: docker rm -f portainer
+      failed_when: false
+      tags: [portainer, dashboards]
+
+    - name: "[portainer] Remover volume portainer-data (se solicitado)"
+      command: docker volume rm portainer-data
+      failed_when: false
+      when: remove_volumes | bool
+      tags: [portainer, dashboards]
+
+    - name: "[portainer] Remover configuração Caddy do Portainer Server"
+      file:
+        path: "{{ caddy_path }}/conf.d/portainer.caddy"
+        state: absent
+      tags: [portainer, dashboards]
+
+    # =========================================================================
+    # === PORTAINER AGENT ===
+    # =========================================================================
+    - name: "[portainer-agent] Parar e remover container do Portainer Agent"
+      command: docker rm -f portainer-agent
+      failed_when: false
+      tags: [portainer-agent, portainer_agent]
+
+    # =========================================================================
+    # === WIREGUARD ===
+    # =========================================================================
+    - name: "[wireguard] Parar e remover container wg-easy"
+      command: docker rm -f wg-easy
+      failed_when: false
+      tags: [wireguard]
+
+    - name: "[wireguard] Remover diretório de deploy do WireGuard"
+      file:
+        path: "{{ wireguard_path }}"
+        state: absent
+      when: remove_volumes | bool
+      tags: [wireguard]
+
+    - name: "[wireguard] Remover configuração Caddy do WireGuard"
+      file:
+        path: "{{ caddy_path }}/conf.d/wireguard.caddy"
+        state: absent
+      tags: [wireguard]
+
+    # =========================================================================
+    # === NETBIRD ===
+    # =========================================================================
+    - name: "[netbird] Parar e remover containers do NetBird"
+      command: docker rm -f netbird-server netbird-dashboard
+      failed_when: false
+      tags: [netbird]
+
+    - name: "[netbird] Remover diretório de deploy do NetBird"
+      file:
+        path: "{{ netbird_path }}"
+        state: absent
+      when: remove_volumes | bool
+      tags: [netbird]
+
+    - name: "[netbird] Remover configuração Caddy do NetBird"
+      file:
+        path: "{{ caddy_path }}/conf.d/netbird.caddy"
+        state: absent
+      tags: [netbird]
+
+    # =========================================================================
+    # === CADDY ===
+    # =========================================================================
+    - name: "[caddy] Parar e remover container Caddy"
+      command: docker rm -f caddy
+      failed_when: false
+      tags: [caddy]
+
+    - name: "[caddy] Remover diretório do Caddy (se solicitado)"
+      file:
+        path: "{{ caddy_path }}"
+        state: absent
+      when: remove_volumes | bool
+      tags: [caddy]
+
+    # =========================================================================
+    # === COCKPIT ===
+    # =========================================================================
+    - name: "[cockpit] Parar e desabilitar Cockpit"
+      systemd:
+        name: "{{ item }}"
+        state: stopped
+        enabled: no
+      loop:
+        - cockpit.socket
+        - cockpit
+      failed_when: false
+      tags: [cockpit]
+
+    - name: "[cockpit] Remover configuração Caddy do Cockpit"
+      file:
+        path: "{{ caddy_path }}/conf.d/cockpit.caddy"
+        state: absent
+      tags: [cockpit]
+
+    # =========================================================================
+    # === RECARREGAR CADDY (SE CADDY ESTIVER ATIVO) ===
+    # =========================================================================
+    - name: "[caddy] Recarregar Caddy após remoção de serviços"
+      command: docker exec caddy caddy reload --config /etc/caddy/Caddyfile
+      failed_when: false
+      tags: [beszel-hub, beszel_hub, portainer, wireguard, netbird, cockpit, dashboards]
+
+    # =========================================================================
+    # === DOCKER PRUNE (LIMPEZA DE IMAGENS ÓRFÃS / SISTEMA) ===
+    # =========================================================================
+    - name: "[prune] Limpar imagens Docker não utilizadas"
+      command: docker image prune -af --filter "until=24h"
+      failed_when: false
+      tags: [prune, docker-prune]
+
+    - name: "[prune] Limpar volumes Docker órfãos (se solicitado)"
+      command: docker volume prune -f
+      failed_when: false
+      when: remove_volumes | bool
+      tags: [prune, docker-prune]

@@ -23,6 +23,7 @@ on:
           - wireguard
           - caddy
           - portainer
+          - portainer-agent
           - coolify
           - supabase
           - beszel

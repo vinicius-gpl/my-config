@@ -13,6 +13,8 @@
     supabase_path: "/opt/supabase"
     beszel_hub_path: "/opt/beszel-hub"
     netbird_path: "/opt/netbird"
+    portainer_edge_id: ""
+    portainer_edge_key: ""
 
   tasks:
     # =========================================================================
@@ -453,6 +455,15 @@
         path: "{{ portainer_path }}"
         state: directory
         mode: '0755'
+      tags: [portainer-agent, portainer_agent]
+
+    - name: "[portainer-agent] Validar se portainer_edge_id foi informado quando edge_key está ativa"
+      fail:
+        msg: "Você informou 'portainer_edge_key', mas 'portainer_edge_id' está faltando no inventário! Copie o EDGE_ID gerado no Portainer e adicione 'portainer_edge_id=\"SEU_EDGE_ID\"' no hosts.ini ou Secret."
+      when:
+        - portainer_edge_key is defined
+        - portainer_edge_key | length > 0
+        - portainer_edge_id is not defined or (portainer_edge_id | length == 0)
       tags: [portainer-agent, portainer_agent]
 
     - name: "[portainer-agent] Gerar docker-compose do Portainer Agent"

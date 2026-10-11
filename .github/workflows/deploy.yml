@@ -79,17 +79,39 @@ jobs:
           echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
           echo "SSH_AGENT_PID=$SSH_AGENT_PID" >> "$GITHUB_ENV"
 
-          echo "$SSH_KEY" | tr -d '\r' > /tmp/id_ci
+          # Normaliza quebras de linha literais caso a secret tenha sido salva com "\n" ou com CRLF
+          if echo "$SSH_KEY" | grep -q '\\n'; then
+            SSH_KEY=$(printf '%b' "$SSH_KEY")
+          fi
+
+          printf '%s\n' "$SSH_KEY" | tr -d '\r' > /tmp/id_ci
           chmod 600 /tmp/id_ci
 
+          if ! grep -q -- "-----BEGIN" /tmp/id_ci; then
+            echo "::error::A chave SSH fornecida não é uma chave privada válida (falta o cabeçalho '-----BEGIN ...')! Verifique se você não copiou a chave pública (.pub) por engano no GitHub Secrets."
+            rm -f /tmp/id_ci
+            exit 1
+          fi
+
+          export PASSPHRASE
           if [ -n "$PASSPHRASE" ]; then
-            echo '#!/bin/sh' > /tmp/ssh_askpass
-            echo 'echo "$PASSPHRASE"' >> /tmp/ssh_askpass
-            chmod +x /tmp/ssh_askpass
-            DISPLAY=None SSH_ASKPASS=/tmp/ssh_askpass SSH_ASKPASS_REQUIRE=force ssh-add /tmp/id_ci
+            cat << 'EOF' > /tmp/ssh_askpass
+#!/bin/sh
+exec printf '%s\n' "$PASSPHRASE"
+EOF
+            chmod 700 /tmp/ssh_askpass
+            if ! DISPLAY=None SSH_ASKPASS=/tmp/ssh_askpass SSH_ASKPASS_REQUIRE=force ssh-add /tmp/id_ci; then
+              echo "::error::Falha ao desbloquear a chave SSH com a passphrase fornecida! Verifique o segredo 'SSH_PASSPHRASE' ou '${TARGET_SERVER^^}_SSH_PASSPHRASE'."
+              rm -f /tmp/ssh_askpass /tmp/id_ci
+              exit 1
+            fi
             rm -f /tmp/ssh_askpass
           else
-            ssh-add /tmp/id_ci
+            if ! ssh-add /tmp/id_ci; then
+              echo "::error::Falha ao carregar a chave SSH! Se a sua chave foi gerada com senha (passphrase), cadastre a secret 'SSH_PASSPHRASE' ou '${TARGET_SERVER^^}_SSH_PASSPHRASE'. Se não possui senha, confirme se a chave privada está completa."
+              rm -f /tmp/id_ci
+              exit 1
+            fi
           fi
           rm -f /tmp/id_ci
 

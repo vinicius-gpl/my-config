@@ -27,11 +27,12 @@ configuration/
 │   ├── deploy.yml       # Playbook unificado multi-servidor / multi-app
 │   └── hosts.ini        # Inventário ativo gerado
 │
-└── desktop/             # 💻 Ambientes Desktop e Dotfiles
-    ├── arch/            # Provisionamento Ansible do desktop Arch (pacman/yay/Hyprland)
-    ├── windows/         # Scripts e ajustes do Windows (ConPTY, teclado, SSH)
-    ├── dotfiles/        # Configurações de shell e terminais (.config, fish, zellij, kitty)
-    └── git-ssh-signing/ # Automação de assinatura de commits via chave SSH (Linux & Windows)
+└── desktop/             # 💻 Ambientes Desktop e Workstations
+    ├── ansible/         # Provisionamento Ansible local (Arch Linux / Hyprland)
+    ├── dotfiles/        # Configurações puras de ambiente (linux e windows)
+    ├── scripts/         # Scripts utilitários standalone (SSH signing, Windows tweaks)
+    ├── themes/          # Temas visuais (GRUB bootloader)
+    └── docker/          # Stacks e configs Docker locais de desktop
 ```
 
 ---

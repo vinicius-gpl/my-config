@@ -1,92 +1,100 @@
-# 💻 Ambientes Desktop & Dotfiles
+# 💻 Ambientes Desktop & Workstations
 
-Este diretório centraliza todas as configurações, scripts de personalização, gerenciadores de pacotes e automações para estações de trabalho pessoais (**Arch Linux** e **Windows 11**), além dos **Dotfiles** compartilhados.
+Estrutura unificada e modular para estações de trabalho pessoais (**Linux / Arch Linux** e **Windows 11**), com separação estrita de responsabilidades entre **Ansible**, **Dotfiles**, **Scripts**, **Temas** e **Docker**.
 
 ---
 
-## 📂 Estrutura de Diretórios
+## 🏗️ Estrutura Organizada
 
 ```text
 configuration/desktop/
-├── arch/                     # 🐧 Provisionamento completo para Arch Linux (Hyprland)
-│   ├── ansible/              # Playbook local Ansible (pacman, yay, pacotes, symlinks)
-│   └── README.md             # Instruções de execução local no Arch
 │
-├── windows/                  # 🪟 Configurações e utilitários para Windows 11
-│   ├── .config/              # Dotfiles do Windows (WezTerm, PowerShell, Zellij, Alacritty)
-│   ├── alacritty-conpty/     # Script para compilar/instalar ConPTY atualizado no Windows
-│   ├── git-ssh-signing/      # Script PowerShell para assinar commits com SSH Agent
-│   ├── keyboard-us-intl/     # Trava de layout do teclado US Internacional no Windows 11
-│   ├── scripts-install-apps/ # Instalação de apps em massa via WinGet
-│   └── windows-11-generate-iso/ # Script oscdimg para gerar ISO limpa do Windows 11
+├── ansible/                  # 🤖 Automação e Provisionamento (Arch Linux / Hyprland)
+│   ├── inventory.ini         # Inventário local (localhost)
+│   ├── setup_desktop.yml     # Playbook que instala pacotes (pacman/yay) e linka dotfiles
+│   └── README.md             # Guia de execução passo a passo
 │
-├── dotfiles/                 # ⚙️ Dotfiles universais (Shell, Terminais, Editores, WM)
-│   ├── .dotfiles/            # Pastas de configuração (.config) prontas para symlink:
-│   │   ├── fish/             # Fish shell
-│   │   ├── hypr/             # Hyprland Wayland compositor + hyprlock/hypridle
-│   │   ├── kitty/            # Kitty terminal
-│   │   ├── lazygit/          # TUI do Git
-│   │   ├── mise/             # Gerenciador de runtimes e ferramentas
-│   │   ├── nvim/             # Neovim (configs completas)
-│   │   ├── ohmyposh/         # Prompt customizado
-│   │   ├── wezterm/          # WezTerm terminal
-│   │   ├── zed/              # Zed editor
-│   │   ├── zellij/           # Multiplexador de terminal
+├── dotfiles/                 # ⚙️ Arquivos de Configuração Puros (Sem scripts ou binários)
+│   ├── linux/                # Configurações do Linux (para ~/.config e ~/)
 │   │   ├── fastfetch/        # Informações de sistema
-│   │   ├── .bashrc           # Configuração de Bash
+│   │   ├── fish/             # Shell Fish
+│   │   ├── hypr/             # Hyprland compositor + hyprlock/hypridle
+│   │   ├── kitty/            # Terminal Kitty
+│   │   ├── lazygit/          # TUI do Git
+│   │   ├── mise/             # Gerenciador de runtimes e polyglot tool versioning
+│   │   ├── nvim/             # Editor Neovim
+│   │   ├── ohmyposh/         # Temas de prompt Oh My Posh
+│   │   ├── wezterm/          # Terminal WezTerm
+│   │   ├── zed/              # Editor Zed
+│   │   ├── zellij/           # Multiplexador de terminal
+│   │   ├── .bashrc           # Configuração base Bash
 │   │   └── starship.toml     # Prompt Starship
-│   ├── theme/                # Tema do GRUB (Frieren Dark Window Left) + install.sh
-│   └── .docker/              # Docker compose locais de suporte (DNS, Manga)
+│   └── windows/              # Configurações do Windows (AppData e Perfis)
+│       ├── alacritty/        # alacritty.toml e tema Catppuccin Mocha
+│       ├── powershell/       # Microsoft.PowerShell_profile.ps1
+│       ├── wezterm/          # .wezterm.lua
+│       ├── zellij/           # config.kdl
+│       ├── git-hooks/        # Hooks globais do Git (prepare-commit-msg)
+│       └── posh/             # posh.json
 │
-└── git-ssh-signing/          # 🔐 Automação de assinatura de commits Git (Multi-OS)
-    ├── enable-ssh-signing.sh # Script para Linux (PAM/Secret-tool/GCR/systemd)
-    ├── enable-ssh-signing.ps1# Script para Windows (OpenSSH Authentication Agent)
-    └── README.md             # Guia de configuração e cadastro no GitHub
+├── scripts/                  # 📜 Scripts Utilitários Standalone (Execução direta)
+│   ├── git-ssh-signing/      # Automação de assinatura de commits via SSH Agent (Multi-OS)
+│   │   ├── enable-ssh-signing.sh   # Script Bash (Linux)
+│   │   ├── enable-ssh-signing.ps1  # Script PowerShell (Windows)
+│   │   └── README.md               # Instruções e integração com GitHub
+│   └── windows/              # Utilitários de automação do Windows
+│       ├── alacritty-conpty/ # Injeção de ConPTY atualizado no Alacritty
+│       ├── keyboard-us-intl/ # Trava de layout do teclado US Internacional no Windows 11
+│       ├── install-apps/     # Instalação de ferramentas em lote via WinGet
+│       └── generate-iso/     # Criação de imagem ISO limpa do Windows 11 via oscdimg
+│
+├── themes/                   # 🎨 Temas Visuais e Bootloader
+│   └── grub/                 # Tema Frieren Dark para o GRUB bootloader
+│       ├── frieren-window-left-dark/
+│       └── install.sh        # Script instalador do tema
+│
+└── docker/                   # 🐳 Stacks e Configurações Docker Locais de Desktop
+    ├── dns/                  # Configurações locais AdGuard, Pi-hole e Unbound
+    └── mangas/               # Configurações Komf e Manga-dlp
 ```
 
 ---
 
-## 🐧 1. Arch Linux (Hyprland + Wayland)
+## 🚀 Como Usar Cada Módulo
 
-O provisionamento do Arch é feito diretamente na própria máquina (conexão `local`), criando symlinks que apontam para este repositório:
+### 1. Provisionar Desktop Arch Linux (Hyprland)
+O provisionamento é 100% automatizado via Ansible local:
 
 ```bash
-# Instalar o Ansible
+# 1. Instalar o Ansible
 sudo pacman -S --needed ansible
 
-# Entrar no diretório e executar
-cd configuration/desktop/arch/ansible
+# 2. Executar o playbook do desktop
+cd configuration/desktop/ansible
 sudo -v && ansible-playbook -i inventory.ini setup_desktop.yml -K
 ```
-
-*Consulte [`configuration/desktop/arch/README.md`](./arch/README.md) para detalhes de tags (`pkgs`, `dotfiles`, `yay`, `shell`).*
-
----
-
-## 🪟 2. Windows 11
-
-No Windows, cada pasta resolve um ponto de fricção específico do sistema operacional:
-
-* **Instalar Programas:** Execute `winget import configuration/desktop/windows/scripts-install-apps/install.winget` para instalar todo o ecossistema de ferramentas de desenvolvimento.
-* **Travar Teclado US-Intl:** O Windows 11 frequentemente adiciona layouts indesejados (ex: ABNT). O script [`keyboard-us-intl/lock-us-intl.ps1`](./windows/keyboard-us-intl/README.md) remove os layouts secundários e fixa o US-Internacional.
-* **Corrigir Terminal (ConPTY):** O script [`alacritty-conpty/install-conpty.ps1`](./windows/alacritty-conpty/README.md) injeta uma versão moderna da OpenConsole no Alacritty para suportar emojis, cores 24-bit e rendering limpo.
-* **Perfis e Dotfiles:** Os arquivos em `.config` fornecem o perfil do PowerShell (`Microsoft.PowerShell_profile.ps1`), WezTerm (`.wezterm.lua`), Zellij e Alacritty.
+*Ele instala os pacotes oficiais, pacotes do AUR via yay, define o shell Fish e cria symlinks automáticos apontando de `~/.config` para `configuration/desktop/dotfiles/linux`.*
 
 ---
 
-## 🔐 3. Assinatura de Commits com Chave SSH
-
-Para evitar que o Git solicite a senha da sua chave SSH privada a cada commit:
+### 2. Configurar Assinatura de Commits com Chave SSH
+Elimina o pedido constante de senha da chave SSH a cada commit:
 
 * **No Linux:**
   ```bash
-  cd configuration/desktop/git-ssh-signing
+  cd configuration/desktop/scripts/git-ssh-signing
   ./enable-ssh-signing.sh
   ```
 * **No Windows:**
   ```powershell
-  cd configuration/desktop/git-ssh-signing
+  cd configuration/desktop/scripts/git-ssh-signing
   .\enable-ssh-signing.ps1
   ```
 
-*Consulte [`configuration/desktop/git-ssh-signing/README.md`](./git-ssh-signing/README.md) para o passo a passo completo de cadastro no GitHub.*
+---
+
+### 3. Utilitários Windows 11
+Dentro de `configuration/desktop/scripts/windows/`:
+* **Instalar apps:** `winget import scripts/windows/install-apps/install.winget`
+* **Fixar teclado US-Intl:** Execute `scripts/windows/keyboard-us-intl/lock-us-intl.ps1`
+* **Corrigir ConPTY no Alacritty:** Execute `scripts/windows/alacritty-conpty/install-conpty.ps1`

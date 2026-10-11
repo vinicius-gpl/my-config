@@ -2,12 +2,12 @@
 # =============================================================================
 #  Arch Linux — desktop Hyprland
 # -----------------------------------------------------------------------------
-#  Instala o que os dotfiles de configuration/linux/global/.config/.dotfiles
+#  Instala o que os dotfiles de configuration/desktop/dotfiles/.dotfiles
 #  esperam encontrar e linka essas configs no ~/.config.
 #
 #  Roda na PRÓPRIA máquina (os dotfiles vêm do repositório local, por symlink):
 #
-#      cd configuration/linux/arch/ansible
+#      cd configuration/desktop/arch/ansible
 #      sudo -v && ansible-playbook -i inventory.ini setup_desktop.yml -K
 #
 #  O "sudo -v" antes não é enfeite: o yay escala privilégios por conta própria
@@ -23,7 +23,7 @@
   hosts: arch_desktops
 
   vars:
-    dotfiles_src: "{{ playbook_dir }}/../../../../configuration/linux/global/.config/.dotfiles"
+    dotfiles_src: "{{ playbook_dir }}/../../dotfiles/.dotfiles"
 
     # O que linkar em ~/.config. Nome = pasta/arquivo dentro de .dotfiles/.
     dotfiles_config_links:

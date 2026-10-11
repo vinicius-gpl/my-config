@@ -28,10 +28,10 @@ configuration/
 │   └── hosts.ini        # Inventário ativo gerado
 │
 └── desktop/             # 💻 Ambientes Desktop e Dotfiles
-    ├── arch/            # Provisionamento Ansible do desktop Arch (pacman/yay/KDE)
+    ├── arch/            # Provisionamento Ansible do desktop Arch (pacman/yay/Hyprland)
     ├── windows/         # Scripts e ajustes do Windows (ConPTY, teclado, SSH)
     ├── dotfiles/        # Configurações de shell e terminais (.config, fish, zellij, kitty)
-    └── git-ssh-signing/ # Automação de assinatura de commits via chave SSH
+    └── git-ssh-signing/ # Automação de assinatura de commits via chave SSH (Linux & Windows)
 ```
 
 ---

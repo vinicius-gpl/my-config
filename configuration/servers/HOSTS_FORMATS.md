@@ -134,8 +134,8 @@ IP_DO_SERVIDOR ansible_user=root ansible_ssh_forward_agent=true \
   wg_allowed_ips="10.0.0.0/24, IP_DO_SERVIDOR/32" \
   beszel_key="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI... chave_gerada_pelo_hub" \
   netbird_auth_secret=0123456789abcdef0123456789abcdef \
-  netbird_session_key=0123456789abcdef0123456789abcdef \
-  netbird_datastore_key=0123456789abcdef0123456789abcdef \
+  netbird_session_key="GERE_BASE64_32_AQUI==" \
+  netbird_datastore_key="GERE_BASE64_32_AQUI==" \
   netbird_setup_key="CHAVE_SETUP_KEY_DO_PAINEL" \
   netbird_mgmt_url=https://netbird.meudominio.com \
   coolify_root_email=admin@meudominio.com \
@@ -175,8 +175,8 @@ IP_DO_SERVIDOR ansible_user=root ansible_ssh_forward_agent=true \
 | **`netbird_setup_key`** | NetBird Client | Não | Chave gerada no painel NetBird para ingressar o servidor na VPN automaticamente. |
 | **`netbird_mgmt_url`** | NetBird Client | Não | URL do servidor de controle NetBird. Default: `https://netbird.{{ domain }}`. |
 | **`netbird_auth_secret`** | NetBird Server | Não | Segredo de autenticação do Relay (mínimo 32 caracteres hex). Gerado automaticamente se omitido. |
-| **`netbird_session_key`** | NetBird Server | Não | Chave de criptografia da sessão de cookies (32 caracteres). Gerada automaticamente se omitida. |
-| **`netbird_datastore_key`** | NetBird Server | Não | Chave de criptografia do banco de dados SQLite (32 caracteres). Gerada automaticamente se omitida. |
+| **`netbird_session_key`** | NetBird Server | Não | Chave de criptografia da sessão de cookies (base64 de 32 bytes). Gerada automaticamente se omitida. |
+| **`netbird_datastore_key`** | NetBird Server | Não | Chave de criptografia do banco SQLite (base64 de 32 bytes). Gerada automaticamente se omitida. |
 | **`coolify_root_email`** | Coolify | Não | E-mail do usuário administrador criado no primeiro boot. |
 | **`coolify_root_password`**| Coolify | Não | Senha do usuário administrador inicial do Coolify. |
 | **`coolify_app_id`** | Coolify | Não | ID único da instância do Coolify (16 caracteres hex). |

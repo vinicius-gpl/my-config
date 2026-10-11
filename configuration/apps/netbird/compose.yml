@@ -18,7 +18,7 @@ services:
         max-file: "2"
 
   netbird-server:
-    image: netbirdio/netbird:0.80.0
+    image: netbirdio/netbird-server:0.80.0
     container_name: netbird-server
     restart: unless-stopped
     networks:
@@ -26,7 +26,7 @@ services:
     ports:
       - "3478:3478/udp"
     volumes:
-      - ./config.yaml:/etc/netbird/config.yaml:ro
+      - ./config.yaml:/etc/netbird/config.yaml
       - /opt/netbird/data:/var/lib/netbird
     command: ["--config", "/etc/netbird/config.yaml"]
     environment:

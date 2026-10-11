@@ -45,13 +45,13 @@ O repositório conta com dois workflows dedicados:
 ### Deploy de Serviços:
 1. Vá na aba **Actions** > **Ansible Deploy** > **Run workflow**.
 2. Selecione o **servidor alvo**: `acerola` ou `oracle`.
-3. Selecione a **etapa / app**: `all`, `base`, `wireguard`, `netbird`, `caddy`, `portainer`, `portainer-agent`, `coolify`, `supabase`, `beszel`, `beszel-hub`, `cockpit`.
+3. Selecione a **etapa / app**: `all`, `base`, `wireguard`, `netbird`, `netbird-client`, `caddy`, `portainer`, `portainer-agent`, `coolify`, `supabase`, `beszel`, `beszel-hub`, `cockpit`.
 4. Clique em **Run workflow**.
 
 ### Limpeza / Remoção Controlada de Serviços:
 1. Vá na aba **Actions** > **Ansible Clean** > **Run workflow**.
 2. Selecione o **servidor alvo**: `acerola` ou `oracle`.
-3. Selecione o **serviço para deitar**: `dashboards` (Beszel Hub + Portainer Server), `beszel-hub`, `portainer`, `portainer-agent`, `beszel-agent`, `wireguard`, `netbird`, `caddy`, `cockpit` ou `prune`.
+3. Selecione o **serviço para deitar**: `dashboards` (Beszel Hub + Portainer Server), `beszel-hub`, `portainer`, `portainer-agent`, `beszel-agent`, `wireguard`, `netbird`, `netbird-client`, `caddy`, `cockpit` ou `prune`.
 4. Marque se deseja apagar os volumes de dados persistentes (`remove_volumes`).
 5. Clique em **Run workflow**.
 

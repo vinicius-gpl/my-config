@@ -98,3 +98,10 @@ Dentro de `configuration/desktop/scripts/windows/`:
 * **Instalar apps:** `winget import scripts/windows/install-apps/install.winget`
 * **Fixar teclado US-Intl:** Execute `scripts/windows/keyboard-us-intl/lock-us-intl.ps1`
 * **Corrigir ConPTY no Alacritty:** Execute `scripts/windows/alacritty-conpty/install-conpty.ps1`
+* **Aplicar Dotfiles do Windows:** Execute `scripts/windows/sync-dotfiles.ps1`
+
+---
+
+### 4. Mapeamento de Destino dos Dotfiles
+Consulte o guia completo com a tabela de destinos para cada arquivo e pasta em:
+👉 **[`configuration/desktop/dotfiles/README.md`](./dotfiles/README.md)**

@@ -1,0 +1,17 @@
+vpn.{$DOMAIN} {
+    handle {
+        reverse_proxy host.docker.internal:51821 {
+            header_up Host {host}
+            header_up X-Real-IP {remote}
+            header_up X-Forwarded-For {remote}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    encode zstd gzip
+
+    log {
+        output file /data/wireguard-access.log
+        format json
+    }
+}

@@ -6,6 +6,7 @@
     caddy_path: "/opt/caddy"
     beszel_path: "/opt/beszel"
     portainer_path: "/opt/portainer"
+    wireguard_path: "/opt/wireguard"
 
   tasks:
     - name: "[base] Instalar dependências do sistema (Rocky Linux)"
@@ -129,6 +130,7 @@
         mode: '0644'
       loop:
         - "{{ playbook_dir }}/../../../../configuration/linux/global/docker/portainer/config/portainer.caddy"
+        - "{{ playbook_dir }}/../../../../configuration/linux/global/docker/wireguard/config/wireguard.caddy"
       tags: [caddy]
 
     - name: "[caddy] Implantar rocky.caddy (Cockpit) - apenas Rocky Linux"
@@ -227,15 +229,23 @@
       notify: Restart cockpit
       tags: [cockpit]
 
-    # === WIREGUARD ===
+    # === WIREGUARD (wg-easy) ===
 
-    - name: "[wireguard] Instalar wireguard-tools"
-      dnf:
-        name: wireguard-tools
-        state: present
+    - name: "[wireguard] Desativar e parar serviço bare-metal antigo wg-quick@wg0 (se existir)"
+      systemd:
+        name: wg-quick@wg0
+        state: stopped
+        enabled: no
+      failed_when: false
       tags: [wireguard]
 
-    - name: "[wireguard] Habilitar IP forwarding"
+    - name: "[wireguard] Remover interface wg0 residual do kernel (se existir)"
+      command: ip link delete dev wg0
+      failed_when: false
+      changed_when: false
+      tags: [wireguard]
+
+    - name: "[wireguard] Habilitar IP forwarding no host"
       sysctl:
         name: net.ipv4.ip_forward
         value: '1'
@@ -244,59 +254,36 @@
         reload: yes
       tags: [wireguard]
 
-    - name: "[wireguard] Gerar chave privada do servidor"
-      shell: wg genkey > /etc/wireguard/server.key && chmod 600 /etc/wireguard/server.key
-      args:
-        creates: /etc/wireguard/server.key
+    - name: "[wireguard] Criar diretórios de deploy"
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - "{{ wireguard_path }}"
+        - "{{ wireguard_path }}/data"
       tags: [wireguard]
 
-    - name: "[wireguard] Gerar chave pública do servidor"
-      shell: wg pubkey < /etc/wireguard/server.key > /etc/wireguard/server.pub
-      args:
-        creates: /etc/wireguard/server.pub
+    - name: "[wireguard] Copiar docker-compose para o servidor"
+      copy:
+        src: "{{ playbook_dir }}/../../../../configuration/linux/global/docker/wireguard/compose.yml"
+        dest: "{{ wireguard_path }}/docker-compose.yml"
+        mode: '0644'
       tags: [wireguard]
 
-    - name: "[wireguard] Ler chave privada do servidor"
-      slurp:
-        src: /etc/wireguard/server.key
-      register: wg_server_privkey
-      tags: [wireguard]
-
-    - name: "[wireguard] Ler chave pública do servidor"
-      slurp:
-        src: /etc/wireguard/server.pub
-      register: wg_server_pubkey
-      tags: [wireguard]
-
-    - name: "[wireguard] Exibir chave pública do servidor"
-      debug:
-        msg: |
-          Chave pública do servidor WireGuard: {{ wg_server_pubkey.content | b64decode | trim }}
-          Peers configurados: {{ wireguard_clients | map(attribute='name') | list | join(', ') }}
-      tags: [wireguard]
-
-    - name: "[wireguard] Implantar configuração wg0"
-      template:
-        src: templates/wg0.conf.j2
-        dest: /etc/wireguard/wg0.conf
+    - name: "[wireguard] Criar arquivo .env para o wg-easy"
+      copy:
+        dest: "{{ wireguard_path }}/.env"
+        content: |
+          WG_HOST={{ domain }}
+          PASSWORD_HASH={{ wg_password_hash | default('') }}
+          PASSWORD={{ wg_password | default('') }}
         mode: '0600'
-      vars:
-        server_private_key: "{{ wg_server_privkey.content | b64decode | trim }}"
-      notify: Restart WireGuard
       tags: [wireguard]
 
-    - name: "[wireguard] Abrir porta UDP no firewall"
+    - name: "[wireguard] Abrir porta UDP do WireGuard no firewall"
       firewalld:
         port: 51820/udp
-        permanent: yes
-        state: enabled
-        immediate: yes
-      tags: [wireguard]
-
-    - name: "[wireguard] Adicionar interface wg0 à zona trusted do firewalld"
-      firewalld:
-        zone: trusted
-        interface: wg0
         permanent: yes
         state: enabled
         immediate: yes
@@ -310,53 +297,26 @@
         immediate: yes
       tags: [wireguard]
 
-    - name: "[wireguard] Habilitar e reiniciar wg-quick@wg0"
-      systemd:
-        name: wg-quick@wg0
-        state: restarted
-        enabled: yes
+    - name: "[wireguard] Subir container wg-easy com docker compose"
+      command: docker compose up -d --force-recreate
+      args:
+        chdir: "{{ wireguard_path }}"
       tags: [wireguard]
 
-    - name: "[wireguard] Verificar status da interface wg0"
-      command: wg show wg0
-      register: wg_status
-      changed_when: false
+    - name: "[wireguard] Implantar configuração wireguard.caddy"
+      copy:
+        src: "{{ playbook_dir }}/../../../../configuration/linux/global/docker/wireguard/config/wireguard.caddy"
+        dest: "{{ caddy_path }}/conf.d/wireguard.caddy"
+        mode: '0644'
       tags: [wireguard]
 
-    - name: "[wireguard] Exibir status da interface wg0"
-      debug:
-        var: wg_status.stdout_lines
-      tags: [wireguard]
-
-    - name: "[wireguard] Inspecionar zonas ativas do firewalld"
-      command: firewall-cmd --get-active-zones
-      register: fw_active_zones
-      changed_when: false
-      tags: [wireguard]
-
-    - name: "[wireguard] Exibir zonas ativas do firewalld"
-      debug:
-        var: fw_active_zones.stdout_lines
-      tags: [wireguard]
-
-    - name: "[wireguard] Inspecionar regras da zona padrão do firewalld"
-      command: firewall-cmd --list-all
-      register: fw_rules
-      changed_when: false
-      tags: [wireguard]
-
-    - name: "[wireguard] Exibir regras da zona padrão do firewalld"
-      debug:
-        var: fw_rules.stdout_lines
+    - name: "[wireguard] Recarregar Caddy para aplicar proxy vpn.{{ domain }}"
+      command: docker exec caddy caddy reload --config /etc/caddy/Caddyfile
+      failed_when: false
       tags: [wireguard]
 
   handlers:
     - name: Restart cockpit
       systemd:
         name: cockpit
-        state: restarted
-
-    - name: Restart WireGuard
-      systemd:
-        name: wg-quick@wg0
         state: restarted

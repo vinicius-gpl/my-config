@@ -1,0 +1,37 @@
+networks:
+  proxy:
+    external: true
+
+services:
+  netbird-dashboard:
+    image: netbirdio/dashboard:latest
+    container_name: netbird-dashboard
+    restart: unless-stopped
+    networks:
+      - proxy
+    env_file:
+      - ./dashboard.env
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "2"
+
+  netbird-server:
+    image: netbirdio/netbird:latest
+    container_name: netbird-server
+    restart: unless-stopped
+    networks:
+      - proxy
+    ports:
+      - "3478:3478/udp"
+    volumes:
+      - ./config.yaml:/etc/netbird/config.yaml:ro
+      - /opt/netbird/data:/var/lib/netbird
+    environment:
+      - NETBIRD_CONFIG=/etc/netbird/config.yaml
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "2"

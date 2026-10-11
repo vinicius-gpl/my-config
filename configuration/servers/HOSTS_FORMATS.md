@@ -95,6 +95,19 @@ IP_DO_SERVIDOR ansible_user=root ansible_ssh_forward_agent=true \
 
 ---
 
+## 5. Formato: Servidor NetBird (VPN Mesh & Zero Trust)
+> Sobe o NetBird Server (Management + Signal + Relay) e Dashboard em `https://netbird.meudominio.com`.
+
+```ini
+[servers]
+IP_DO_SERVIDOR ansible_user=root domain=meudominio.com email=admin@meudominio.com
+```
+
+* Os segredos de sessão, datastore e relay são gerados automaticamente pelo Ansible se não informados.
+* Você pode configurar o login via GitHub OAuth diretamente no painel web em **Settings > Identity Providers**.
+
+---
+
 ## 🛠️ Geradores Rápidos de Segredos
 
 Se precisar gerar chaves aleatórias no terminal para colocar no `hosts.ini`:

@@ -14,6 +14,7 @@ configuration/
 │
 ├── apps/                # 📦 Catálogo de APPS (Docker Compose + configs prontas)
 │   ├── wireguard/       # wg-easy com suporte a host network e QR Code
+│   ├── netbird/         # VPN Mesh com WireGuard, ACLs, Grupos e GitHub SSO
 │   ├── caddy/           # Proxy reverso principal com TLS automático
 │   ├── portainer/       # Gerenciamento de containers
 │   ├── coolify/         # PaaS self-hosted (alternativa ao Heroku/Vercel)
@@ -42,7 +43,7 @@ O repositório utiliza **um único workflow unificado** ([`.github/workflows/dep
 Para executar um deploy:
 1. Vá na aba **Actions** > **Ansible Deploy** > **Run workflow**.
 2. Selecione o **servidor alvo**: `acerola` ou `oracle`.
-3. Selecione a **etapa / app**: `all`, `base`, `wireguard`, `caddy`, `portainer`, `coolify`, `supabase`, `beszel`, `beszel-hub`, `cockpit`.
+3. Selecione a **etapa / app**: `all`, `base`, `wireguard`, `netbird`, `caddy`, `portainer`, `coolify`, `supabase`, `beszel`, `beszel-hub`, `cockpit`.
 4. Clique em **Run workflow**.
 
 ### Autenticação no GitHub (Environments)

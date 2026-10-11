@@ -74,7 +74,7 @@ jobs:
 
       - name: Configurar inventário (hosts.ini)
         env:
-          ANSIBLE_HOSTS_INI: ${{ secrets.ANSIBLE_HOSTS_INI }}
+          ANSIBLE_HOSTS_INI: ${{ secrets.ANSIBLE_HOSTS_INI || secrets.ANSIBLE_FEDORA_HOSTS_INI }}
         run: |
           if [ -n "$ANSIBLE_HOSTS_INI" ]; then
             printf '%s\n' "$ANSIBLE_HOSTS_INI" > configuration/linux/fedora/ansible/hosts.ini
@@ -102,10 +102,16 @@ jobs:
             CHECK_ARG="--check"
           fi
 
+          # A senha de become vai num arquivo JSON com modo 600, não na linha de
+          # comando: assim não aparece em `ps` e caracteres especiais, espaços e
+          # quebras de linha passam intactos.
           EXTRA_VARS=""
           if [ -n "$ANSIBLE_BECOME_PASSWORD" ]; then
-            EXTRA_VARS="--extra-vars ansible_become_password=$ANSIBLE_BECOME_PASSWORD"
+            umask 077
+            python3 -c 'import json, os; json.dump({"ansible_become_password": os.environ["ANSIBLE_BECOME_PASSWORD"]}, open("/tmp/become.json", "w"))'
+            EXTRA_VARS="--extra-vars @/tmp/become.json"
           fi
+          trap 'rm -f /tmp/become.json' EXIT
 
           ansible-playbook \
             -i configuration/linux/fedora/ansible/hosts.ini \

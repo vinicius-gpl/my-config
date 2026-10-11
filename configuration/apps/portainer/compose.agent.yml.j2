@@ -7,7 +7,7 @@ services:
     restart: always
     environment:
       - "EDGE=1"
-      - "EDGE_ID={{ portainer_edge_id }}"
+      - "EDGE_ID={{ portainer_edge_id | default('') }}"
       - "EDGE_KEY={{ portainer_edge_key }}"
       - "EDGE_INSECURE_POLL=1"
     volumes:

@@ -763,9 +763,10 @@
         mode: '0600'
       tags: [netbird]
 
-    - name: "[netbird] Criar config.yaml para netbird-server"
+    - name: "[netbird] Criar config.yaml para netbird-server (não sobrescrever se já existir)"
       copy:
         dest: "{{ netbird_path }}/config.yaml"
+        force: false
         content: |
           server:
             listenAddress: ":80"

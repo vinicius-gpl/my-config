@@ -121,7 +121,23 @@ IP_DO_SERVIDOR ansible_user=root domain=acerola.app netbird_setup_key="CHAVE_SET
 
 ---
 
-## 7. Formato: Servidor All-in-One (100% de Todos os Serviços)
+## 7. Formato: Portainer Edge Agent (Conectar Worker ao Portainer Central)
+> Conecta este servidor como nó Edge ao Portainer Server central (ex: na Oracle) via Edge ID e Edge Key.
+
+```ini
+[servers]
+IP_DO_SERVIDOR ansible_user=root ansible_ssh_forward_agent=true \
+  domain=acerola.app \
+  portainer_edge_id="EDGE_ID_GERADO_NO_PORTAINER" \
+  portainer_edge_key="EDGE_KEY_GERADA_NO_PORTAINER"
+```
+
+* `portainer_edge_id`: O ID do Edge Environment gerado no Portainer (`Environments` -> `Add environment` -> `Edge Agent Docker`).
+* `portainer_edge_key`: A chave Edge Key completa gerada pelo Portainer no mesmo formulário.
+
+---
+
+## 8. Formato: Servidor All-in-One (100% de Todos os Serviços)
 > Se você quiser subir **absolutamente tudo** do repositório em um único servidor (Caddy, Portainer, WireGuard, NetBird Server, NetBird Client, Beszel Hub, Beszel Agent, Coolify, Supabase, Cockpit):
 
 ```ini
@@ -172,6 +188,8 @@ IP_DO_SERVIDOR ansible_user=root ansible_ssh_forward_agent=true \
 | **`wg_password`** | WireGuard | Não | Senha da interface web do `wg-easy` (convertida automaticamente em bcrypt hash). |
 | **`wg_allowed_ips`** | WireGuard | Não | Faixas de IP que o cliente VPN vai rotear pelo túnel (Split Tunneling). |
 | **`beszel_key`** | Beszel Agent | Não | Chave pública gerada pelo Beszel Hub para autorizar este agente a enviar métricas. |
+| **`portainer_edge_id`** | Portainer Edge Agent | Não | ID do Edge Environment gerado no painel do Portainer Server. |
+| **`portainer_edge_key`** | Portainer Edge Agent | Não | Chave Edge Key gerada no Portainer Server para conexão do nó remoto. |
 | **`netbird_setup_key`** | NetBird Client | Não | Chave gerada no painel NetBird para ingressar o servidor na VPN automaticamente. |
 | **`netbird_mgmt_url`** | NetBird Client | Não | URL do servidor de controle NetBird. Default: `https://netbird.{{ domain }}`. |
 | **`netbird_auth_secret`** | NetBird Server | Não | Segredo de autenticação do Relay (mínimo 32 caracteres hex). Gerado automaticamente se omitido. |

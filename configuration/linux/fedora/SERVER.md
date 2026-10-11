@@ -24,7 +24,7 @@ ansible -i ansible/hosts.ini relay_servers -m ping
 
 ## Configurar Inventário
 
-Edite o arquivo `ansible/hosts.ini` (ou cadastre no GitHub Secrets como `ANSIBLE_HOSTS_INI`):
+Edite o arquivo `ansible/hosts.ini` (ou cadastre no GitHub Secrets como `FEDORA_HOSTS_INI`):
 
 ```ini
 [relay_servers]

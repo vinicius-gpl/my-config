@@ -178,13 +178,32 @@
         mode: '0644'
       tags: [wireguard]
 
+    - name: "[wireguard] Gerar PASSWORD_HASH a partir de wg_password (se necessário)"
+      command: "docker run --rm ghcr.io/wg-easy/wg-easy:latest wgpw '{{ wg_password }}'"
+      register: generated_wg_hash
+      when:
+        - wg_password is defined
+        - wg_password | length > 0
+        - wg_password_hash is not defined or wg_password_hash | length == 0
+      changed_when: false
+      tags: [wireguard]
+
+    - name: "[wireguard] Definir variável de hash da senha"
+      set_fact:
+        final_wg_hash: >-
+          {{
+            (generated_wg_hash.stdout | regex_replace("^PASSWORD_HASH=['\"]?", "") | regex_replace("['\"]?$", "") | trim)
+            if (generated_wg_hash is defined and generated_wg_hash.stdout is defined and generated_wg_hash.stdout | length > 0)
+            else (wg_password_hash | default('') | regex_replace("^PASSWORD_HASH=['\"]?", "") | regex_replace("['\"]?$", "") | trim)
+          }}
+      tags: [wireguard]
+
     - name: "[wireguard] Criar arquivo .env para o wg-easy"
       copy:
         dest: "{{ wireguard_path }}/.env"
         content: |
           WG_HOST={{ domain | default(ansible_host) }}
-          PASSWORD_HASH={{ wg_password_hash | default('') }}
-          PASSWORD={{ wg_password | default('') }}
+          PASSWORD_HASH={{ final_wg_hash }}
         mode: '0600'
       tags: [wireguard]
 

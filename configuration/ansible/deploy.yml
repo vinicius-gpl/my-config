@@ -19,6 +19,13 @@
     # === BASE: SISTEMA, FIREWALL E DOCKER (MULTI-DISTRO) ===
     # =========================================================================
 
+    - name: "[base] Verificar se Docker está instalado"
+      command: which docker
+      register: docker_check
+      failed_when: false
+      changed_when: false
+      tags: [always]
+
     - name: "[base] Instalar dependências (Família RedHat: Fedora/Rocky/CentOS)"
       dnf:
         name:
@@ -26,15 +33,15 @@
           - firewalld
           - curl
         state: present
-      when: ansible_os_family == 'RedHat'
-      tags: [base]
+      when: ansible_os_family == 'RedHat' and (docker_check.rc != 0 or 'base' in ansible_run_tags or 'all' in ansible_run_tags)
+      tags: [base, always]
 
     - name: "[base] Adicionar repositório do Docker (RedHat)"
       command: dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
       args:
         creates: /etc/yum.repos.d/docker-ce.repo
-      when: ansible_os_family == 'RedHat'
-      tags: [base]
+      when: ansible_os_family == 'RedHat' and (docker_check.rc != 0 or 'base' in ansible_run_tags or 'all' in ansible_run_tags)
+      tags: [base, always]
 
     - name: "[base] Instalar Docker (RedHat)"
       dnf:
@@ -44,9 +51,10 @@
           - containerd.io
           - docker-buildx-plugin
           - docker-compose-plugin
+        allowerasing: yes
         state: present
-      when: ansible_os_family == 'RedHat'
-      tags: [base]
+      when: ansible_os_family == 'RedHat' and (docker_check.rc != 0 or 'base' in ansible_run_tags or 'all' in ansible_run_tags)
+      tags: [base, always]
 
     - name: "[base] Iniciar e habilitar Docker e Firewalld (RedHat)"
       systemd:
@@ -56,8 +64,8 @@
       loop:
         - docker
         - firewalld
-      when: ansible_os_family == 'RedHat'
-      tags: [base]
+      when: ansible_os_family == 'RedHat' and (docker_check.rc != 0 or 'base' in ansible_run_tags or 'all' in ansible_run_tags)
+      tags: [base, always]
 
     - name: "[base] Instalar dependências e Docker (Família Debian: Ubuntu/Debian)"
       block:
@@ -83,13 +91,13 @@
 
         - name: "[base] Baixar chave GPG oficial do Docker"
           get_url:
-            url: https://download.docker.com/linux/debian/gpg
+            url: "https://download.docker.com/linux/{{ 'ubuntu' if ansible_distribution == 'Ubuntu' else 'debian' }}/gpg"
             dest: /etc/apt/keyrings/docker.gpg
             mode: '0644'
 
         - name: "[base] Adicionar repositório Docker no apt"
           apt_repository:
-            repo: "deb [arch={{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' }} signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable"
+            repo: "deb [arch={{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' }} signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/{{ 'ubuntu' if ansible_distribution == 'Ubuntu' else 'debian' }} {{ ansible_distribution_release }} stable"
             state: present
 
         - name: "[base] Instalar pacotes Docker"
@@ -108,8 +116,8 @@
             name: docker
             state: started
             enabled: yes
-      when: ansible_os_family == 'Debian'
-      tags: [base]
+      when: ansible_os_family == 'Debian' and (docker_check.rc != 0 or 'base' in ansible_run_tags or 'all' in ansible_run_tags)
+      tags: [base, always]
 
     - name: "[base] Abrir portas padrão no Firewalld (se ativo)"
       firewalld:
@@ -133,7 +141,7 @@
         - proxy_net.rc != 0
         - '"already exists" not in proxy_net.stderr'
       changed_when: proxy_net.rc == 0
-      tags: [base, proxy]
+      tags: [base, proxy, always]
 
     # =========================================================================
     # === WIREGUARD (wg-easy) ===

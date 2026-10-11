@@ -455,11 +455,16 @@
         mode: '0755'
       tags: [portainer-agent, portainer_agent]
 
-    - name: "[portainer-agent] Copiar docker-compose do Portainer Agent"
-      copy:
-        src: "{{ apps_dir }}/portainer/compose.agent.yml"
+    - name: "[portainer-agent] Gerar docker-compose do Portainer Agent"
+      template:
+        src: "{{ apps_dir }}/portainer/compose.agent.yml.j2"
         dest: "{{ portainer_path }}/docker-compose.yml"
         mode: '0644'
+      tags: [portainer-agent, portainer_agent]
+
+    - name: "[portainer-agent] Limpar container de modo alternativo para evitar conflito"
+      command: docker rm -f {{ 'portainer-agent' if (portainer_edge_key is defined and portainer_edge_key | length > 0) else 'portainer_edge_agent' }}
+      failed_when: false
       tags: [portainer-agent, portainer_agent]
 
     - name: "[portainer-agent] Abrir porta do Portainer Agent (9001) no firewall"
@@ -468,6 +473,7 @@
         permanent: yes
         state: enabled
         immediate: yes
+      when: portainer_edge_key is not defined or (portainer_edge_key | length == 0)
       failed_when: false
       tags: [portainer-agent, portainer_agent]
 

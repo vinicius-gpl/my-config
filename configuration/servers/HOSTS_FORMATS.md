@@ -23,6 +23,7 @@ IP_DO_SERVIDOR ansible_user=root variavel1=valor variavel2=valor
 192.168.0.1 ansible_user=root ansible_ssh_forward_agent=true \
   email=admin@meudominio.com \
   domain=meudominio.com \
+  wg_host=meudominio.com \
   wg_password=MinhaSenhaForteDaVPN123 \
   beszel_key="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI... chave_gerada_pelo_hub"
 ```
@@ -33,7 +34,8 @@ IP_DO_SERVIDOR ansible_user=root variavel1=valor variavel2=valor
   * `vpn.meudominio.com` (Painel do WireGuard / wg-easy)
   * `container.meudominio.com` (Painel do Portainer)
   * `monitor.meudominio.com` (Painel do Beszel Hub, se instalado)
-* `wg_password`: A senha de acesso à interface Web do WireGuard.
+* `wg_host`: *(Opcional)* IP público ou domínio DNS real usado como `Endpoint` nos clientes WireGuard (ex: `200.x.x.x` ou `vpn.meudominio.com`). Se omitido, usa o `domain` ou o IP do host.
+* `wg_password`: A senha de acesso à interface Web do WireGuard (convertida automaticamente em bcrypt hash).
 * `beszel_key`: A chave pública gerada pelo Beszel Hub para que o Beszel Agent monitore esta máquina.
 
 ---

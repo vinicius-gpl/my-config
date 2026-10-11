@@ -223,6 +223,7 @@
         dest: "{{ wireguard_path }}/.env"
         content: |
           WG_HOST={{ wg_host | default(domain) | default(ansible_host) }}
+          WG_DEVICE={{ ansible_default_ipv4.interface | default('eth0') }}
           PASSWORD_HASH={{ final_wg_hash }}
         mode: '0600'
       tags: [wireguard]
@@ -239,6 +240,26 @@
     - name: "[wireguard] Habilitar masquerade no firewalld"
       firewalld:
         masquerade: yes
+        permanent: yes
+        state: enabled
+        immediate: yes
+      failed_when: false
+      tags: [wireguard]
+
+    - name: "[wireguard] Adicionar rede VPN (10.0.0.0/24) e interface wg0 na zona trusted do firewalld"
+      firewalld:
+        zone: trusted
+        source: 10.0.0.0/24
+        permanent: yes
+        state: enabled
+        immediate: yes
+      failed_when: false
+      tags: [wireguard]
+
+    - name: "[wireguard] Adicionar interface wg0 na zona trusted do firewalld"
+      firewalld:
+        zone: trusted
+        interface: wg0
         permanent: yes
         state: enabled
         immediate: yes

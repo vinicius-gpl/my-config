@@ -40,7 +40,7 @@ configuration/
 O repositório utiliza **um único workflow unificado** ([`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)).
 
 Para executar um deploy:
-1. Vá na aba **Actions** > **Server Deploy** > **Run workflow**.
+1. Vá na aba **Actions** > **Ansible Deploy** > **Run workflow**.
 2. Selecione o **servidor alvo**: `acerola` ou `oracle`.
 3. Selecione a **etapa / app**: `all`, `base`, `wireguard`, `caddy`, `portainer`, `coolify`, `supabase`, `beszel`, `beszel-hub`, `cockpit`.
 4. Clique em **Run workflow**.
@@ -69,6 +69,6 @@ ansible-playbook -i configuration/servers/acerola/inventory.ini configuration/an
 # Exemplo 2: Subir apenas o WireGuard e o Caddy no servidor acerola
 ansible-playbook -i configuration/servers/acerola/inventory.ini configuration/ansible/deploy.yml --tags "wireguard,caddy"
 
-# Exemplo 3: Subir Coolify e Supabase no homelab
-ansible-playbook -i configuration/servers/homelab/inventory.ini configuration/ansible/deploy.yml --tags "coolify,supabase"
+# Exemplo 3: Subir Coolify e Supabase no servidor oracle
+ansible-playbook -i configuration/servers/oracle/inventory.ini configuration/ansible/deploy.yml --tags "coolify,supabase"
 ```

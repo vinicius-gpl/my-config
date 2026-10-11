@@ -727,8 +727,8 @@
     - name: "[netbird] Gerar segredos criptográficos (se não fornecidos)"
       set_fact:
         nb_auth_secret: "{{ netbird_auth_secret | default(lookup('password', '/dev/null chars=ascii_letters,digits length=32')) }}"
-        nb_session_key: "{{ netbird_session_key | default(lookup('password', '/dev/null chars=ascii_letters,digits length=32')) }}"
-        nb_datastore_key: "{{ netbird_datastore_key | default(lookup('password', '/dev/null chars=ascii_letters,digits length=32')) }}"
+        nb_session_key: "{{ netbird_session_key if (netbird_session_key is defined and (netbird_session_key | length == 44)) else (netbird_session_key | default(lookup('password', '/dev/null chars=ascii_letters,digits length=32')) | b64encode) }}"
+        nb_datastore_key: "{{ netbird_datastore_key if (netbird_datastore_key is defined and (netbird_datastore_key | length == 44)) else (netbird_datastore_key | default(lookup('password', '/dev/null chars=ascii_letters,digits length=32')) | b64encode) }}"
       tags: [netbird]
 
     - name: "[netbird] Criar dashboard.env"
@@ -737,10 +737,10 @@
         content: |
           NETBIRD_MGMT_API_ENDPOINT=https://netbird.{{ domain | default(ansible_host) }}
           NETBIRD_MGMT_GRPC_API_ENDPOINT=https://netbird.{{ domain | default(ansible_host) }}
-          AUTH_AUDIENCE={{ netbird_auth_audience | default('netbird-dashboard') }}
-          AUTH_CLIENT_ID={{ netbird_client_id | default('netbird-dashboard') }}
-          AUTH_CLIENT_SECRET={{ netbird_client_secret | default('') }}
-          AUTH_AUTHORITY={{ netbird_auth_authority | default('https://netbird.' + (domain | default(ansible_host)) + '/oauth2') }}
+          AUTH_AUDIENCE=netbird-dashboard
+          AUTH_CLIENT_ID=netbird-dashboard
+          AUTH_CLIENT_SECRET=
+          AUTH_AUTHORITY=https://netbird.{{ domain | default(ansible_host) }}/oauth2
           USE_AUTH0=false
           AUTH_SUPPORTED_SCOPES=openid profile email groups
           AUTH_REDIRECT_URI=/nb-auth

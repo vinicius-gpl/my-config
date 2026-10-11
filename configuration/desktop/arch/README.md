@@ -1,11 +1,11 @@
 # Arch Linux — desktop Hyprland
 
 Não existia nada de Arch no repositório: os dotfiles de
-`configuration/linux/global/.config/.dotfiles` estavam versionados, mas nada
+`configuration/desktop/dotfiles/.dotfiles` estavam versionados, mas nada
 instalava os programas que eles chamam nem linkava as configs. É o que este
 playbook faz.
 
-Diferente do `fedora/` e do `rocky/`, que provisionam servidor por SSH, aqui é
+Diferente dos playbooks de servidor, que provisionam máquinas por SSH, aqui é
 a **própria máquina**: os dotfiles entram por symlink apontando para o
 repositório, então editar no repo vale na hora.
 
@@ -20,7 +20,7 @@ ansible/
 ```bash
 sudo pacman -S --needed ansible
 
-cd configuration/linux/arch/ansible
+cd configuration/desktop/arch/ansible
 sudo -v && ansible-playbook -i inventory.ini setup_desktop.yml -K
 ```
 

@@ -218,12 +218,39 @@
           }}
       tags: [wireguard]
 
+    - name: "[wireguard] Descobrir IP público do host"
+      command: curl -s4 https://api.ipify.org
+      register: host_public_ip
+      changed_when: false
+      failed_when: false
+      tags: [wireguard]
+
+    - name: "[wireguard] Definir IP público detectado"
+      set_fact:
+        detected_public_ip: "{{ host_public_ip.stdout | trim if (host_public_ip is defined and host_public_ip.stdout is defined and host_public_ip.stdout | length > 0) else '' }}"
+      tags: [wireguard]
+
+    - name: "[wireguard] Definir lista de AllowedIPs (Split Tunnel com IP público e rede local)"
+      set_fact:
+        final_allowed_ips: >-
+          {{
+            wg_allowed_ips
+            if (wg_allowed_ips is defined and wg_allowed_ips | length > 0)
+            else (
+              '10.0.0.0/24'
+              ~ (', ' ~ ansible_host ~ '/32' if (ansible_host is defined and ansible_host != 'localhost' and ansible_host != '127.0.0.1') else '')
+              ~ (', ' ~ detected_public_ip ~ '/32' if (detected_public_ip | length > 0 and detected_public_ip != ansible_host) else '')
+            )
+          }}
+      tags: [wireguard]
+
     - name: "[wireguard] Criar arquivo .env para o wg-easy"
       copy:
         dest: "{{ wireguard_path }}/.env"
         content: |
-          WG_HOST={{ wg_host | default(domain) | default(ansible_host) }}
+          WG_HOST={{ wg_host | default(domain) | default(detected_public_ip) | default(ansible_host) }}
           WG_DEVICE={{ ansible_default_ipv4.interface | default('eth0') }}
+          WG_ALLOWED_IPS={{ final_allowed_ips }}
           PASSWORD_HASH={{ final_wg_hash }}
         mode: '0600'
       tags: [wireguard]

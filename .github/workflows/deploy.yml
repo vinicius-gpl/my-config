@@ -96,10 +96,7 @@ jobs:
 
           export PASSPHRASE
           if [ -n "$PASSPHRASE" ]; then
-            cat << 'EOF' > /tmp/ssh_askpass
-#!/bin/sh
-exec printf '%s\n' "$PASSPHRASE"
-EOF
+            printf '#!/bin/sh\nexec printf "%%s\\n" "$PASSPHRASE"\n' > /tmp/ssh_askpass
             chmod 700 /tmp/ssh_askpass
             if ! DISPLAY=None SSH_ASKPASS=/tmp/ssh_askpass SSH_ASKPASS_REQUIRE=force ssh-add /tmp/id_ci; then
               echo "::error::Falha ao desbloquear a chave SSH com a passphrase fornecida! Verifique o segredo 'SSH_PASSPHRASE' ou '${TARGET_SERVER^^}_SSH_PASSPHRASE'."

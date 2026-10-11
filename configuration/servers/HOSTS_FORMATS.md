@@ -104,7 +104,7 @@ IP_DO_SERVIDOR ansible_user=root domain=meudominio.com email=admin@meudominio.co
 ```
 
 * Os segredos de sessão, datastore e relay são gerados automaticamente pelo Ansible se não informados.
-* Você pode configurar o login via GitHub OAuth diretamente no painel web em **Settings > Identity Providers**.
+* No primeiro acesso, o painel solicita a criação do usuário Administrador local (e-mail e senha).
 
 ---
 

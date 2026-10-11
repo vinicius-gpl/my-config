@@ -121,6 +121,82 @@ IP_DO_SERVIDOR ansible_user=root domain=acerola.app netbird_setup_key="CHAVE_SET
 
 ---
 
+## 7. Formato: Servidor All-in-One (100% de Todos os Serviços)
+> Se você quiser subir **absolutamente tudo** do repositório em um único servidor (Caddy, Portainer, WireGuard, NetBird Server, NetBird Client, Beszel Hub, Beszel Agent, Coolify, Supabase, Cockpit):
+
+```ini
+[servers]
+IP_DO_SERVIDOR ansible_user=root ansible_ssh_forward_agent=true \
+  domain=meudominio.com \
+  email=admin@meudominio.com \
+  wg_host=meudominio.com \
+  wg_password=MinhaSenhaForteDaVPN123 \
+  wg_allowed_ips="10.0.0.0/24, IP_DO_SERVIDOR/32" \
+  beszel_key="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI... chave_gerada_pelo_hub" \
+  netbird_auth_secret=0123456789abcdef0123456789abcdef \
+  netbird_session_key=0123456789abcdef0123456789abcdef \
+  netbird_datastore_key=0123456789abcdef0123456789abcdef \
+  netbird_setup_key="CHAVE_SETUP_KEY_DO_PAINEL" \
+  netbird_mgmt_url=https://netbird.meudominio.com \
+  coolify_root_email=admin@meudominio.com \
+  coolify_root_password=MinhaSenhaForteCoolifyAa1! \
+  coolify_app_id=0123456789abcdef \
+  coolify_app_key=base64:GERE_BASE64_32_AQUI== \
+  coolify_db_password=SenhaForteBancoCoolify123! \
+  coolify_redis_password=SenhaForteRedisCoolify123! \
+  coolify_pusher_app_id=0123456789abcdef \
+  coolify_pusher_app_key=0123456789abcdef0123456789abcdef \
+  coolify_pusher_app_secret=0123456789abcdef0123456789abcdef \
+  supabase_postgres_password=SenhaFortePostgresSupabase123! \
+  supabase_jwt_secret=0123456789abcdef0123456789abcdef \
+  supabase_anon_key=JWT_ANON_ASSINADO_AQUI \
+  supabase_service_role_key=JWT_SERVICE_ROLE_ASSINADO_AQUI \
+  supabase_dashboard_password=SenhaForteDashboardSupabase123! \
+  supabase_secret_key_base=0123456789abcdef0123456789abcdef \
+  supabase_realtime_enc_key=01234567 \
+  supabase_profiles=
+```
+
+---
+
+## 📖 Dicionário de Todas as Variáveis Possíveis
+
+| Variável | Aplicação / Escopo | Obrigatória? | Descrição |
+| :--- | :--- | :---: | :--- |
+| **`ansible_user`** | Conexão SSH | **Sim** | Usuário de acesso SSH (`root`, `ubuntu`, `opc`). |
+| **`ansible_become`** | Conexão SSH | Não | `true` se o usuário não for root e precisar de `sudo`. |
+| **`ansible_ssh_forward_agent`** | Conexão SSH | Não | `true` para usar chaves SSH do agente local. |
+| **`domain`** | Caddy / Geral | **Sim** | Domínio base raiz (ex: `meudominio.com`). Gera automaticamente os subdomínios (`vpn.`, `container.`, `monitor.`, `netbird.`). |
+| **`email`** | Caddy (SSL) | **Sim** | E-mail registrado no Let's Encrypt / ZeroSSL para emissão automática de HTTPS. |
+| **`wg_host`** | WireGuard | Não | IP público ou domínio DNS real usado como `Endpoint` no arquivo de configuração do cliente VPN. |
+| **`wg_password`** | WireGuard | Não | Senha da interface web do `wg-easy` (convertida automaticamente em bcrypt hash). |
+| **`wg_allowed_ips`** | WireGuard | Não | Faixas de IP que o cliente VPN vai rotear pelo túnel (Split Tunneling). |
+| **`beszel_key`** | Beszel Agent | Não | Chave pública gerada pelo Beszel Hub para autorizar este agente a enviar métricas. |
+| **`netbird_setup_key`** | NetBird Client | Não | Chave gerada no painel NetBird para ingressar o servidor na VPN automaticamente. |
+| **`netbird_mgmt_url`** | NetBird Client | Não | URL do servidor de controle NetBird. Default: `https://netbird.{{ domain }}`. |
+| **`netbird_auth_secret`** | NetBird Server | Não | Segredo de autenticação do Relay (mínimo 32 caracteres hex). Gerado automaticamente se omitido. |
+| **`netbird_session_key`** | NetBird Server | Não | Chave de criptografia da sessão de cookies (32 caracteres). Gerada automaticamente se omitida. |
+| **`netbird_datastore_key`** | NetBird Server | Não | Chave de criptografia do banco de dados SQLite (32 caracteres). Gerada automaticamente se omitida. |
+| **`coolify_root_email`** | Coolify | Não | E-mail do usuário administrador criado no primeiro boot. |
+| **`coolify_root_password`**| Coolify | Não | Senha do usuário administrador inicial do Coolify. |
+| **`coolify_app_id`** | Coolify | Não | ID único da instância do Coolify (16 caracteres hex). |
+| **`coolify_app_key`** | Coolify | Não | Chave de cifra mestra do Laravel (`base64:...` com 32 bytes). |
+| **`coolify_db_password`** | Coolify | Não | Senha do banco PostgreSQL interno do Coolify. |
+| **`coolify_redis_password`**| Coolify | Não | Senha do Redis interno do Coolify. |
+| **`coolify_pusher_app_id`** | Coolify | Não | ID do servidor de websockets em tempo real (16 chars). |
+| **`coolify_pusher_app_key`**| Coolify | Não | Chave do servidor de websockets em tempo real (32 chars). |
+| **`coolify_pusher_app_secret`**| Coolify | Não | Segredo do servidor de websockets em tempo real (32 chars). |
+| **`supabase_postgres_password`**| Supabase | Não | Senha do banco PostgreSQL principal do Supabase. |
+| **`supabase_jwt_secret`** | Supabase | Não | Segredo HMAC-SHA256 usado para assinar os tokens JWT (32 chars). |
+| **`supabase_anon_key`** | Supabase | Não | Token JWT com role `anon` assinado com o `supabase_jwt_secret`. |
+| **`supabase_service_role_key`**| Supabase| Não | Token JWT com role `service_role` com privilégios administrativos. |
+| **`supabase_dashboard_password`**| Supabase| Não | Senha do painel web Studio do Supabase (usuário padrão: `supabase`). |
+| **`supabase_secret_key_base`**| Supabase | Não | Chave mestra de 32 caracteres usada pelo serviço Realtime. |
+| **`supabase_realtime_enc_key`**| Supabase| Não | Chave de 8 caracteres usada para cifrar mensagens em tempo real. |
+| **`supabase_profiles`** | Supabase | Não | Perfis adicionais do Compose para ativar (`analytics,realtime,storage,edge-runtime`). |
+
+---
+
 ## 🛠️ Geradores Rápidos de Segredos
 
 Se precisar gerar chaves aleatórias no terminal para colocar no `hosts.ini`:
@@ -133,3 +209,4 @@ openssl rand -hex 32
 # Chave Base64 (para Coolify app_key):
 printf 'base64:%s\n' "$(openssl rand -base64 32)"
 ```
+

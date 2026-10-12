@@ -10,15 +10,16 @@ services:
     environment:
       - EMAIL=${EMAIL}
       - DOMAIN=${DOMAIN}
+      - CADDY_OPTS=${CADDY_OPTS:-}
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - /opt/caddy/caddyfile:/etc/caddy/Caddyfile
-      - /opt/caddy/conf.d:/etc/caddy/conf.d
+      - ${CADDY_CONFIG_PATH:-/opt/caddy}/caddyfile:/etc/caddy/Caddyfile:z
+      - ${CADDY_CONFIG_PATH:-/opt/caddy}/conf.d:/etc/caddy/conf.d:z
       - caddy-config:/config
       - caddy-data:/data
-      - /opt/caddy/static:/srv/static:ro
+      - ${CADDY_CONFIG_PATH:-/opt/caddy}/static:/srv/static:ro,z
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:

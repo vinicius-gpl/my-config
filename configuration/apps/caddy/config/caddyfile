@@ -1,5 +1,6 @@
 {
     email {$EMAIL}
+    {$CADDY_OPTS}
 }
 
 import /etc/caddy/conf.d/*.caddy

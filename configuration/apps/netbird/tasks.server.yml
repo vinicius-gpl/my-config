@@ -1,0 +1,119 @@
+---
+# =========================================================================
+# === NETBIRD SERVER ===
+# =========================================================================
+
+- name: "[netbird] Criar diretórios de deploy do NetBird"
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - "{{ netbird_path }}"
+    - "{{ netbird_path }}/data"
+  tags: [netbird]
+
+- name: "[netbird] Copiar docker-compose do NetBird"
+  copy:
+    src: "{{ apps_dir }}/netbird/compose.yml"
+    dest: "{{ netbird_path }}/docker-compose.yml"
+    mode: '0644'
+  tags: [netbird]
+
+- name: "[netbird] Gerar segredos criptográficos (se não fornecidos)"
+  set_fact:
+    nb_auth_secret: "{{ netbird_auth_secret | default(lookup('password', '/dev/null chars=ascii_letters,digits length=32')) }}"
+    nb_session_key: "{{ netbird_session_key if (netbird_session_key is defined and (netbird_session_key | length == 44)) else (netbird_session_key | default(lookup('password', '/dev/null chars=ascii_letters,digits length=32')) | b64encode) }}"
+    nb_datastore_key: "{{ netbird_datastore_key if (netbird_datastore_key is defined and (netbird_datastore_key | length == 44)) else (netbird_datastore_key | default(lookup('password', '/dev/null chars=ascii_letters,digits length=32')) | b64encode) }}"
+  tags: [netbird]
+
+- name: "[netbird] Criar dashboard.env"
+  copy:
+    dest: "{{ netbird_path }}/dashboard.env"
+    content: |
+      NETBIRD_MGMT_API_ENDPOINT=https://netbird.{{ domain | default(ansible_host) }}
+      NETBIRD_MGMT_GRPC_API_ENDPOINT=https://netbird.{{ domain | default(ansible_host) }}
+      AUTH_AUDIENCE=netbird-dashboard
+      AUTH_CLIENT_ID=netbird-dashboard
+      AUTH_CLIENT_SECRET=
+      AUTH_AUTHORITY=https://netbird.{{ domain | default(ansible_host) }}/oauth2
+      USE_AUTH0=false
+      AUTH_SUPPORTED_SCOPES=openid profile email groups
+      AUTH_REDIRECT_URI=/nb-auth
+      AUTH_SILENT_REDIRECT_URI=/nb-silent-auth
+      NGINX_SSL_PORT=443
+      LETSENCRYPT_DOMAIN=none
+    mode: '0600'
+  tags: [netbird]
+
+- name: "[netbird] Criar config.yaml para netbird-server (não sobrescrever se já existir)"
+  copy:
+    dest: "{{ netbird_path }}/config.yaml"
+    force: false
+    content: |
+      server:
+        listenAddress: ":80"
+        exposedAddress: "https://netbird.{{ domain | default(ansible_host) }}:443"
+        stunPorts:
+          - 3478
+        metricsPort: 9090
+        healthcheckAddress: ":9000"
+        logLevel: "info"
+        logFile: "console"
+        authSecret: "{{ nb_auth_secret }}"
+        dataDir: "/var/lib/netbird"
+        auth:
+          issuer: "https://netbird.{{ domain | default(ansible_host) }}/oauth2"
+          signKeyRefreshEnabled: true
+          sessionCookieEncryptionKey: "{{ nb_session_key }}"
+          dashboardRedirectURIs:
+            - "https://netbird.{{ domain | default(ansible_host) }}/nb-auth"
+            - "https://netbird.{{ domain | default(ansible_host) }}/nb-silent-auth"
+          cliRedirectURIs:
+            - "http://localhost:53000/"
+        reverseProxy:
+          trustedHTTPProxies:
+            - "172.16.0.0/12"
+            - "192.168.0.0/16"
+            - "10.0.0.0/8"
+        store:
+          engine: "sqlite"
+          encryptionKey: "{{ nb_datastore_key }}"
+    mode: '0600'
+  tags: [netbird]
+
+- name: "[netbird] Abrir porta STUN (3478/udp) no firewall"
+  firewalld:
+    port: 3478/udp
+    permanent: yes
+    state: enabled
+    immediate: yes
+  failed_when: false
+  tags: [netbird]
+
+- name: "[netbird] Garantir que diretório conf.d do Caddy existe"
+  file:
+    path: "{{ caddy_path }}/conf.d"
+    state: directory
+    mode: '0755'
+  failed_when: false
+  tags: [netbird]
+
+- name: "[netbird] Implantar configuração netbird.caddy"
+  copy:
+    src: "{{ apps_dir }}/netbird/config/netbird.caddy"
+    dest: "{{ caddy_path }}/conf.d/netbird.caddy"
+    mode: '0644'
+  failed_when: false
+  tags: [netbird]
+
+- name: "[netbird] Recarregar Caddy para aplicar netbird.{{ domain | default('') }}"
+  command: docker exec caddy caddy reload --config /etc/caddy/Caddyfile
+  failed_when: false
+  tags: [netbird]
+
+- name: "[netbird] Subir containers do NetBird"
+  command: docker compose up -d --force-recreate
+  args:
+    chdir: "{{ netbird_path }}"
+  tags: [netbird]

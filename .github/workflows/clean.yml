@@ -29,6 +29,7 @@ on:
           - netbird-proxy
           - caddy
           - cockpit
+          - sure
           - prune
       remove_volumes:
         description: 'Apagar volumes de dados persistentes?'

@@ -1,0 +1,101 @@
+---
+# =========================================================================
+# === COOLIFY ===
+# =========================================================================
+
+- name: "[coolify] Criar diretório de deploy"
+  file:
+    path: "{{ coolify_path }}"
+    state: directory
+    mode: '0755'
+  tags: [coolify]
+
+- name: "[coolify] Criar árvore /data/coolify"
+  file:
+    path: "{{ coolify_data_path }}/{{ item.path }}"
+    state: directory
+    owner: '9999'
+    group: root
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: "", mode: '0755' }
+    - { path: "ssh", mode: '0700' }
+    - { path: "ssh/keys", mode: '0700' }
+    - { path: "ssh/mux", mode: '0700' }
+    - { path: "applications", mode: '0755' }
+    - { path: "databases", mode: '0755' }
+    - { path: "services", mode: '0755' }
+    - { path: "backups", mode: '0755' }
+    - { path: "webhooks-during-maintenance", mode: '0755' }
+    - { path: "logs", mode: '0755' }
+    - { path: "proxy", mode: '0755' }
+    - { path: "proxy/dynamic", mode: '0755' }
+    - { path: "source", mode: '0755' }
+  loop_control:
+    label: "{{ coolify_data_path }}/{{ item.path }}"
+  tags: [coolify]
+
+- name: "[coolify] Gerar chave SSH que o Coolify usa para administrar o host"
+  command: ssh-keygen -t ed25519 -a 100 -f {{ coolify_data_path }}/ssh/keys/id.root@host.docker.internal -q -N '' -C coolify
+  args:
+    creates: "{{ coolify_data_path }}/ssh/keys/id.root@host.docker.internal"
+  tags: [coolify]
+
+- name: "[coolify] Ajustar permissões da chave SSH do Coolify"
+  file:
+    path: "{{ coolify_data_path }}/ssh/keys/{{ item.name }}"
+    owner: '9999'
+    group: root
+    mode: "{{ item.mode }}"
+  loop:
+    - { name: "id.root@host.docker.internal", mode: '0600' }
+    - { name: "id.root@host.docker.internal.pub", mode: '0644' }
+  loop_control:
+    label: "{{ item.name }}"
+  tags: [coolify]
+
+- name: "[coolify] Ler chave pública gerada"
+  slurp:
+    src: "{{ coolify_data_path }}/ssh/keys/id.root@host.docker.internal.pub"
+  register: coolify_hostkey_pub
+  tags: [coolify]
+
+- name: "[coolify] Autorizar chave no root do host"
+  authorized_key:
+    user: root
+    key: "{{ coolify_hostkey_pub.content | b64decode | trim }}"
+    state: present
+  tags: [coolify]
+
+- name: "[coolify] Copiar docker-compose do Coolify"
+  copy:
+    src: "{{ apps_dir }}/coolify/compose.yml"
+    dest: "{{ coolify_path }}/docker-compose.yml"
+    mode: '0644'
+  tags: [coolify]
+
+- name: "[coolify] Criar arquivo .env com credenciais"
+  template:
+    src: "{{ apps_dir }}/coolify/coolify.env.j2"
+    dest: "{{ coolify_path }}/.env"
+    mode: '0600'
+  tags: [coolify]
+
+- name: "[coolify] Abrir portas do Coolify no firewall"
+  firewalld:
+    port: "{{ item }}"
+    permanent: yes
+    state: enabled
+    immediate: yes
+  loop:
+    - 8000/tcp
+    - 6001/tcp
+    - 6002/tcp
+  failed_when: false
+  tags: [coolify]
+
+- name: "[coolify] Subir containers do Coolify"
+  command: docker compose up -d --force-recreate
+  args:
+    chdir: "{{ coolify_path }}"
+  tags: [coolify]

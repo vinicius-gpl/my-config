@@ -1,0 +1,46 @@
+---
+# =========================================================================
+# === PORTAINER ===
+# =========================================================================
+
+- name: "[portainer] Criar diretório de deploy"
+  file:
+    path: "{{ portainer_path }}"
+    state: directory
+    mode: '0755'
+  tags: [portainer]
+
+- name: "[portainer] Copiar docker-compose do Portainer"
+  copy:
+    src: "{{ apps_dir }}/portainer/compose.yml"
+    dest: "{{ portainer_path }}/docker-compose.yml"
+    mode: '0644'
+  tags: [portainer]
+
+- name: "[portainer] Subir containers Portainer"
+  command: docker compose up -d --force-recreate
+  args:
+    chdir: "{{ portainer_path }}"
+  tags: [portainer]
+
+- name: "[portainer] Implantar configuração portainer.caddy (se caddy existir)"
+  copy:
+    src: "{{ apps_dir }}/portainer/config/portainer.caddy"
+    dest: "{{ caddy_path }}/conf.d/portainer.caddy"
+    mode: '0644'
+  failed_when: false
+  tags: [portainer]
+
+- name: "[portainer] Abrir porta do Edge Tunnel (8000) no firewall"
+  firewalld:
+    port: 8000/tcp
+    permanent: yes
+    state: enabled
+    immediate: yes
+  failed_when: false
+  tags: [portainer]
+
+- name: "[portainer] Recarregar Caddy para aplicar container.{{ domain | default('') }}"
+  command: docker exec caddy caddy reload --config /etc/caddy/Caddyfile
+  failed_when: false
+  tags: [portainer]

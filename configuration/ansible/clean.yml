@@ -12,6 +12,7 @@
     supabase_path: "/opt/supabase"
     netbird_path: "/opt/netbird"
     netbird_proxy_path: "/opt/netbird-proxy"
+    sure_path: "/opt/sure"
     remove_volumes: "{{ remove_volumes | default(false) }}"
 
   tasks:
@@ -189,6 +190,21 @@
         path: "{{ caddy_path }}/conf.d/cockpit.caddy"
         state: absent
       tags: [cockpit]
+
+    # =========================================================================
+    # === SURE ===
+    # =========================================================================
+    - name: "[sure] Parar e remover containers do Sure"
+      command: docker rm -f sure-web sure-worker sure-db sure-redis
+      failed_when: false
+      tags: [sure]
+
+    - name: "[sure] Remover diretório de deploy do Sure"
+      file:
+        path: "{{ sure_path }}"
+        state: absent
+      when: remove_volumes | bool
+      tags: [sure]
 
     # =========================================================================
     # === RECARREGAR CADDY (SE CADDY ESTIVER ATIVO) ===

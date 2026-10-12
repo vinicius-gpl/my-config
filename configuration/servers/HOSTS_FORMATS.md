@@ -154,7 +154,24 @@ IP_DO_SERVIDOR ansible_user=root ansible_ssh_forward_agent=true \
 
 ---
 
-## 9. Formato: Servidor All-in-One (100% de Todos os Serviços)
+## 9. Formato: Sure (Gestão Financeira Pessoal)
+> Sobe o Sure (fork do Maybe Finance) com Web Puma, Worker Sidekiq, PostgreSQL 16 e Redis 7.
+
+```ini
+[servers]
+IP_DO_SERVIDOR ansible_user=root ansible_ssh_forward_agent=true \
+  sure_enabled=true \
+  sure_port=3000
+```
+
+* `sure_enabled`: Ativa o deploy do Sure no modo `all` (`true`).
+* `sure_port`: Porta publicada no host (padrão `3000`).
+* `sure_secret_key_base`: *(Opcional)* Chave mestra Rails de 64 bytes. Gerada automaticamente se omitida.
+* `sure_postgres_password`: *(Opcional)* Senha do banco Postgres do Sure. Gerada automaticamente se omitida.
+
+---
+
+## 10. Formato: Servidor All-in-One (100% de Todos os Serviços)
 > Se você quiser subir **absolutamente tudo** do repositório em um único servidor (Caddy, Portainer, WireGuard, NetBird Server, NetBird Client, Beszel Hub, Beszel Agent, Coolify, Supabase, Cockpit):
 
 ```ini

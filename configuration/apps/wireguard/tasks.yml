@@ -1,0 +1,178 @@
+---
+# =========================================================================
+# === WIREGUARD (wg-easy) ===
+# =========================================================================
+
+- name: "[wireguard] Desativar serviço bare-metal antigo wg-quick@wg0 (se existir)"
+  systemd:
+    name: wg-quick@wg0
+    state: stopped
+    enabled: no
+  failed_when: false
+  tags: [wireguard]
+
+- name: "[wireguard] Remover interface wg0 residual do kernel (se existir)"
+  command: ip link delete dev wg0
+  failed_when: false
+  changed_when: false
+  tags: [wireguard]
+
+- name: "[wireguard] Habilitar IP forwarding no host"
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    sysctl_set: yes
+    state: present
+    reload: yes
+  tags: [wireguard]
+
+- name: "[wireguard] Carregar módulos do kernel para iptables nat (exigidos pelo wg-quick)"
+  modprobe:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - ip_tables
+    - iptable_nat
+  failed_when: false
+  tags: [wireguard]
+
+- name: "[wireguard] Persistir módulos do kernel em /etc/modules-load.d/wireguard.conf"
+  copy:
+    dest: /etc/modules-load.d/wireguard.conf
+    content: |
+      ip_tables
+      iptable_nat
+    mode: '0644'
+  failed_when: false
+  tags: [wireguard]
+
+- name: "[wireguard] Criar diretórios de deploy"
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - "{{ wireguard_path }}"
+    - "{{ wireguard_path }}/data"
+  tags: [wireguard]
+
+- name: "[wireguard] Copiar docker-compose do wg-easy"
+  copy:
+    src: "{{ apps_dir }}/wireguard/compose.yml"
+    dest: "{{ wireguard_path }}/docker-compose.yml"
+    mode: '0644'
+  tags: [wireguard]
+
+- name: "[wireguard] Gerar PASSWORD_HASH a partir de wg_password (se necessário)"
+  command: "docker run --rm ghcr.io/wg-easy/wg-easy:latest wgpw '{{ wg_password }}'"
+  register: generated_wg_hash
+  when:
+    - wg_password is defined
+    - wg_password | length > 0
+    - wg_password_hash is not defined or wg_password_hash | length == 0
+  changed_when: false
+  tags: [wireguard]
+
+- name: "[wireguard] Definir variável de hash da senha"
+  set_fact:
+    final_wg_hash: >-
+      {{
+        (generated_wg_hash.stdout | regex_replace("^PASSWORD_HASH=['\"]?", "") | regex_replace("['\"]?$", "") | trim)
+        if (generated_wg_hash is defined and generated_wg_hash.stdout is defined and generated_wg_hash.stdout | length > 0)
+        else (wg_password_hash | default('') | regex_replace("^PASSWORD_HASH=['\"]?", "") | regex_replace("['\"]?$", "") | trim)
+      }}
+  tags: [wireguard]
+
+- name: "[wireguard] Descobrir IP público do host"
+  command: curl -s4 https://api.ipify.org
+  register: host_public_ip
+  changed_when: false
+  failed_when: false
+  tags: [wireguard]
+
+- name: "[wireguard] Definir IP público detectado"
+  set_fact:
+    detected_public_ip: "{{ host_public_ip.stdout | trim if (host_public_ip is defined and host_public_ip.stdout is defined and host_public_ip.stdout | length > 0) else '' }}"
+  tags: [wireguard]
+
+- name: "[wireguard] Definir lista de AllowedIPs (Split Tunnel com IP público e rede local)"
+  set_fact:
+    final_allowed_ips: >-
+      {{
+        wg_allowed_ips
+        if (wg_allowed_ips is defined and wg_allowed_ips | length > 0)
+        else (
+          '10.0.0.0/24'
+          ~ (', ' ~ ansible_host ~ '/32' if (ansible_host is defined and ansible_host != 'localhost' and ansible_host != '127.0.0.1') else '')
+          ~ (', ' ~ detected_public_ip ~ '/32' if (detected_public_ip | length > 0 and detected_public_ip != ansible_host) else '')
+        )
+      }}
+  tags: [wireguard]
+
+- name: "[wireguard] Criar arquivo .env para o wg-easy"
+  copy:
+    dest: "{{ wireguard_path }}/.env"
+    content: |
+      WG_HOST={{ wg_host | default(domain) | default(detected_public_ip) | default(ansible_host) }}
+      WG_DEVICE={{ ansible_default_ipv4.interface | default('eth0') }}
+      WG_ALLOWED_IPS={{ final_allowed_ips }}
+      PASSWORD_HASH={{ final_wg_hash }}
+    mode: '0600'
+  tags: [wireguard]
+
+- name: "[wireguard] Abrir porta UDP do WireGuard no firewall"
+  firewalld:
+    port: 51820/udp
+    permanent: yes
+    state: enabled
+    immediate: yes
+  failed_when: false
+  tags: [wireguard]
+
+- name: "[wireguard] Habilitar masquerade no firewalld"
+  firewalld:
+    masquerade: yes
+    permanent: yes
+    state: enabled
+    immediate: yes
+  failed_when: false
+  tags: [wireguard]
+
+- name: "[wireguard] Adicionar rede VPN (10.0.0.0/24) e interface wg0 na zona trusted do firewalld"
+  firewalld:
+    zone: trusted
+    source: 10.0.0.0/24
+    permanent: yes
+    state: enabled
+    immediate: yes
+  failed_when: false
+  tags: [wireguard]
+
+- name: "[wireguard] Adicionar interface wg0 na zona trusted do firewalld"
+  firewalld:
+    zone: trusted
+    interface: wg0
+    permanent: yes
+    state: enabled
+    immediate: yes
+  failed_when: false
+  tags: [wireguard]
+
+- name: "[wireguard] Subir container wg-easy"
+  command: docker compose up -d --force-recreate
+  args:
+    chdir: "{{ wireguard_path }}"
+  tags: [wireguard]
+
+- name: "[wireguard] Implantar configuração wireguard.caddy (se caddy existir)"
+  copy:
+    src: "{{ apps_dir }}/wireguard/config/wireguard.caddy"
+    dest: "{{ caddy_path }}/conf.d/wireguard.caddy"
+    mode: '0644'
+  failed_when: false
+  tags: [wireguard]
+
+- name: "[wireguard] Recarregar Caddy para aplicar vpn.{{ domain | default('') }}"
+  command: docker exec caddy caddy reload --config /etc/caddy/Caddyfile
+  failed_when: false
+  tags: [wireguard]

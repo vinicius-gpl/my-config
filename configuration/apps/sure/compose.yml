@@ -1,0 +1,145 @@
+# =============================================================================
+#  sure/compose.yml  --  GESTÃO FINANCEIRA PESSOAL (we-promise/sure)
+# -----------------------------------------------------------------------------
+#  Sure é um fork comunitário do Maybe Finance (self-hosted personal finance).
+#  Permite gerenciamento de finanças pessoais, contas, investimentos e controle
+#  de saldo de forma 100% self-hosted e privada.
+#
+#  Segue a especificação e recomendações oficiais do projeto:
+#    https://github.com/we-promise/sure/blob/main/compose.example.yml
+#    https://github.com/we-promise/sure/blob/main/docs/hosting/docker.md
+#
+#  Serviços:
+#    web      Aplicação web Rails (Puma). Porta padrão 3000.
+#    worker   Processamento assíncrono em segundo plano com Sidekiq.
+#    db       Banco de dados relacional PostgreSQL 16 (volume persistente).
+#    redis    Cache e controle de filas em memória (volume persistente).
+# =============================================================================
+name: sure
+
+x-db-env: &db_env
+  POSTGRES_USER: ${POSTGRES_USER:-sure_user}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sure_password}
+  POSTGRES_DB: ${POSTGRES_DB:-sure_production}
+
+x-rails-env: &rails_env
+  <<: *db_env
+  SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+  SELF_HOSTED: "true"
+  RAILS_FORCE_SSL: ${RAILS_FORCE_SSL:-false}
+  RAILS_ASSUME_SSL: ${RAILS_ASSUME_SSL:-false}
+  DB_HOST: db
+  DB_PORT: 5432
+  REDIS_URL: redis://redis:6379/1
+  EXCHANGE_RATE_PROVIDER: ${EXCHANGE_RATE_PROVIDER:-yahoo_finance}
+  SECURITIES_PROVIDER: ${SECURITIES_PROVIDER:-yahoo_finance}
+  OPENAI_ACCESS_TOKEN: ${OPENAI_ACCESS_TOKEN:-}
+  OPENAI_MODEL: ${OPENAI_MODEL:-}
+  OPENAI_URI_BASE: ${OPENAI_URI_BASE:-}
+  LLM_CONTEXT_WINDOW: ${LLM_CONTEXT_WINDOW:-}
+  OPENAI_REQUEST_TIMEOUT: ${OPENAI_REQUEST_TIMEOUT:-60}
+  AI_HEALTH_PROBE_TIMEOUT: ${AI_HEALTH_PROBE_TIMEOUT:-}
+  AI_HEALTH_PROBE_CACHE_TTL: ${AI_HEALTH_PROBE_CACHE_TTL:-}
+  AI_RESPONSE_TIMEOUT: ${AI_RESPONSE_TIMEOUT:-90}
+  ASSISTANT_MAX_TOOL_CALL_ITERATIONS: ${ASSISTANT_MAX_TOOL_CALL_ITERATIONS:-}
+
+services:
+
+  # ===========================================================================
+  #  APLICAÇÃO WEB (Rails / Puma)
+  # ===========================================================================
+  web:
+    image: ghcr.io/we-promise/sure:${SURE_VERSION:-0.7.5-hotfix.2}
+    container_name: sure-web
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    volumes:
+      - app-storage:/rails/storage
+    environment:
+      <<: *rails_env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    networks:
+      - sure-net
+      - proxy
+
+  # ===========================================================================
+  #  WORKER (Background jobs / Sidekiq)
+  # ===========================================================================
+  worker:
+    image: ghcr.io/we-promise/sure:${SURE_VERSION:-0.7.5-hotfix.2}
+    container_name: sure-worker
+    command: bundle exec sidekiq
+    restart: unless-stopped
+    volumes:
+      - app-storage:/rails/storage
+    environment:
+      <<: *rails_env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    networks:
+      - sure-net
+
+  # ===========================================================================
+  #  BANCO DE DADOS (PostgreSQL 16)
+  # ===========================================================================
+  db:
+    image: postgres:16-alpine
+    container_name: sure-db
+    restart: unless-stopped
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      <<: *db_env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sure-net
+
+  # ===========================================================================
+  #  CACHE & FILAS (Redis)
+  # ===========================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: sure-redis
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sure-net
+
+volumes:
+  app-storage:
+    name: sure-storage
+  postgres-data:
+    name: sure-postgres-data
+  redis-data:
+    name: sure-redis-data
+
+networks:
+  sure-net:
+    name: sure-net
+    driver: bridge
+  proxy:
+    external: true

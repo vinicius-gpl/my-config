@@ -20,7 +20,7 @@ Este diretório contém a infraestrutura e templates para o gerenciamento centra
 ```
 
 * **Servidor Central (Oracle):** Roda o container `portainer/portainer-ee:lts` com persistência no volume `portainer-data` e proxy reverso no Caddy em `https://container.vinicius-gpl.com`.
-* **Nós Remotos (Acerola e outros workers):** Rodam o container `portainer_edge_agent` (`portainer/agent:2.45.2`), conectando-se de dentro para fora (outbound) na Oracle via túnel reverso.
+* **Nós Remotos (Acerola e outros workers):** Rodam o container `portainer-edge-agent` (`portainer/agent:2.45.2`), conectando-se de dentro para fora (outbound) na Oracle via túnel reverso.
 
 ---
 

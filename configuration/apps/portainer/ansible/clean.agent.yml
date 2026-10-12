@@ -4,7 +4,7 @@
 # =========================================================================
 
 - name: "[portainer-agent] Parar e remover container do Portainer Agent"
-  command: docker rm -f portainer-agent portainer_edge_agent
+  command: docker rm -f portainer-agent portainer-edge-agent portainer_edge_agent
   failed_when: false
   tags: [portainer-agent, portainer_agent]
 

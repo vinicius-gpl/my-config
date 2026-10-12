@@ -26,8 +26,8 @@
     mode: '0644'
   tags: [portainer-agent, portainer_agent]
 
-- name: "[portainer-agent] Limpar container de modo alternativo para evitar conflito"
-  command: docker rm -f {{ 'portainer-agent' if (portainer_edge_key is defined and portainer_edge_key | length > 0) else 'portainer_edge_agent' }}
+- name: "[portainer-agent] Limpar container de modo alternativo (e nome legado) para evitar conflito"
+  command: docker rm -f {{ 'portainer-agent' if (portainer_edge_key is defined and portainer_edge_key | length > 0) else 'portainer-edge-agent' }} portainer_edge_agent
   failed_when: false
   tags: [portainer-agent, portainer_agent]
 

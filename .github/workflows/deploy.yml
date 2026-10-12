@@ -30,6 +30,7 @@ on:
           - beszel-hub
           - netbird
           - netbird-client
+          - netbird-proxy
           - cockpit
       dry_run:
         description: 'Modo simulação (--check)?'

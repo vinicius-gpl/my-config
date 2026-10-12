@@ -3,6 +3,8 @@
 VPS pública (`168.138.133.78`, Rocky Linux, usuário `rocky`) e borda de toda a rede:
 termina o TLS, hospeda o NetBird e encaminha os serviços públicos do [PLUTO](../pluto/README.md).
 
+> Arquitetura completa, fluxos e diagnóstico: [**REDE.md**](../REDE.md).
+
 | Item | Valor |
 |---|---|
 | IP público | `168.138.133.78` |
@@ -32,8 +34,8 @@ o NetBird não gerencia nenhuma zona de `vinicius-gpl.com`. Quem decide o acesso
 
 - **Privados** (`container`, `monitor`, `cockpit`): o snippet `vpn_only` derruba a conexão de qualquer
   origem fora de `vpn_cidr`.
-  Para os peers chegarem com IP da VPN, o NetBird tem a rota `168.138.133.78/32` (peer de roteamento:
-  este servidor, sem masquerade) e o host mantém esse IP no loopback (`vpn-public-ip.service`).
+  Para os peers chegarem com IP da VPN, o NetBird tem a rota `oracle-public-ip` (`168.138.133.78/32`,
+  peer de roteamento: este servidor, sem masquerade; criada à mão no painel) e o host mantém esse IP no loopback (`vpn-public-ip.service`).
 - **Públicos** (`netbird`, `*.host`): liberados para qualquer origem. Os hosts de `caddy_tunnels` seguem
   pelo túnel até o Caddy local do peer.
 

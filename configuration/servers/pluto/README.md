@@ -4,6 +4,8 @@ Desktop pessoal (Fedora). Não é gerenciado por Ansible nem pelas Actions: os s
 `docker compose` direto das pastas deste repositório. Fica atrás de NAT, então tudo que é público
 passa pela [Oracle](../oracle/README.md).
 
+> Arquitetura completa, fluxos e diagnóstico: [**REDE.md**](../REDE.md).
+
 | Item | Valor |
 |---|---|
 | IP na VPN (NetBird, `wt0`) | `100.96.62.172` (`pluto.netbird.selfhosted`) |

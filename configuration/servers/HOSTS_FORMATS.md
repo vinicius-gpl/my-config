@@ -2,6 +2,10 @@
 
 Este documento detalha todos os formatos aceitos pelo Ansible no repositório, quais variáveis são necessárias para cada app e exemplos prontos para copiar e colar nas Secrets (`ANSIBLE_HOSTS_INI`).
 
+> Variáveis **não secretas** de um servidor (sites do Caddy, túneis, rede da VPN) ficam versionadas em
+> `configuration/servers/<servidor>/vars.yml` e são carregadas automaticamente pelo workflow de deploy.
+> Exemplo: [`oracle/vars.yml`](oracle/vars.yml).
+
 ---
 
 ## 📌 Estrutura Geral de uma Linha no `hosts.ini`

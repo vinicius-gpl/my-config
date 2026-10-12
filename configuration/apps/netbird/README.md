@@ -63,3 +63,21 @@ ansible-playbook -i configuration/servers/oracle/inventory.ini configuration/ans
    * Troque a URL de gerenciamento para o seu servidor: `https://netbird.seu-dominio.com`.
 3. Clique em **Connect** / **Login**.
 4. Faça login com o seu usuário e senha. O dispositivo será pareado instantaneamente!
+
+---
+
+## 🛣️ Rotas
+
+O servidor da Oracle usa uma rota para que os peers alcancem o IP público dela pelo túnel. É isso que
+permite ao Caddy liberar os serviços privados só para quem está na VPN, mantendo o DNS no IP público.
+
+| Campo | Valor |
+|---|---|
+| Nome | `oracle-public-ip` |
+| Network Range | `168.138.133.78/32` |
+| Routing Peer | `VIVY` (Oracle) |
+| Distribution Groups | `All` |
+| Masquerade | desligado |
+
+A rota é criada no painel (**Network Routing > Routes > Add Route**) e não é gerenciada pelo Ansible.
+Detalhes e diagnóstico em [`configuration/servers/REDE.md`](../../servers/REDE.md).

@@ -11,6 +11,7 @@
     coolify_path: "/opt/coolify"
     supabase_path: "/opt/supabase"
     netbird_path: "/opt/netbird"
+    netbird_proxy_path: "/opt/netbird-proxy"
     remove_volumes: "{{ remove_volumes | default(false) }}"
 
   tasks:
@@ -137,6 +138,21 @@
       command: netbird down
       failed_when: false
       tags: [netbird-client, netbird_client]
+
+    # =========================================================================
+    # === NETBIRD REVERSE PROXY ===
+    # =========================================================================
+    - name: "[netbird-proxy] Parar e remover container do NetBird Reverse Proxy"
+      command: docker rm -f netbird-reverse-proxy
+      failed_when: false
+      tags: [netbird-proxy, netbird_proxy]
+
+    - name: "[netbird-proxy] Remover diretório de deploy do NetBird Reverse Proxy"
+      file:
+        path: "{{ netbird_proxy_path }}"
+        state: absent
+      when: remove_volumes | bool
+      tags: [netbird-proxy, netbird_proxy]
 
 
     # =========================================================================

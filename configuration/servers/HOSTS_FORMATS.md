@@ -121,7 +121,24 @@ IP_DO_SERVIDOR ansible_user=root domain=acerola.app netbird_setup_key="CHAVE_SET
 
 ---
 
-## 7. Formato: Portainer Edge Agent (Conectar Worker ao Portainer Central)
+## 7. Formato: NetBird Reverse Proxy (Proxy Reverso Privado)
+> Sobe o container oficial do NetBird Reverse Proxy (`netbirdio/reverse-proxy:0.80.0`) para expor serviços privados nas portas 80 e 443 com ACME automático.
+
+```ini
+[servers]
+IP_DO_SERVIDOR ansible_user=root ansible_ssh_forward_agent=true \
+  netbird_proxy_token="SEU_TOKEN_DO_NETBIRD_PROXY" \
+  netbird_proxy_domain="proxy.meudominio.com" \
+  netbird_proxy_address="https://netbird.meudominio.com:443"
+```
+
+* `netbird_proxy_token`: Token gerado no NetBird para autorizar o proxy reverso.
+* `netbird_proxy_domain`: Domínio gerenciado pelo proxy (`NB_PROXY_DOMAIN`).
+* `netbird_proxy_address`: Endereço do NetBird Management Server (`NB_PROXY_MANAGEMENT_ADDRESS`).
+
+---
+
+## 8. Formato: Portainer Edge Agent (Conectar Worker ao Portainer Central)
 > Conecta este servidor como nó Edge ao Portainer Server central (ex: na Oracle) via Edge ID e Edge Key.
 
 ```ini
@@ -137,7 +154,7 @@ IP_DO_SERVIDOR ansible_user=root ansible_ssh_forward_agent=true \
 
 ---
 
-## 8. Formato: Servidor All-in-One (100% de Todos os Serviços)
+## 9. Formato: Servidor All-in-One (100% de Todos os Serviços)
 > Se você quiser subir **absolutamente tudo** do repositório em um único servidor (Caddy, Portainer, WireGuard, NetBird Server, NetBird Client, Beszel Hub, Beszel Agent, Coolify, Supabase, Cockpit):
 
 ```ini
@@ -195,6 +212,9 @@ IP_DO_SERVIDOR ansible_user=root ansible_ssh_forward_agent=true \
 | **`netbird_auth_secret`** | NetBird Server | Não | Segredo de autenticação do Relay (mínimo 32 caracteres hex). Gerado automaticamente se omitido. |
 | **`netbird_session_key`** | NetBird Server | Não | Chave de criptografia da sessão de cookies (base64 de 32 bytes). Gerada automaticamente se omitida. |
 | **`netbird_datastore_key`** | NetBird Server | Não | Chave de criptografia do banco SQLite (base64 de 32 bytes). Gerada automaticamente se omitida. |
+| **`netbird_proxy_token`** | NetBird Reverse Proxy | Não* | Token gerado no NetBird para autenticar e registrar o container do proxy reverso. |
+| **`netbird_proxy_domain`** | NetBird Reverse Proxy | Não* | Domínio atendido pelo proxy reverso (onde os certificados ACME são provisionados). |
+| **`netbird_proxy_address`** | NetBird Reverse Proxy | Não* | Endereço do NetBird Management Server (`NB_PROXY_MANAGEMENT_ADDRESS`). |
 | **`coolify_root_email`** | Coolify | Não | E-mail do usuário administrador criado no primeiro boot. |
 | **`coolify_root_password`**| Coolify | Não | Senha do usuário administrador inicial do Coolify. |
 | **`coolify_app_id`** | Coolify | Não | ID único da instância do Coolify (16 caracteres hex). |

@@ -41,6 +41,18 @@
   failed_when: false
   tags: [portainer-agent, portainer_agent]
 
+- name: "[portainer-agent] Fechar porta do Portainer Agent (9001) no firewall em modo Edge"
+  firewalld:
+    port: 9001/tcp
+    permanent: yes
+    state: disabled
+    immediate: yes
+  when:
+    - portainer_edge_key is defined
+    - portainer_edge_key | length > 0
+  failed_when: false
+  tags: [portainer-agent, portainer_agent]
+
 - name: "[portainer-agent] Subir container do Portainer Agent"
   command: docker compose up -d --force-recreate
   args:

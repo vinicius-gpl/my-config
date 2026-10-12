@@ -15,8 +15,6 @@
     netbird_path: "/opt/netbird"
     netbird_proxy_path: "/opt/netbird-proxy"
     sure_path: "/opt/sure"
-    portainer_edge_id: ""
-    portainer_edge_key: ""
     netbird_proxy_token: ""
     netbird_proxy_domain: ""
     netbird_proxy_address: ""

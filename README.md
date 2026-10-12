@@ -10,7 +10,8 @@ Repositório central de configurações, automações de infraestrutura e dotfil
 configuration/
 ├── servers/             # 🖥️ Inventários e variáveis por SERVIDOR (independente de distro)
 │   ├── acerola/         # Servidor Acerola
-│   └── oracle/          # Servidor Oracle
+│   ├── oracle/          # Servidor Oracle (borda pública, NetBird, vars.yml)
+│   └── pluto/           # Desktop PLUTO (serviços locais publicados via Oracle)
 │
 ├── apps/                # 📦 Catálogo de APPS (Docker Compose + configs prontas)
 │   ├── wireguard/       # wg-easy com suporte a host network e QR Code

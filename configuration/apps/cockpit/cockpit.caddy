@@ -1,4 +1,5 @@
 cockpit.{$DOMAIN} {
+    import vpn_only
 
     reverse_proxy host.docker.internal:9090 {
         transport http {

@@ -1,0 +1,14 @@
+# Caddyfile dos servidores de borda (deploy via Ansible): TLS público + conf.d.
+# O Caddy local (atrás do túnel, sem TLS) usa o arquivo `caddyfile`.
+{
+    email {$EMAIL}
+    {$CADDY_OPTS}
+}
+
+# Serviços privados: derruba a conexão de qualquer origem fora da VPN.
+(vpn_only) {
+    @fora_da_vpn not remote_ip {$VPN_CIDR}
+    abort @fora_da_vpn
+}
+
+import /etc/caddy/conf.d/*.caddy

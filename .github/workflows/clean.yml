@@ -30,6 +30,8 @@ on:
           - caddy
           - cockpit
           - sure
+          - coolify
+          - supabase
           - prune
       remove_volumes:
         description: 'Apagar volumes de dados persistentes?'

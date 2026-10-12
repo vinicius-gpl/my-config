@@ -1,0 +1,15 @@
+---
+# =========================================================================
+# === BESZEL AGENT CLEAN / TEARDOWN ===
+# =========================================================================
+
+- name: "[beszel-agent] Parar e remover container do Beszel Agent"
+  command: docker rm -f beszel-agent
+  failed_when: false
+  tags: [beszel-agent, beszel_agent]
+
+- name: "[beszel-agent] Remover diretório de deploy do Beszel Agent"
+  file:
+    path: "{{ beszel_path | default('/opt/beszel') }}"
+    state: absent
+  tags: [beszel-agent, beszel_agent]

@@ -1,0 +1,16 @@
+---
+# =========================================================================
+# === SURE CLEAN / TEARDOWN ===
+# =========================================================================
+
+- name: "[sure] Parar e remover containers do Sure"
+  command: docker rm -f sure-web sure-worker sure-db sure-redis
+  failed_when: false
+  tags: [sure]
+
+- name: "[sure] Remover diretório de deploy do Sure"
+  file:
+    path: "{{ sure_path | default('/opt/sure') }}"
+    state: absent
+  when: remove_volumes | default(false) | bool
+  tags: [sure]

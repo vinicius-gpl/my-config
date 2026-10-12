@@ -1,0 +1,22 @@
+---
+# =========================================================================
+# === WIREGUARD CLEAN / TEARDOWN ===
+# =========================================================================
+
+- name: "[wireguard] Parar e remover container wg-easy"
+  command: docker rm -f wg-easy
+  failed_when: false
+  tags: [wireguard]
+
+- name: "[wireguard] Remover diretório de deploy do WireGuard"
+  file:
+    path: "{{ wireguard_path | default('/opt/wireguard') }}"
+    state: absent
+  when: remove_volumes | default(false) | bool
+  tags: [wireguard]
+
+- name: "[wireguard] Remover configuração Caddy do WireGuard"
+  file:
+    path: "{{ caddy_path | default('/opt/caddy') }}/conf.d/wireguard.caddy"
+    state: absent
+  tags: [wireguard]

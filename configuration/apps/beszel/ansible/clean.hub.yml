@@ -1,0 +1,27 @@
+---
+# =========================================================================
+# === BESZEL HUB CLEAN / TEARDOWN ===
+# =========================================================================
+
+- name: "[beszel-hub] Parar e remover container do Beszel Hub"
+  command: docker rm -f beszel
+  failed_when: false
+  tags: [beszel-hub, beszel_hub, dashboards]
+
+- name: "[beszel-hub] Remover diretório de deploy do Beszel Hub"
+  file:
+    path: "{{ beszel_hub_path | default('/opt/beszel-hub') }}"
+    state: absent
+  tags: [beszel-hub, beszel_hub, dashboards]
+
+- name: "[beszel-hub] Remover volume beszel-data (se solicitado)"
+  command: docker volume rm beszel-data
+  failed_when: false
+  when: remove_volumes | default(false) | bool
+  tags: [beszel-hub, beszel_hub, dashboards]
+
+- name: "[beszel-hub] Remover configuração Caddy do Beszel Hub"
+  file:
+    path: "{{ caddy_path | default('/opt/caddy') }}/conf.d/beszel.caddy"
+    state: absent
+  tags: [beszel-hub, beszel_hub, dashboards]

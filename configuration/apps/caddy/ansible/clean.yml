@@ -1,0 +1,16 @@
+---
+# =========================================================================
+# === CADDY CLEAN / TEARDOWN ===
+# =========================================================================
+
+- name: "[caddy] Parar e remover container Caddy"
+  command: docker rm -f caddy
+  failed_when: false
+  tags: [caddy]
+
+- name: "[caddy] Remover diretório do Caddy (se solicitado)"
+  file:
+    path: "{{ caddy_path | default('/opt/caddy') }}"
+    state: absent
+  when: remove_volumes | default(false) | bool
+  tags: [caddy]

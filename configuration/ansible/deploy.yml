@@ -33,55 +33,55 @@
     # Apps e Serviços
     # -------------------------------------------------------------------------
     - name: "[wireguard] Deploy WireGuard (wg-easy)"
-      include_tasks: "{{ apps_dir }}/wireguard/tasks.yml"
+      include_tasks: "{{ apps_dir }}/wireguard/ansible/deploy.yml"
       tags: [wireguard]
 
     - name: "[caddy] Deploy Caddy Reverse Proxy"
-      include_tasks: "{{ apps_dir }}/caddy/tasks.yml"
+      include_tasks: "{{ apps_dir }}/caddy/ansible/deploy.yml"
       tags: [caddy]
 
     - name: "[portainer] Deploy Portainer Server"
-      include_tasks: "{{ apps_dir }}/portainer/tasks.yml"
+      include_tasks: "{{ apps_dir }}/portainer/ansible/deploy.yml"
       tags: [portainer]
 
     - name: "[portainer-agent] Deploy Portainer Agent / Edge"
-      include_tasks: "{{ apps_dir }}/portainer/tasks.agent.yml"
+      include_tasks: "{{ apps_dir }}/portainer/ansible/deploy.agent.yml"
       tags: [portainer-agent, portainer_agent]
 
     - name: "[coolify] Deploy Coolify PaaS"
-      include_tasks: "{{ apps_dir }}/coolify/tasks.yml"
+      include_tasks: "{{ apps_dir }}/coolify/ansible/deploy.yml"
       tags: [coolify]
 
     - name: "[supabase] Deploy Supabase Backend"
-      include_tasks: "{{ apps_dir }}/supabase/tasks.yml"
+      include_tasks: "{{ apps_dir }}/supabase/ansible/deploy.yml"
       tags: [supabase]
 
     - name: "[beszel] Deploy Beszel Agent"
-      include_tasks: "{{ apps_dir }}/beszel/tasks.agent.yml"
+      include_tasks: "{{ apps_dir }}/beszel/ansible/deploy.agent.yml"
       tags: [beszel, beszel-agent, beszel_agent]
 
     - name: "[beszel-hub] Deploy Beszel Hub"
-      include_tasks: "{{ apps_dir }}/beszel/tasks.hub.yml"
+      include_tasks: "{{ apps_dir }}/beszel/ansible/deploy.hub.yml"
       tags: [beszel-hub, beszel_hub]
 
     - name: "[netbird] Deploy NetBird Server"
-      include_tasks: "{{ apps_dir }}/netbird/tasks.server.yml"
+      include_tasks: "{{ apps_dir }}/netbird/ansible/deploy.server.yml"
       tags: [netbird]
 
     - name: "[netbird-client] Conectar NetBird Client"
-      include_tasks: "{{ apps_dir }}/netbird/tasks.client.yml"
+      include_tasks: "{{ apps_dir }}/netbird/ansible/deploy.client.yml"
       tags: [netbird-client, netbird_client]
 
     - name: "[netbird-proxy] Deploy NetBird Reverse Proxy"
-      include_tasks: "{{ apps_dir }}/netbird/tasks.proxy.yml"
+      include_tasks: "{{ apps_dir }}/netbird/ansible/deploy.proxy.yml"
       tags: [netbird-proxy, netbird_proxy]
 
     - name: "[cockpit] Instalar e Configurar Cockpit"
-      include_tasks: "{{ apps_dir }}/cockpit/tasks.yml"
+      include_tasks: "{{ apps_dir }}/cockpit/ansible/deploy.yml"
       tags: [cockpit]
 
     - name: "[sure] Deploy Sure (Maybe Finance)"
-      include_tasks: "{{ apps_dir }}/sure/tasks.yml"
+      include_tasks: "{{ apps_dir }}/sure/ansible/deploy.yml"
       when: (sure_enabled is defined and sure_enabled | bool) or ('sure' in ansible_run_tags)
       tags: [sure]
 

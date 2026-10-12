@@ -1,0 +1,16 @@
+---
+# =========================================================================
+# === COOLIFY CLEAN / TEARDOWN ===
+# =========================================================================
+
+- name: "[coolify] Parar e remover containers do Coolify"
+  command: docker compose -f {{ coolify_path | default('/opt/coolify') }}/docker-compose.yml down
+  failed_when: false
+  tags: [coolify]
+
+- name: "[coolify] Remover diretório de deploy do Coolify (se solicitado)"
+  file:
+    path: "{{ coolify_path | default('/opt/coolify') }}"
+    state: absent
+  when: remove_volumes | default(false) | bool
+  tags: [coolify]

@@ -1,0 +1,21 @@
+---
+# =========================================================================
+# === PORTAINER SERVER CLEAN / TEARDOWN ===
+# =========================================================================
+
+- name: "[portainer] Parar e remover container do Portainer Server"
+  command: docker rm -f portainer
+  failed_when: false
+  tags: [portainer, dashboards]
+
+- name: "[portainer] Remover volume portainer-data (se solicitado)"
+  command: docker volume rm portainer-data
+  failed_when: false
+  when: remove_volumes | default(false) | bool
+  tags: [portainer, dashboards]
+
+- name: "[portainer] Remover configuração Caddy do Portainer Server"
+  file:
+    path: "{{ caddy_path | default('/opt/caddy') }}/conf.d/portainer.caddy"
+    state: absent
+  tags: [portainer, dashboards]

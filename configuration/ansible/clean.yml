@@ -3,6 +3,7 @@
   hosts: all
   become: yes
   vars:
+    apps_dir: "{{ playbook_dir }}/../apps"
     caddy_path: "/opt/caddy"
     beszel_path: "/opt/beszel"
     beszel_hub_path: "/opt/beszel-hub"
@@ -19,191 +20,92 @@
     # =========================================================================
     # === BESZEL HUB ===
     # =========================================================================
-    - name: "[beszel-hub] Parar e remover container do Beszel Hub"
-      command: docker rm -f beszel
-      failed_when: false
-      tags: [beszel-hub, beszel_hub, dashboards]
-
-    - name: "[beszel-hub] Remover diretório de deploy do Beszel Hub"
-      file:
-        path: "{{ beszel_hub_path }}"
-        state: absent
-      tags: [beszel-hub, beszel_hub, dashboards]
-
-    - name: "[beszel-hub] Remover volume beszel-data (se solicitado)"
-      command: docker volume rm beszel-data
-      failed_when: false
-      when: remove_volumes | bool
-      tags: [beszel-hub, beszel_hub, dashboards]
-
-    - name: "[beszel-hub] Remover configuração Caddy do Beszel Hub"
-      file:
-        path: "{{ caddy_path }}/conf.d/beszel.caddy"
-        state: absent
+    - name: "[beszel-hub] Teardown Beszel Hub"
+      include_tasks: "{{ apps_dir }}/beszel/ansible/clean.hub.yml"
       tags: [beszel-hub, beszel_hub, dashboards]
 
     # =========================================================================
     # === BESZEL AGENT ===
     # =========================================================================
-    - name: "[beszel-agent] Parar e remover container do Beszel Agent"
-      command: docker rm -f beszel-agent
-      failed_when: false
-      tags: [beszel-agent, beszel_agent]
-
-    - name: "[beszel-agent] Remover diretório de deploy do Beszel Agent"
-      file:
-        path: "{{ beszel_path }}"
-        state: absent
+    - name: "[beszel-agent] Teardown Beszel Agent"
+      include_tasks: "{{ apps_dir }}/beszel/ansible/clean.agent.yml"
       tags: [beszel-agent, beszel_agent]
 
     # =========================================================================
     # === PORTAINER SERVER ===
     # =========================================================================
-    - name: "[portainer] Parar e remover container do Portainer Server"
-      command: docker rm -f portainer
-      failed_when: false
-      tags: [portainer, dashboards]
-
-    - name: "[portainer] Remover volume portainer-data (se solicitado)"
-      command: docker volume rm portainer-data
-      failed_when: false
-      when: remove_volumes | bool
-      tags: [portainer, dashboards]
-
-    - name: "[portainer] Remover configuração Caddy do Portainer Server"
-      file:
-        path: "{{ caddy_path }}/conf.d/portainer.caddy"
-        state: absent
+    - name: "[portainer] Teardown Portainer Server"
+      include_tasks: "{{ apps_dir }}/portainer/ansible/clean.yml"
       tags: [portainer, dashboards]
 
     # =========================================================================
     # === PORTAINER AGENT ===
     # =========================================================================
-    - name: "[portainer-agent] Parar e remover container do Portainer Agent"
-      command: docker rm -f portainer-agent portainer_edge_agent
-      failed_when: false
-      tags: [portainer-agent, portainer_agent]
-
-    - name: "[portainer-agent] Remover volume portainer_agent_data (se solicitado)"
-      command: docker volume rm portainer_agent_data
-      failed_when: false
-      when: remove_volumes | bool
+    - name: "[portainer-agent] Teardown Portainer Agent"
+      include_tasks: "{{ apps_dir }}/portainer/ansible/clean.agent.yml"
       tags: [portainer-agent, portainer_agent]
 
     # =========================================================================
     # === WIREGUARD ===
     # =========================================================================
-    - name: "[wireguard] Parar e remover container wg-easy"
-      command: docker rm -f wg-easy
-      failed_when: false
-      tags: [wireguard]
-
-    - name: "[wireguard] Remover diretório de deploy do WireGuard"
-      file:
-        path: "{{ wireguard_path }}"
-        state: absent
-      when: remove_volumes | bool
-      tags: [wireguard]
-
-    - name: "[wireguard] Remover configuração Caddy do WireGuard"
-      file:
-        path: "{{ caddy_path }}/conf.d/wireguard.caddy"
-        state: absent
+    - name: "[wireguard] Teardown WireGuard"
+      include_tasks: "{{ apps_dir }}/wireguard/ansible/clean.yml"
       tags: [wireguard]
 
     # =========================================================================
-    # === NETBIRD ===
+    # === NETBIRD SERVER ===
     # =========================================================================
-    - name: "[netbird] Parar e remover containers do NetBird"
-      command: docker rm -f netbird-server netbird-dashboard
-      failed_when: false
-      tags: [netbird]
-
-    - name: "[netbird] Remover diretório de deploy do NetBird"
-      file:
-        path: "{{ netbird_path }}"
-        state: absent
-      when: remove_volumes | bool
-      tags: [netbird]
-
-    - name: "[netbird] Remover configuração Caddy do NetBird"
-      file:
-        path: "{{ caddy_path }}/conf.d/netbird.caddy"
-        state: absent
+    - name: "[netbird] Teardown NetBird Server"
+      include_tasks: "{{ apps_dir }}/netbird/ansible/clean.server.yml"
       tags: [netbird]
 
     # =========================================================================
     # === NETBIRD CLIENT ===
     # =========================================================================
-    - name: "[netbird-client] Desconectar e parar NetBird Client"
-      command: netbird down
-      failed_when: false
+    - name: "[netbird-client] Teardown NetBird Client"
+      include_tasks: "{{ apps_dir }}/netbird/ansible/clean.client.yml"
       tags: [netbird-client, netbird_client]
 
     # =========================================================================
     # === NETBIRD REVERSE PROXY ===
     # =========================================================================
-    - name: "[netbird-proxy] Parar e remover container do NetBird Reverse Proxy"
-      command: docker rm -f netbird-reverse-proxy
-      failed_when: false
+    - name: "[netbird-proxy] Teardown NetBird Reverse Proxy"
+      include_tasks: "{{ apps_dir }}/netbird/ansible/clean.proxy.yml"
       tags: [netbird-proxy, netbird_proxy]
 
-    - name: "[netbird-proxy] Remover diretório de deploy do NetBird Reverse Proxy"
-      file:
-        path: "{{ netbird_proxy_path }}"
-        state: absent
-      when: remove_volumes | bool
-      tags: [netbird-proxy, netbird_proxy]
+    # =========================================================================
+    # === COOLIFY ===
+    # =========================================================================
+    - name: "[coolify] Teardown Coolify PaaS"
+      include_tasks: "{{ apps_dir }}/coolify/ansible/clean.yml"
+      tags: [coolify]
 
+    # =========================================================================
+    # === SUPABASE ===
+    # =========================================================================
+    - name: "[supabase] Teardown Supabase Backend"
+      include_tasks: "{{ apps_dir }}/supabase/ansible/clean.yml"
+      tags: [supabase]
 
     # =========================================================================
     # === CADDY ===
     # =========================================================================
-    - name: "[caddy] Parar e remover container Caddy"
-      command: docker rm -f caddy
-      failed_when: false
-      tags: [caddy]
-
-    - name: "[caddy] Remover diretório do Caddy (se solicitado)"
-      file:
-        path: "{{ caddy_path }}"
-        state: absent
-      when: remove_volumes | bool
+    - name: "[caddy] Teardown Caddy"
+      include_tasks: "{{ apps_dir }}/caddy/ansible/clean.yml"
       tags: [caddy]
 
     # =========================================================================
     # === COCKPIT ===
     # =========================================================================
-    - name: "[cockpit] Parar e desabilitar Cockpit"
-      systemd:
-        name: "{{ item }}"
-        state: stopped
-        enabled: no
-      loop:
-        - cockpit.socket
-        - cockpit
-      failed_when: false
-      tags: [cockpit]
-
-    - name: "[cockpit] Remover configuração Caddy do Cockpit"
-      file:
-        path: "{{ caddy_path }}/conf.d/cockpit.caddy"
-        state: absent
+    - name: "[cockpit] Teardown Cockpit"
+      include_tasks: "{{ apps_dir }}/cockpit/ansible/clean.yml"
       tags: [cockpit]
 
     # =========================================================================
     # === SURE ===
     # =========================================================================
-    - name: "[sure] Parar e remover containers do Sure"
-      command: docker rm -f sure-web sure-worker sure-db sure-redis
-      failed_when: false
-      tags: [sure]
-
-    - name: "[sure] Remover diretório de deploy do Sure"
-      file:
-        path: "{{ sure_path }}"
-        state: absent
-      when: remove_volumes | bool
+    - name: "[sure] Teardown Sure"
+      include_tasks: "{{ apps_dir }}/sure/ansible/clean.yml"
       tags: [sure]
 
     # =========================================================================
@@ -217,13 +119,6 @@
     # =========================================================================
     # === DOCKER PRUNE (LIMPEZA DE IMAGENS ÓRFÃS / SISTEMA) ===
     # =========================================================================
-    - name: "[prune] Limpar imagens Docker não utilizadas"
-      command: docker image prune -af --filter "until=24h"
-      failed_when: false
-      tags: [prune, docker-prune]
-
-    - name: "[prune] Limpar volumes Docker órfãos (se solicitado)"
-      command: docker volume prune -f
-      failed_when: false
-      when: remove_volumes | bool
+    - name: "[prune] Limpeza de imagens e volumes"
+      include_tasks: "tasks/prune.yml"
       tags: [prune, docker-prune]

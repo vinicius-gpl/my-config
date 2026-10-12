@@ -1,0 +1,22 @@
+---
+# =========================================================================
+# === NETBIRD SERVER CLEAN / TEARDOWN ===
+# =========================================================================
+
+- name: "[netbird] Parar e remover containers do NetBird"
+  command: docker rm -f netbird-server netbird-dashboard
+  failed_when: false
+  tags: [netbird]
+
+- name: "[netbird] Remover diretório de deploy do NetBird"
+  file:
+    path: "{{ netbird_path | default('/opt/netbird') }}"
+    state: absent
+  when: remove_volumes | default(false) | bool
+  tags: [netbird]
+
+- name: "[netbird] Remover configuração Caddy do NetBird"
+  file:
+    path: "{{ caddy_path | default('/opt/caddy') }}/conf.d/netbird.caddy"
+    state: absent
+  tags: [netbird]

@@ -1,0 +1,21 @@
+---
+# =========================================================================
+# === COCKPIT CLEAN / TEARDOWN ===
+# =========================================================================
+
+- name: "[cockpit] Parar e desabilitar Cockpit"
+  systemd:
+    name: "{{ item }}"
+    state: stopped
+    enabled: no
+  loop:
+    - cockpit.socket
+    - cockpit
+  failed_when: false
+  tags: [cockpit]
+
+- name: "[cockpit] Remover configuração Caddy do Cockpit"
+  file:
+    path: "{{ caddy_path | default('/opt/caddy') }}/conf.d/cockpit.caddy"
+    state: absent
+  tags: [cockpit]

@@ -1,0 +1,15 @@
+---
+# =========================================================================
+# === DOCKER PRUNE (LIMPEZA DE IMAGENS ÓRFÃS / SISTEMA) ===
+# =========================================================================
+
+- name: "[prune] Limpar imagens Docker não utilizadas"
+  command: docker image prune -af --filter "until=24h"
+  failed_when: false
+  tags: [prune, docker-prune]
+
+- name: "[prune] Limpar volumes Docker órfãos (se solicitado)"
+  command: docker volume prune -f
+  failed_when: false
+  when: remove_volumes | default(false) | bool
+  tags: [prune, docker-prune]

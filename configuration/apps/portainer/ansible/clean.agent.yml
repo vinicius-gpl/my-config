@@ -1,0 +1,15 @@
+---
+# =========================================================================
+# === PORTAINER AGENT CLEAN / TEARDOWN ===
+# =========================================================================
+
+- name: "[portainer-agent] Parar e remover container do Portainer Agent"
+  command: docker rm -f portainer-agent portainer_edge_agent
+  failed_when: false
+  tags: [portainer-agent, portainer_agent]
+
+- name: "[portainer-agent] Remover volume portainer_agent_data (se solicitado)"
+  command: docker volume rm portainer_agent_data
+  failed_when: false
+  when: remove_volumes | default(false) | bool
+  tags: [portainer-agent, portainer_agent]

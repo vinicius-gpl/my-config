@@ -187,11 +187,16 @@ jobs:
           fi
 
           EXTRA_VARS=""
+          VARS_FILE="configuration/servers/${TARGET_SERVER}/vars.yml"
+          if [ -f "$VARS_FILE" ]; then
+            EXTRA_VARS="--extra-vars @$VARS_FILE"
+          fi
+
           export BECOME_PASS
           if [ -n "$BECOME_PASS" ]; then
             umask 077
             BECOME_PASS="$BECOME_PASS" python3 -c 'import json, os; json.dump({"ansible_become_password": os.environ["BECOME_PASS"]}, open("/tmp/become.json", "w"))'
-            EXTRA_VARS="--extra-vars @/tmp/become.json"
+            EXTRA_VARS="$EXTRA_VARS --extra-vars @/tmp/become.json"
           fi
           trap 'rm -f /tmp/become.json' EXIT
 

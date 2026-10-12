@@ -20,6 +20,15 @@
     netbird_proxy_token: ""
     netbird_proxy_domain: ""
     netbird_proxy_address: ""
+    # Caddy: sobrescreva por servidor em configuration/servers/<servidor>/vars.yml
+    caddy_sites:
+      - portainer/config/portainer.caddy
+      - wireguard/config/wireguard.caddy
+      - cockpit/cockpit.caddy
+      - netbird/config/netbird.caddy
+      - beszel/config/beszel.caddy
+    caddy_tunnels: []
+    vpn_cidr: "100.64.0.0/10"
 
   tasks:
     # -------------------------------------------------------------------------

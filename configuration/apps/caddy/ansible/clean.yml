@@ -14,3 +14,17 @@
     state: absent
   when: remove_volumes | default(false) | bool
   tags: [caddy]
+
+- name: "[caddy] Parar e desabilitar o serviço do IP público no loopback"
+  systemd:
+    name: vpn-public-ip.service
+    state: stopped
+    enabled: no
+  failed_when: false
+  tags: [caddy]
+
+- name: "[caddy] Remover o serviço do IP público no loopback"
+  file:
+    path: /etc/systemd/system/vpn-public-ip.service
+    state: absent
+  tags: [caddy]

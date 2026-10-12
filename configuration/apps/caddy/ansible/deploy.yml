@@ -16,23 +16,60 @@
 
 - name: "[caddy] Implantar Caddyfile principal"
   copy:
-    src: "{{ apps_dir }}/caddy/config/caddyfile"
+    src: "{{ apps_dir }}/caddy/config/caddyfile.edge"
     dest: "{{ caddy_path }}/caddyfile"
     mode: '0644'
   tags: [caddy]
 
 - name: "[caddy] Implantar configs de sites (*.caddy)"
   copy:
-    src: "{{ item }}"
+    src: "{{ apps_dir }}/{{ item }}"
     dest: "{{ caddy_path }}/conf.d/{{ item | basename }}"
     mode: '0644'
-  loop:
-    - "{{ apps_dir }}/portainer/config/portainer.caddy"
-    - "{{ apps_dir }}/wireguard/config/wireguard.caddy"
-    - "{{ apps_dir }}/cockpit/cockpit.caddy"
-    - "{{ apps_dir }}/netbird/config/netbird.caddy"
-    - "{{ apps_dir }}/beszel/config/beszel.caddy"
-  failed_when: false
+  loop: "{{ caddy_sites }}"
+  tags: [caddy]
+
+- name: "[caddy] Implantar hosts públicos encaminhados pelo túnel da VPN"
+  template:
+    src: "{{ apps_dir }}/caddy/config/tunnel.caddy.j2"
+    dest: "{{ caddy_path }}/conf.d/tunnel.caddy"
+    mode: '0644'
+  when: caddy_tunnels | length > 0
+  tags: [caddy]
+
+# -------------------------------------------------------------------------
+# Os peers da VPN alcançam o IP público deste servidor pelo túnel (rota no
+# NetBird). Em nuvens com NAT 1:1 esse IP não existe na interface, então ele
+# é adicionado ao loopback para o host aceitar o tráfego como local.
+# -------------------------------------------------------------------------
+- name: "[caddy] Criar serviço que adiciona o IP público ao loopback"
+  copy:
+    dest: /etc/systemd/system/vpn-public-ip.service
+    content: |
+      [Unit]
+      Description=IP publico como endereco local (trafego roteado pela VPN)
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      Type=oneshot
+      RemainAfterExit=yes
+      ExecStart=/usr/sbin/ip address replace {{ vpn_routed_public_ip }}/32 dev lo
+      ExecStop=/usr/sbin/ip address del {{ vpn_routed_public_ip }}/32 dev lo
+
+      [Install]
+      WantedBy=multi-user.target
+    mode: '0644'
+  when: vpn_routed_public_ip is defined
+  tags: [caddy]
+
+- name: "[caddy] Habilitar e iniciar o serviço do IP público no loopback"
+  systemd:
+    name: vpn-public-ip.service
+    state: restarted
+    enabled: yes
+    daemon_reload: yes
+  when: vpn_routed_public_ip is defined
   tags: [caddy]
 
 - name: "[caddy] Copiar docker-compose do Caddy"
@@ -48,7 +85,17 @@
     content: |
       EMAIL={{ email | default('admin@' + domain) }}
       DOMAIN={{ domain }}
+      VPN_CIDR={{ vpn_cidr }}
     mode: '0600'
+  tags: [caddy]
+
+- name: "[caddy] Validar configuração antes de subir"
+  command: >
+    docker run --rm --env-file {{ caddy_path }}/.env
+    -v {{ caddy_path }}/caddyfile:/etc/caddy/Caddyfile:ro,z
+    -v {{ caddy_path }}/conf.d:/etc/caddy/conf.d:ro,z
+    caddy:2.9 caddy validate --config /etc/caddy/Caddyfile
+  changed_when: false
   tags: [caddy]
 
 - name: "[caddy] Subir container Caddy"

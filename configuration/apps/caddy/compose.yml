@@ -11,6 +11,7 @@ services:
       - EMAIL=${EMAIL}
       - DOMAIN=${DOMAIN}
       - CADDY_OPTS=${CADDY_OPTS:-}
+      - VPN_CIDR=${VPN_CIDR:-100.64.0.0/10}
     ports:
       - "80:80"
       - "443:443"

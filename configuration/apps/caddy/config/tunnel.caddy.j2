@@ -1,0 +1,9 @@
+# Gerado pelo Ansible a partir de `caddy_tunnels` (configuration/servers/<servidor>/vars.yml).
+# Hosts públicos servidos por outro peer da VPN: o TLS termina aqui e a
+# requisição segue em HTTP pelo túnel até o Caddy local do peer.
+{% for tunnel in caddy_tunnels %}
+
+{{ tunnel.hosts | map('regex_replace', '$', '.' ~ tunnel.domain) | join(', ') }} {
+    reverse_proxy {{ tunnel.upstream }}
+}
+{% endfor %}

@@ -9,8 +9,10 @@ Repositório central de configurações, automações de infraestrutura e dotfil
 ```text
 configuration/
 ├── servers/             # 🖥️ Inventários e variáveis por SERVIDOR (independente de distro)
+│   ├── REDE.md          # Arquitetura da rede: DNS, VPN, acesso e fluxos
 │   ├── acerola/         # Servidor Acerola
-│   └── oracle/          # Servidor Oracle
+│   ├── oracle/          # Servidor Oracle (borda pública, NetBird, vars.yml)
+│   └── pluto/           # Desktop PLUTO (serviços locais publicados via Oracle)
 │
 ├── apps/                # 📦 Catálogo de APPS (Docker Compose + configs prontas)
 │   ├── wireguard/       # wg-easy com suporte a host network e QR Code
@@ -37,6 +39,13 @@ configuration/
 
 ---
 
+## 🌐 Rede e acesso
+
+Como os serviços são publicados, quais são privados (só VPN) e por onde o tráfego passa:
+[**`configuration/servers/REDE.md`**](configuration/servers/REDE.md).
+
+---
+
 ## 🚀 Como fazer Deploy via GitHub Actions
 
 O repositório conta com dois workflows dedicados:
@@ -46,13 +55,16 @@ O repositório conta com dois workflows dedicados:
 ### Deploy de Serviços:
 1. Vá na aba **Actions** > **Ansible Deploy** > **Run workflow**.
 2. Selecione o **servidor alvo**: `acerola` ou `oracle`.
-3. Selecione a **etapa / app**: `all`, `base`, `wireguard`, `netbird`, `netbird-client`, `caddy`, `portainer`, `portainer-agent`, `coolify`, `supabase`, `beszel`, `beszel-hub`, `cockpit`.
+3. Selecione a **etapa / app**: `all`, `base`, `wireguard`, `netbird`, `netbird-client`, `caddy`, `portainer`, `portainer-agent`, `coolify`, `supabase`, `beszel`, `beszel-hub`, `netbird-proxy`, `cockpit`, `sure`.
 4. Clique em **Run workflow**.
+
+Se existir `configuration/servers/<servidor>/vars.yml`, o workflow carrega esse arquivo como variáveis
+do deploy (configuração não secreta do servidor, versionada no repositório).
 
 ### Limpeza / Remoção Controlada de Serviços:
 1. Vá na aba **Actions** > **Ansible Clean** > **Run workflow**.
 2. Selecione o **servidor alvo**: `acerola` ou `oracle`.
-3. Selecione o **serviço para deitar**: `dashboards` (Beszel Hub + Portainer Server), `beszel-hub`, `portainer`, `portainer-agent`, `beszel-agent`, `wireguard`, `netbird`, `netbird-client`, `caddy`, `cockpit` ou `prune`.
+3. Selecione o **serviço para deitar**: `dashboards` (Beszel Hub + Portainer Server), `beszel-hub`, `portainer`, `portainer-agent`, `beszel-agent`, `wireguard`, `netbird`, `netbird-client`, `netbird-proxy`, `caddy`, `cockpit`, `sure`, `coolify`, `supabase` ou `prune`.
 4. Marque se deseja apagar os volumes de dados persistentes (`remove_volumes`).
 5. Clique em **Run workflow**.
 

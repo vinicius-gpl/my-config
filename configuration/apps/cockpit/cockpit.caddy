@@ -1,4 +1,7 @@
 cockpit.{$DOMAIN} {
+    @denied not remote_ip 10.0.0.0/8 100.64.0.0/10 127.0.0.1
+    abort @denied
+
     reverse_proxy host.docker.internal:9090 {
         transport http {
             tls_insecure_skip_verify

@@ -167,7 +167,6 @@ jobs:
           ENV_BECOME_PASS: ${{ secrets.ANSIBLE_BECOME_PASSWORD || secrets.BECOME_PASSWORD }}
           ACEROLA_BECOME_PASS: ${{ secrets.ACEROLA_ANSIBLE_BECOME_PASSWORD || secrets.FEDORA_ANSIBLE_BECOME_PASSWORD }}
           ORACLE_BECOME_PASS: ${{ secrets.ORACLE_ANSIBLE_BECOME_PASSWORD || secrets.ROCKY_ANSIBLE_BECOME_PASSWORD }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
           BECOME_PASS="$ENV_BECOME_PASS"
           if [ -z "$BECOME_PASS" ]; then
@@ -199,13 +198,7 @@ jobs:
             BECOME_PASS="$BECOME_PASS" python3 -c 'import json, os; json.dump({"ansible_become_password": os.environ["BECOME_PASS"]}, open("/tmp/become.json", "w"))'
             EXTRA_VARS="$EXTRA_VARS --extra-vars @/tmp/become.json"
           fi
-
-          if [ -n "$CLOUDFLARE_API_TOKEN" ]; then
-            umask 077
-            python3 -c 'import json, os; json.dump({"cloudflare_api_token": os.environ["CLOUDFLARE_API_TOKEN"]}, open("/tmp/cloudflare.json", "w"))'
-            EXTRA_VARS="$EXTRA_VARS --extra-vars @/tmp/cloudflare.json"
-          fi
-          trap 'rm -f /tmp/become.json /tmp/cloudflare.json' EXIT
+          trap 'rm -f /tmp/become.json' EXIT
 
           ansible-playbook \
             -i configuration/ansible/hosts.ini \

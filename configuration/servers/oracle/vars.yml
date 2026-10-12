@@ -1,9 +1,13 @@
 # Variáveis não-secretas do servidor Oracle (carregadas pelo workflow de deploy
 # e, localmente, com `-e @configuration/servers/oracle/vars.yml`).
 
-# Rede da VPN (NetBird) e o IP deste servidor dentro dela (interface wt0).
+# Rede da VPN (NetBird). Os sites com `import vpn_only` só aceitam origem dentro dela.
 vpn_cidr: "100.96.0.0/16"
-vpn_ip: "100.96.113.83"
+
+# IP público que os peers alcançam pelo túnel (rota `168.138.133.78/32` no NetBird,
+# peer de roteamento = este servidor, sem masquerade). É o que faz o Caddy enxergar
+# a origem 100.96.x.x mesmo com o DNS apontando para o IP público.
+vpn_routed_public_ip: "168.138.133.78"
 
 # Sites servidos pelo Caddy deste servidor (caminhos relativos a configuration/apps).
 caddy_sites:
@@ -12,16 +16,9 @@ caddy_sites:
   - beszel/config/beszel.caddy          # monitor.<domain>   só VPN
   - cockpit/cockpit.caddy               # cockpit.<domain>   só VPN
 
-# Hosts privados: com CLOUDFLARE_API_TOKEN, o registro A de cada um passa a
-# apontar para `vpn_ip`, então só quem está na VPN consegue conectar.
-caddy_private_hosts:
-  - container
-  - monitor
-  - cockpit
-
 # Hosts públicos que rodam em outro peer: TLS termina aqui e segue pelo túnel.
 caddy_tunnels:
   - domain: host.vinicius-gpl.com
     upstream: "100.96.62.172:80"        # Caddy local do PLUTO
-    hosts:                              # usados quando não há wildcard (sem token)
+    hosts:
       - sure

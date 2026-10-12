@@ -49,5 +49,5 @@ docker compose -f configuration/apps/sure/compose.yml up -d
 1. Conectar o container à rede `proxy` e criar `configuration/apps/caddy/config/conf.d/<app>.caddy`
    com `http://<app>.{$DOMAIN} { reverse_proxy <container>:<porta> }`.
 2. Recarregar: `docker exec caddy caddy reload --config /etc/caddy/Caddyfile`.
-3. Na Oracle: com `CLOUDFLARE_API_TOKEN` o wildcard já cobre o novo host; sem ele, adicionar o nome em
-   `caddy_tunnels[].hosts` de `configuration/servers/oracle/vars.yml` e rodar o deploy `caddy`.
+3. Na Oracle: adicionar o nome em `caddy_tunnels[].hosts` de `configuration/servers/oracle/vars.yml`
+   e rodar o deploy `caddy`.

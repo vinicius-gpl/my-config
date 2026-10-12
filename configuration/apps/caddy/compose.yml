@@ -4,7 +4,7 @@ networks:
 
 services:
   caddy:
-    image: ${CADDY_IMAGE:-caddy:2.9}
+    image: caddy:2.9
     container_name: caddy
     restart: always
     environment:
@@ -12,7 +12,6 @@ services:
       - DOMAIN=${DOMAIN}
       - CADDY_OPTS=${CADDY_OPTS:-}
       - VPN_CIDR=${VPN_CIDR:-100.64.0.0/10}
-      - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN:-}
     ports:
       - "80:80"
       - "443:443"

@@ -38,50 +38,38 @@
   tags: [caddy]
 
 # -------------------------------------------------------------------------
-# Desafio DNS-01 (Cloudflare): só quando `cloudflare_api_token` é informado.
-# A imagem é compilada na máquina que roda o Ansible (o servidor pode ter
-# pouca RAM para compilar Go) e enviada pronta.
+# Os peers da VPN alcançam o IP público deste servidor pelo túnel (rota no
+# NetBird). Em nuvens com NAT 1:1 esse IP não existe na interface, então ele
+# é adicionado ao loopback para o host aceitar o tráfego como local.
 # -------------------------------------------------------------------------
-- name: "[caddy] Compilar imagem com plugin Cloudflare (local)"
-  shell: |
-    set -e
-    docker build -t {{ caddy_image }} {{ apps_dir }}/caddy
-    docker save {{ caddy_image }} | gzip > /tmp/caddy-image.tar.gz
-  args:
-    executable: /bin/bash
-  delegate_to: localhost
-  become: false
-  when: caddy_dns_challenge | bool
-  tags: [caddy]
-
-- name: "[caddy] Enviar imagem para o servidor"
+- name: "[caddy] Criar serviço que adiciona o IP público ao loopback"
   copy:
-    src: /tmp/caddy-image.tar.gz
-    dest: "{{ caddy_path }}/caddy-image.tar.gz"
-    mode: '0600'
-  when: caddy_dns_challenge | bool
+    dest: /etc/systemd/system/vpn-public-ip.service
+    content: |
+      [Unit]
+      Description=IP publico como endereco local (trafego roteado pela VPN)
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      Type=oneshot
+      RemainAfterExit=yes
+      ExecStart=/usr/sbin/ip address replace {{ vpn_routed_public_ip }}/32 dev lo
+      ExecStop=/usr/sbin/ip address del {{ vpn_routed_public_ip }}/32 dev lo
+
+      [Install]
+      WantedBy=multi-user.target
+    mode: '0644'
+  when: vpn_routed_public_ip is defined
   tags: [caddy]
 
-- name: "[caddy] Carregar imagem no Docker do servidor"
-  command: docker load -i {{ caddy_path }}/caddy-image.tar.gz
-  when: caddy_dns_challenge | bool
-  tags: [caddy]
-
-- name: "[caddy] Apontar hosts privados para o IP da VPN na Cloudflare"
-  community.general.cloudflare_dns:
-    api_token: "{{ cloudflare_api_token }}"
-    zone: "{{ cloudflare_zone | default(domain) }}"
-    record: "{{ item }}"
-    type: A
-    value: "{{ vpn_ip }}"
-    proxied: false
-    solo: true
-    state: present
-  loop: "{{ caddy_private_hosts }}"
-  delegate_to: localhost
-  become: false
-  no_log: true
-  when: (caddy_dns_challenge | bool) and vpn_ip is defined
+- name: "[caddy] Habilitar e iniciar o serviço do IP público no loopback"
+  systemd:
+    name: vpn-public-ip.service
+    state: restarted
+    enabled: yes
+    daemon_reload: yes
+  when: vpn_routed_public_ip is defined
   tags: [caddy]
 
 - name: "[caddy] Copiar docker-compose do Caddy"
@@ -98,13 +86,7 @@
       EMAIL={{ email | default('admin@' + domain) }}
       DOMAIN={{ domain }}
       VPN_CIDR={{ vpn_cidr }}
-      CADDY_IMAGE={{ caddy_image }}
-      {% if caddy_dns_challenge %}
-      CADDY_OPTS=acme_dns cloudflare {env.CLOUDFLARE_API_TOKEN}
-      CLOUDFLARE_API_TOKEN={{ cloudflare_api_token }}
-      {% endif %}
     mode: '0600'
-  no_log: true
   tags: [caddy]
 
 - name: "[caddy] Validar configuração antes de subir"
@@ -112,7 +94,7 @@
     docker run --rm --env-file {{ caddy_path }}/.env
     -v {{ caddy_path }}/caddyfile:/etc/caddy/Caddyfile:ro,z
     -v {{ caddy_path }}/conf.d:/etc/caddy/conf.d:ro,z
-    {{ caddy_image }} caddy validate --config /etc/caddy/Caddyfile
+    caddy:2.9 caddy validate --config /etc/caddy/Caddyfile
   changed_when: false
   tags: [caddy]
 

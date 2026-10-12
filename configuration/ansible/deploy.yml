@@ -28,11 +28,7 @@
       - netbird/config/netbird.caddy
       - beszel/config/beszel.caddy
     caddy_tunnels: []
-    caddy_private_hosts: []
     vpn_cidr: "100.64.0.0/10"
-    cloudflare_api_token: ""
-    caddy_dns_challenge: "{{ cloudflare_api_token | length > 0 }}"
-    caddy_image: "{{ 'caddy-cloudflare:2.9' if caddy_dns_challenge else 'caddy:2.9' }}"
 
   tasks:
     # -------------------------------------------------------------------------

@@ -21,29 +21,21 @@ termina o TLS, hospeda o NetBird e encaminha os serviços públicos do [PLUTO](.
 | Portainer Edge Tunnel | Docker (`/opt/portainer`) | `:8000` | público (agentes Edge) |
 | Beszel Hub | Docker (`/opt/beszel-hub`) | `monitor.vinicius-gpl.com` | só VPN |
 | Cockpit | systemd (`cockpit.socket`, `:9090`) | `cockpit.vinicius-gpl.com` | só VPN |
-| Túnel para o PLUTO | Caddy (`conf.d/tunnel.caddy`) | `*.host.vinicius-gpl.com` | público |
+| Túnel para o PLUTO | Caddy (`conf.d/tunnel.caddy`) | hosts de `caddy_tunnels` em `*.host.vinicius-gpl.com` | público |
 
-Tudo que não é segredo fica em [`vars.yml`](vars.yml): sites do Caddy, hosts privados, túneis e IPs da VPN.
+Tudo que não é segredo fica em [`vars.yml`](vars.yml): sites do Caddy, túneis e rede da VPN.
 
 ## DNS e acesso
 
-Todo o domínio resolve pela Cloudflare; o NetBird não gerencia nenhuma zona de `vinicius-gpl.com`.
+Todo o domínio resolve pela Cloudflare e **todos os hosts apontam para o IP público** (`168.138.133.78`);
+o NetBird não gerencia nenhuma zona de `vinicius-gpl.com`. Quem decide o acesso é o Caddy:
 
-- **Públicos** (`netbird`, `*.host`): registro `A` → `168.138.133.78`.
-- **Privados** (`container`, `monitor`, `cockpit`): registro `A` → `100.96.113.83`. Fora da VPN esse IP não é
-  roteável; dentro dela o tráfego entra pelo túnel e o Caddy vê a origem `100.96.x.x`. O snippet `vpn_only`
-  do Caddy ainda derruba qualquer origem fora de `vpn_cidr`.
-
-Como a Let's Encrypt não alcança hosts que apontam para a VPN, os certificados usam o desafio DNS-01.
-Isso é ativado pela secret **`CLOUDFLARE_API_TOKEN`** (permissão `Zone → DNS → Edit` na zona), que também
-faz o deploy criar/atualizar os registros `A` privados e emitir o wildcard `*.host.vinicius-gpl.com`:
-
-```bash
-gh secret set CLOUDFLARE_API_TOKEN --env oracle
-```
-
-Sem a secret, o deploy usa a imagem oficial do Caddy, não toca no DNS e serve só os hosts listados em
-`caddy_tunnels[].hosts`.
+- **Privados** (`container`, `monitor`, `cockpit`): o snippet `vpn_only` derruba a conexão de qualquer
+  origem fora de `vpn_cidr`.
+  Para os peers chegarem com IP da VPN, o NetBird tem a rota `168.138.133.78/32` (peer de roteamento:
+  este servidor, sem masquerade) e o host mantém esse IP no loopback (`vpn-public-ip.service`).
+- **Públicos** (`netbird`, `*.host`): liberados para qualquer origem. Os hosts de `caddy_tunnels` seguem
+  pelo túnel até o Caddy local do peer.
 
 ## Inventário
 

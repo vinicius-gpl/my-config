@@ -15,6 +15,20 @@
   when: netbird_cli_check.rc != 0
   tags: [netbird-client, netbird_client]
 
+- name: "[netbird-client] Restaurar contexto SELinux do binário do NetBird"
+  command: restorecon -v /usr/bin/netbird
+  failed_when: false
+  tags: [netbird-client, netbird_client]
+
+- name: "[netbird-client] Garantir resolução de loopback do NetBird no /etc/hosts (Hairpin NAT)"
+  lineinfile:
+    path: /etc/hosts
+    line: "127.0.0.1 netbird.{{ domain }}"
+    state: present
+  when: domain is defined and (domain | length > 0)
+  failed_when: false
+  tags: [netbird-client, netbird_client]
+
 - name: "[netbird-client] Iniciar e habilitar serviço do NetBird"
   systemd:
     name: netbird

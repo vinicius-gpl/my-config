@@ -1,0 +1,3 @@
+http://sure.{$DOMAIN} {
+    reverse_proxy sure-web:3000
+}

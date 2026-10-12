@@ -1,0 +1,38 @@
+---
+# =========================================================================
+# === NETBIRD REVERSE PROXY ===
+# =========================================================================
+
+- name: "[netbird-proxy] Validar se as variáveis obrigatórias foram informadas"
+  fail:
+    msg: "Você informou 'netbird_proxy_token', mas 'netbird_proxy_domain' ou 'netbird_proxy_address' estão faltando no inventário! Adicione essas variáveis no hosts.ini."
+  when:
+    - netbird_proxy_token is defined
+    - netbird_proxy_token | length > 0
+    - (netbird_proxy_domain is not defined or (netbird_proxy_domain | length == 0)) or
+      ((netbird_proxy_address is not defined or (netbird_proxy_address | length == 0)) and
+       (netbird_proxy_management_address is not defined or (netbird_proxy_management_address | length == 0)))
+  tags: [netbird-proxy, netbird_proxy]
+
+- name: "[netbird-proxy] Criar diretório de deploy do NetBird Reverse Proxy"
+  file:
+    path: "{{ netbird_proxy_path }}"
+    state: directory
+    mode: '0755'
+  when: netbird_proxy_token is defined and (netbird_proxy_token | length > 0)
+  tags: [netbird-proxy, netbird_proxy]
+
+- name: "[netbird-proxy] Gerar docker-compose do NetBird Reverse Proxy"
+  template:
+    src: "{{ apps_dir }}/netbird/compose.proxy.yml.j2"
+    dest: "{{ netbird_proxy_path }}/docker-compose.yml"
+    mode: '0644'
+  when: netbird_proxy_token is defined and (netbird_proxy_token | length > 0)
+  tags: [netbird-proxy, netbird_proxy]
+
+- name: "[netbird-proxy] Subir container NetBird Reverse Proxy"
+  command: docker compose up -d --force-recreate
+  args:
+    chdir: "{{ netbird_proxy_path }}"
+  when: netbird_proxy_token is defined and (netbird_proxy_token | length > 0)
+  tags: [netbird-proxy, netbird_proxy]

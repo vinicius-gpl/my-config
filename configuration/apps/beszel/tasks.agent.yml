@@ -1,0 +1,41 @@
+---
+# =========================================================================
+# === BESZEL AGENT ===
+# =========================================================================
+
+- name: "[beszel] Criar diretório de deploy"
+  file:
+    path: "{{ beszel_path }}"
+    state: directory
+    mode: '0755'
+  tags: [beszel, beszel-agent, beszel_agent]
+
+- name: "[beszel] Copiar docker-compose do Beszel Agent"
+  copy:
+    src: "{{ apps_dir }}/beszel/compose.agent.yml"
+    dest: "{{ beszel_path }}/docker-compose.yml"
+    mode: '0644'
+  tags: [beszel, beszel-agent, beszel_agent]
+
+- name: "[beszel] Criar arquivo .env do Beszel"
+  copy:
+    dest: "{{ beszel_path }}/.env"
+    content: |
+      BESZEL_KEY={{ beszel_key }}
+    mode: '0600'
+  tags: [beszel, beszel-agent, beszel_agent]
+
+- name: "[beszel] Abrir porta do Beszel no firewall (45876)"
+  firewalld:
+    port: 45876/tcp
+    permanent: yes
+    state: enabled
+    immediate: yes
+  failed_when: false
+  tags: [beszel, beszel-agent, beszel_agent]
+
+- name: "[beszel] Subir containers do Beszel Agent"
+  command: docker compose up -d --force-recreate
+  args:
+    chdir: "{{ beszel_path }}"
+  tags: [beszel, beszel-agent, beszel_agent]

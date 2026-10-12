@@ -1,0 +1,50 @@
+---
+# =========================================================================
+# === SUPABASE ===
+# =========================================================================
+
+- name: "[supabase] Criar diretório de deploy"
+  file:
+    path: "{{ supabase_path }}"
+    state: directory
+    mode: '0755'
+  tags: [supabase]
+
+- name: "[supabase] Implantar configs (kong, init do banco)"
+  copy:
+    src: "{{ apps_dir }}/supabase/config/"
+    dest: "{{ supabase_path }}/config/"
+    mode: '0644'
+    directory_mode: '0755'
+  tags: [supabase]
+
+- name: "[supabase] Copiar docker-compose do Supabase"
+  copy:
+    src: "{{ apps_dir }}/supabase/compose.yml"
+    dest: "{{ supabase_path }}/docker-compose.yml"
+    mode: '0644'
+  tags: [supabase]
+
+- name: "[supabase] Criar arquivo .env do Supabase"
+  template:
+    src: "{{ apps_dir }}/supabase/supabase.env.j2"
+    dest: "{{ supabase_path }}/.env"
+    mode: '0600'
+  tags: [supabase]
+
+- name: "[supabase] Abrir porta do Supabase no firewall (8001)"
+  firewalld:
+    port: 8001/tcp
+    permanent: yes
+    state: enabled
+    immediate: yes
+  failed_when: false
+  tags: [supabase]
+
+- name: "[supabase] Subir containers do Supabase"
+  command: docker compose up -d --force-recreate
+  args:
+    chdir: "{{ supabase_path }}"
+  environment:
+    COMPOSE_PROFILES: "{{ supabase_profiles | default('') }}"
+  tags: [supabase]

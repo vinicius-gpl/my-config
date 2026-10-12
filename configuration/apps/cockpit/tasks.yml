@@ -1,0 +1,47 @@
+---
+# =========================================================================
+# === COCKPIT ===
+# =========================================================================
+
+- name: "[cockpit] Instalar Cockpit"
+  package:
+    name: cockpit
+    state: present
+  tags: [cockpit]
+
+- name: "[cockpit] Habilitar e iniciar cockpit.socket"
+  systemd:
+    name: cockpit.socket
+    state: started
+    enabled: yes
+  tags: [cockpit]
+
+- name: "[cockpit] Configurar origins no cockpit.conf"
+  template:
+    src: "{{ apps_dir }}/cockpit/cockpit.conf.j2"
+    dest: /etc/cockpit/cockpit.conf
+    mode: '0644'
+  notify: Restart cockpit
+  tags: [cockpit]
+
+- name: "[cockpit] Abrir porta do Cockpit no firewall (9090)"
+  firewalld:
+    port: 9090/tcp
+    permanent: yes
+    state: enabled
+    immediate: yes
+  failed_when: false
+  tags: [cockpit]
+
+- name: "[cockpit] Implantar configuração cockpit.caddy (se caddy existir)"
+  copy:
+    src: "{{ apps_dir }}/cockpit/cockpit.caddy"
+    dest: "{{ caddy_path }}/conf.d/cockpit.caddy"
+    mode: '0644'
+  failed_when: false
+  tags: [cockpit]
+
+- name: "[cockpit] Recarregar Caddy para aplicar cockpit.{{ domain | default('') }}"
+  command: docker exec caddy caddy reload --config /etc/caddy/Caddyfile
+  failed_when: false
+  tags: [cockpit]

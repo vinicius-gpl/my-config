@@ -1,0 +1,58 @@
+---
+# =========================================================================
+# === CADDY ===
+# =========================================================================
+
+- name: "[caddy] Criar diretórios de configuração"
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - "{{ caddy_path }}"
+    - "{{ caddy_path }}/conf.d"
+    - "{{ caddy_path }}/static"
+  tags: [caddy]
+
+- name: "[caddy] Implantar Caddyfile principal"
+  copy:
+    src: "{{ apps_dir }}/caddy/config/caddyfile"
+    dest: "{{ caddy_path }}/caddyfile"
+    mode: '0644'
+  tags: [caddy]
+
+- name: "[caddy] Implantar configs de sites (*.caddy)"
+  copy:
+    src: "{{ item }}"
+    dest: "{{ caddy_path }}/conf.d/{{ item | basename }}"
+    mode: '0644'
+  loop:
+    - "{{ apps_dir }}/portainer/config/portainer.caddy"
+    - "{{ apps_dir }}/wireguard/config/wireguard.caddy"
+    - "{{ apps_dir }}/cockpit/cockpit.caddy"
+    - "{{ apps_dir }}/netbird/config/netbird.caddy"
+    - "{{ apps_dir }}/beszel/config/beszel.caddy"
+  failed_when: false
+  tags: [caddy]
+
+- name: "[caddy] Copiar docker-compose do Caddy"
+  copy:
+    src: "{{ apps_dir }}/caddy/compose.yml"
+    dest: "{{ caddy_path }}/docker-compose.yml"
+    mode: '0644'
+  tags: [caddy]
+
+- name: "[caddy] Criar arquivo .env para o Caddy"
+  copy:
+    dest: "{{ caddy_path }}/.env"
+    content: |
+      EMAIL={{ email | default('admin@' + domain) }}
+      DOMAIN={{ domain }}
+    mode: '0600'
+  tags: [caddy]
+
+- name: "[caddy] Subir container Caddy"
+  command: docker compose up -d --force-recreate
+  args:
+    chdir: "{{ caddy_path }}"
+  tags: [caddy]

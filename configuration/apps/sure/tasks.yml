@@ -1,0 +1,41 @@
+---
+# =========================================================================
+# === SURE (MAYBE FINANCE) ===
+# =========================================================================
+
+- name: "[sure] Criar diretório de deploy do Sure"
+  file:
+    path: "{{ sure_path }}"
+    state: directory
+    mode: '0755'
+  tags: [sure]
+
+- name: "[sure] Copiar docker-compose do Sure"
+  copy:
+    src: "{{ apps_dir }}/sure/compose.yml"
+    dest: "{{ sure_path }}/docker-compose.yml"
+    mode: '0644'
+  tags: [sure]
+
+- name: "[sure] Criar arquivo .env do Sure"
+  copy:
+    dest: "{{ sure_path }}/.env"
+    content: |
+      SECRET_KEY_BASE={{ sure_secret_key_base | default(lookup('password', '/dev/null chars=ascii_letters,digits length=64')) }}
+      POSTGRES_USER={{ sure_postgres_user | default('sure_user') }}
+      POSTGRES_PASSWORD={{ sure_postgres_password | default(lookup('password', '/dev/null chars=ascii_letters,digits length=32')) }}
+      POSTGRES_DB={{ sure_postgres_db | default('sure_production') }}
+      PORT={{ sure_port | default('3000') }}
+      RAILS_ASSUME_SSL={{ sure_assume_ssl | default('true' if domain is defined else 'false') }}
+      RAILS_FORCE_SSL=false
+      ONBOARDING_STATE={{ sure_onboarding_state | default('open') }}
+      EXCHANGE_RATE_PROVIDER=yahoo_finance
+      SECURITIES_PROVIDER=yahoo_finance
+    mode: '0600'
+  tags: [sure]
+
+- name: "[sure] Subir containers do Sure"
+  command: docker compose up -d --force-recreate
+  args:
+    chdir: "{{ sure_path }}"
+  tags: [sure]

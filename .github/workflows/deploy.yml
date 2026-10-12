@@ -32,6 +32,7 @@ on:
           - netbird-client
           - netbird-proxy
           - cockpit
+          - sure
       dry_run:
         description: 'Modo simulação (--check)?'
         required: false

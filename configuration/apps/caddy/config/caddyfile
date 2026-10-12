@@ -1,6 +1,9 @@
 {
     email {$EMAIL}
     {$CADDY_OPTS}
+    servers {
+        trusted_proxies static 100.96.0.0/16 127.0.0.1/32 172.16.0.0/12
+    }
 }
 
 import /etc/caddy/conf.d/*.caddy

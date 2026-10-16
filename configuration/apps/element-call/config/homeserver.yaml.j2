@@ -39,11 +39,9 @@ macaroon_secret_key: "{{ ec_synapse_macaroon_secret }}"
 form_secret: "{{ ec_synapse_form_secret }}"
 
 # Controle de registro no modo Standalone:
-# - Por padrão (`false`), o registro público fica FECHADO: apenas usuários com
-#   credenciais criadas (via Ansible ou CLI) conseguem fazer login em /login.
-# - Se definir `element_call_allow_guest: true`, visitantes também podem entrar sem conta prévia.
-enable_registration: {{ (element_call_allow_guest | default(false) | bool) | lower }}
-enable_registration_without_verification: {{ (element_call_allow_guest | default(false) | bool) | lower }}
+# - Liberado para permitir criação de novas contas diretamente pela interface web do Element Call
+enable_registration: {{ (element_call_enable_registration | default(element_call_allow_guest | default(true)) | bool) | lower }}
+enable_registration_without_verification: {{ (element_call_enable_registration | default(element_call_allow_guest | default(true)) | bool) | lower }}
 
 # MSCs obrigatórias para o MatrixRTC / Element Call
 experimental_features:

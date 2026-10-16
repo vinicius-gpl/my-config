@@ -40,7 +40,7 @@ services:
   #  MATRIX HOMESERVER (Synapse dedicado ao MatrixRTC)
   # ===========================================================================
   element-synapse:
-    image: ghcr.io/element-hq/synapse:${SYNAPSE_VERSION:-v1.163.0}
+    image: matrixdotorg/synapse:${SYNAPSE_VERSION:-v1.163.0}
     container_name: element-synapse
     restart: unless-stopped
     environment:
@@ -71,7 +71,7 @@ services:
   #  MATRIXRTC AUTHORIZATION SERVICE (lk-jwt-service)
   # ===========================================================================
   element-lk-jwt:
-    image: ghcr.io/element-hq/lk-jwt-service:${LK_JWT_VERSION:-v0.9.0}
+    image: ghcr.io/element-hq/lk-jwt-service:${LK_JWT_VERSION:-0.9.0}
     container_name: element-lk-jwt
     restart: unless-stopped
     environment:

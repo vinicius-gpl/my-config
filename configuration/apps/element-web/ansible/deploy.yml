@@ -1,0 +1,63 @@
+---
+# =========================================================================
+# === ELEMENT WEB (CHAT & MESSAGING CLIENT) ===
+# =========================================================================
+
+- name: "[element-web] Criar diretórios de deploy do Element Web"
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - "{{ element_web_path | default('/opt/element-web') }}"
+    - "{{ element_web_path | default('/opt/element-web') }}/config"
+  tags: [element-web, element_web]
+
+- name: "[element-web] Renderizar config.json do Element Web"
+  template:
+    src: "{{ apps_dir }}/element-web/config/config.json.j2"
+    dest: "{{ element_web_path | default('/opt/element-web') }}/config/config.json"
+    mode: '0644'
+  tags: [element-web, element_web]
+
+- name: "[element-web] Copiar docker-compose do Element Web"
+  copy:
+    src: "{{ apps_dir }}/element-web/compose.yml"
+    dest: "{{ element_web_path | default('/opt/element-web') }}/docker-compose.yml"
+    mode: '0644'
+  tags: [element-web, element_web]
+
+- name: "[element-web] Criar arquivo .env do Element Web"
+  copy:
+    dest: "{{ element_web_path | default('/opt/element-web') }}/.env"
+    content: |
+      DOMAIN={{ domain | default(ansible_host) }}
+    mode: '0600'
+  tags: [element-web, element_web]
+
+- name: "[element-web] Garantir que diretório conf.d do Caddy existe"
+  file:
+    path: "{{ caddy_path }}/conf.d"
+    state: directory
+    mode: '0755'
+  failed_when: false
+  tags: [element-web, element_web]
+
+- name: "[element-web] Implantar configuração element-web.caddy"
+  copy:
+    src: "{{ apps_dir }}/element-web/config/element-web.caddy"
+    dest: "{{ caddy_path }}/conf.d/element-web.caddy"
+    mode: '0644'
+  failed_when: false
+  tags: [element-web, element_web]
+
+- name: "[element-web] Subir container do Element Web"
+  command: docker compose up -d --force-recreate
+  args:
+    chdir: "{{ element_web_path | default('/opt/element-web') }}"
+  tags: [element-web, element_web]
+
+- name: "[element-web] Recarregar Caddy para aplicar chat.{{ domain | default('') }}"
+  command: docker exec caddy caddy reload --config /etc/caddy/Caddyfile
+  failed_when: false
+  tags: [element-web, element_web]

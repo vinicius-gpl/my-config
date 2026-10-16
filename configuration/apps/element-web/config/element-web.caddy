@@ -1,0 +1,43 @@
+chat.{$DOMAIN}, element.{$DOMAIN} {
+    header {
+        Strict-Transport-Security "max-age=31536000;"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "no-referrer"
+        X-Frame-Options "SAMEORIGIN"
+    }
+
+    # Descoberta Matrix (.well-known) para clientes móveis/desktop e web
+    handle /.well-known/matrix/client {
+        header Content-Type application/json
+        header Access-Control-Allow-Origin "*"
+        respond `{"m.homeserver":{"base_url":"https://call.{$DOMAIN}"},"org.matrix.msc4143.rtc_foci":[{"type":"livekit","livekit_service_url":"https://call.{$DOMAIN}/livekit/jwt"}]}` 200
+    }
+
+    # Proxy para Matrix Synapse caso o cliente envie requisições da API neste domínio
+    @synapse path /_matrix/* /_synapse/client/*
+    handle @synapse {
+        reverse_proxy element-synapse:8008 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # Element Web Frontend (SPA)
+    handle {
+        reverse_proxy element-web:80 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    encode zstd gzip
+
+    log {
+        output file /data/element-web-access.log
+        format json
+    }
+}

@@ -23,6 +23,8 @@ configuration/
 │   ├── supabase/        # Backend self-hosted (Postgres, Kong, Studio, Storage)
 │   ├── beszel/          # Monitoramento de hardware e containers (Hub e Agent)
 │   ├── cockpit/         # Painel administrativo do host
+│   ├── element-call/    # Videoconferência Matrix (MatrixRTC + LiveKit)
+│   ├── element-web/     # Chat e mensagens Matrix (Slack/Discord open source)
 │   └── ...              # authelia, netdata, transmission, dns, traefik
 │
 ├── ansible/             # 🤖 Automação agnóstica de distro
@@ -55,7 +57,7 @@ O repositório conta com dois workflows dedicados:
 ### Deploy de Serviços:
 1. Vá na aba **Actions** > **Ansible Deploy** > **Run workflow**.
 2. Selecione o **servidor alvo**: `acerola` ou `oracle`.
-3. Selecione a **etapa / app**: `all`, `base`, `wireguard`, `netbird`, `netbird-client`, `caddy`, `portainer`, `portainer-agent`, `coolify`, `supabase`, `beszel`, `beszel-hub`, `netbird-proxy`, `cockpit`, `sure`.
+3. Selecione a **etapa / app**: `all`, `base`, `wireguard`, `netbird`, `netbird-client`, `caddy`, `portainer`, `portainer-agent`, `coolify`, `supabase`, `beszel`, `beszel-hub`, `netbird-proxy`, `cockpit`, `sure`, `element-call`, `element-web`.
 4. Clique em **Run workflow**.
 
 Se existir `configuration/servers/<servidor>/vars.yml`, o workflow carrega esse arquivo como variáveis

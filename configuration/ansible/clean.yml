@@ -15,6 +15,7 @@
     netbird_proxy_path: "/opt/netbird-proxy"
     sure_path: "/opt/sure"
     element_call_path: "/opt/element-call"
+    element_web_path: "/opt/element-web"
     remove_volumes: "{{ remove_volumes | default(false) }}"
 
   tasks:
@@ -117,12 +118,19 @@
       tags: [element-call, element_call]
 
     # =========================================================================
+    # === ELEMENT WEB ===
+    # =========================================================================
+    - name: "[element-web] Teardown Element Web"
+      include_tasks: "{{ apps_dir }}/element-web/ansible/clean.yml"
+      tags: [element-web, element_web]
+
+    # =========================================================================
     # === RECARREGAR CADDY (SE CADDY ESTIVER ATIVO) ===
     # =========================================================================
     - name: "[caddy] Recarregar Caddy após remoção de serviços"
       command: docker exec caddy caddy reload --config /etc/caddy/Caddyfile
       failed_when: false
-      tags: [beszel-hub, beszel_hub, portainer, wireguard, netbird, cockpit, element-call, element_call, dashboards]
+      tags: [beszel-hub, beszel_hub, portainer, wireguard, netbird, cockpit, element-call, element_call, element-web, element_web, dashboards]
 
     # =========================================================================
     # === DOCKER PRUNE (LIMPEZA DE IMAGENS ÓRFÃS / SISTEMA) ===

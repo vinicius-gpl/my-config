@@ -1,0 +1,131 @@
+# =============================================================================
+#  element-call/compose.yml  --  VIDEOCONFERÊNCIA MATRIX (element-hq/element-call)
+# -----------------------------------------------------------------------------
+#  Stack completa self-hosted do Element Call em modo Standalone (MatrixRTC):
+#    https://github.com/element-hq/element-call
+#    https://github.com/element-hq/element-call/blob/livekit/docs/self_hosting.md
+#
+#  Serviços:
+#    element-call     Frontend SPA do Element Call (nginx-unprivileged :8080).
+#    element-synapse  Homeserver Matrix dedicado às salas de chamada (:8008).
+#    element-lk-jwt   MatrixRTC Authorization Service / lk-jwt-service (:8080).
+#    element-livekit  Servidor WebRTC SFU LiveKit (:7880 WS, :7881 TCP, UDP).
+# =============================================================================
+name: element-call
+
+services:
+
+  # ===========================================================================
+  #  FRONTEND WEB (Element Call SPA)
+  # ===========================================================================
+  element-call:
+    image: ghcr.io/element-hq/element-call:${ELEMENT_CALL_VERSION:-v0.28.0}
+    container_name: element-call
+    restart: unless-stopped
+    volumes:
+      - ./config/config.json:/app/config.json:ro,z
+    depends_on:
+      - element-synapse
+      - element-lk-jwt
+    networks:
+      - element-call-net
+      - proxy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "2"
+
+  # ===========================================================================
+  #  MATRIX HOMESERVER (Synapse dedicado ao MatrixRTC)
+  # ===========================================================================
+  element-synapse:
+    image: ghcr.io/element-hq/synapse:${SYNAPSE_VERSION:-v1.163.0}
+    container_name: element-synapse
+    restart: unless-stopped
+    environment:
+      - SYNAPSE_CONFIG_PATH=/etc/synapse/homeserver.yaml
+      - UID=0
+      - GID=0
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        if [ ! -f /data/signing.key ]; then
+          python -m synapse.app.homeserver --config-path /etc/synapse/homeserver.yaml --generate-keys
+        fi
+        exec /start.py
+    volumes:
+      - ./config/homeserver.yaml:/etc/synapse/homeserver.yaml:ro,z
+      - synapse-data:/data:z
+    networks:
+      - element-call-net
+      - proxy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "2"
+
+  # ===========================================================================
+  #  MATRIXRTC AUTHORIZATION SERVICE (lk-jwt-service)
+  # ===========================================================================
+  element-lk-jwt:
+    image: ghcr.io/element-hq/lk-jwt-service:${LK_JWT_VERSION:-v0.9.0}
+    container_name: element-lk-jwt
+    restart: unless-stopped
+    environment:
+      - LIVEKIT_JWT_BIND=:8080
+      - LIVEKIT_URL=wss://call.${DOMAIN}/livekit/sfu
+      - LIVEKIT_KEY=${LIVEKIT_KEY}
+      - LIVEKIT_SECRET=${LIVEKIT_SECRET}
+      - LIVEKIT_FULL_ACCESS_HOMESERVERS=call.${DOMAIN}
+      - LIVEKIT_CS_API_URL_OVERRIDES=call.${DOMAIN}=http://element-synapse:8008
+    extra_hosts:
+      - "call.${DOMAIN}:host-gateway"
+    depends_on:
+      - element-synapse
+      - element-livekit
+    networks:
+      - element-call-net
+      - proxy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "2"
+
+  # ===========================================================================
+  #  WEBRTC SFU (LiveKit Server)
+  # ===========================================================================
+  element-livekit:
+    image: livekit/livekit-server:${LIVEKIT_VERSION:-v1.13.10}
+    container_name: element-livekit
+    restart: unless-stopped
+    command: --config /etc/livekit.yaml
+    ports:
+      - "7881:7881/tcp"
+      - "50100-50200:50100-50200/udp"
+    volumes:
+      - ./config/livekit.yaml:/etc/livekit.yaml:ro,z
+    extra_hosts:
+      - "call.${DOMAIN}:host-gateway"
+    networks:
+      - element-call-net
+      - proxy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "2"
+
+volumes:
+  synapse-data:
+    name: element-synapse-data
+
+networks:
+  element-call-net:
+    name: element-call-net
+    driver: bridge
+  proxy:
+    external: true

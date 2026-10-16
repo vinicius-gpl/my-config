@@ -30,6 +30,7 @@ on:
           - caddy
           - cockpit
           - sure
+          - element-call
           - coolify
           - supabase
           - prune

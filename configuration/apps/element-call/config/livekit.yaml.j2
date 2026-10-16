@@ -1,0 +1,33 @@
+# =============================================================================
+#  LiveKit SFU (Backend de mídia WebRTC para o Element Call)
+# =============================================================================
+port: 7880
+bind_addresses:
+  - "0.0.0.0"
+
+rtc:
+  tcp_port: 7881
+  port_range_start: 50100
+  port_range_end: 50200
+  use_external_ip: false
+  node_ip: "{{ element_call_node_ip | default(vpn_routed_public_ip | default(ansible_host)) }}"
+
+room:
+  # Obrigatório false: apenas o lk-jwt-service pode autorizar a criação de salas
+  auto_create: false
+  empty_timeout: 300
+  departure_timeout: 20
+
+turn:
+  enabled: false
+
+keys:
+  "{{ ec_livekit_key }}": "{{ ec_livekit_secret }}"
+
+webhook:
+  api_key: "{{ ec_livekit_key }}"
+  urls:
+    - "https://call.{{ domain }}/livekit/jwt/sfu_webhook"
+
+logging:
+  level: info

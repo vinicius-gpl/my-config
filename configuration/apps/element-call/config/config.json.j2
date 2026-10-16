@@ -1,0 +1,15 @@
+{
+  "default_server_config": {
+    "m.homeserver": {
+      "base_url": "https://call.{{ domain }}",
+      "server_name": "call.{{ domain }}"
+    }
+  },
+  "livekit": {
+    "livekit_service_url": "https://call.{{ domain }}/livekit/jwt"
+  },
+  "features": {
+    "feature_group_calls_without_video_and_audio": true
+  },
+  "matrix_rtc_mode": "compatibility"
+}

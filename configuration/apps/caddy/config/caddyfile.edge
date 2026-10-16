@@ -5,9 +5,9 @@
     {$CADDY_OPTS}
 }
 
-# Serviços privados: derruba a conexão de qualquer origem fora da VPN.
+# Serviços privados: derruba a conexão de qualquer origem fora da VPN (ou containers locais).
 (vpn_only) {
-    @fora_da_vpn not remote_ip {$VPN_CIDR}
+    @fora_da_vpn not remote_ip {$VPN_CIDR} 127.0.0.0/8 172.16.0.0/12
     abort @fora_da_vpn
 }
 

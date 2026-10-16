@@ -1,0 +1,70 @@
+call.{$DOMAIN} {
+    header {
+        Strict-Transport-Security "max-age=31536000;"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "no-referrer"
+        X-Frame-Options "SAMEORIGIN"
+    }
+
+    # Descoberta Matrix (.well-known) para clientes e validação OpenID do lk-jwt-service
+    handle /.well-known/matrix/client {
+        header Content-Type application/json
+        header Access-Control-Allow-Origin "*"
+        respond `{"m.homeserver":{"base_url":"https://call.{$DOMAIN}"},"org.matrix.msc4143.rtc_foci":[{"type":"livekit","livekit_service_url":"https://call.{$DOMAIN}/livekit/jwt"}]}` 200
+    }
+
+    handle /.well-known/matrix/server {
+        header Content-Type application/json
+        respond `{"m.server":"call.{$DOMAIN}:443"}` 200
+    }
+
+    # Matrix Synapse (Client-Server, Federation OpenID e Admin)
+    @synapse path /_matrix/* /_synapse/client/* /_synapse/admin/*
+    handle @synapse {
+        reverse_proxy element-synapse:8008 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # MatrixRTC Authorization Service (lk-jwt-service)
+    handle_path /livekit/jwt/* {
+        reverse_proxy element-lk-jwt:8080 {
+            header_up Host {host}
+            header_up X-Forwarded-Server {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # LiveKit SFU (WebSocket Signaling e Twirp API)
+    handle_path /livekit/sfu/* {
+        reverse_proxy element-livekit:7880 {
+            header_up Host {host}
+            header_up X-Forwarded-Server {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # Element Call Frontend (SPA)
+    handle {
+        reverse_proxy element-call:8080 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    encode zstd gzip
+
+    log {
+        output file /data/element-call-access.log
+        format json
+    }
+}

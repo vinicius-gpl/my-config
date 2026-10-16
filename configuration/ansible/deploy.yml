@@ -15,6 +15,7 @@
     netbird_path: "/opt/netbird"
     netbird_proxy_path: "/opt/netbird-proxy"
     sure_path: "/opt/sure"
+    element_call_path: "/opt/element-call"
     netbird_proxy_token: ""
     netbird_proxy_domain: ""
     netbird_proxy_address: ""
@@ -91,6 +92,11 @@
       include_tasks: "{{ apps_dir }}/sure/ansible/deploy.yml"
       when: (sure_enabled is defined and sure_enabled | bool) or ('sure' in ansible_run_tags)
       tags: [sure]
+
+    - name: "[element-call] Deploy Element Call (MatrixRTC + LiveKit)"
+      include_tasks: "{{ apps_dir }}/element-call/ansible/deploy.yml"
+      when: (element_call_enabled is defined and element_call_enabled | bool) or ('element-call' in ansible_run_tags) or ('element_call' in ansible_run_tags)
+      tags: [element-call, element_call]
 
   handlers:
     - name: Restart cockpit

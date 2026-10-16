@@ -33,6 +33,7 @@ on:
           - netbird-proxy
           - cockpit
           - sure
+          - element-call
       dry_run:
         description: 'Modo simulação (--check)?'
         required: false

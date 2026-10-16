@@ -1,0 +1,28 @@
+---
+# =========================================================================
+# === ELEMENT CALL CLEAN / TEARDOWN ===
+# =========================================================================
+
+- name: "[element-call] Parar e remover containers do Element Call"
+  command: docker rm -f element-call element-lk-jwt element-livekit element-synapse
+  failed_when: false
+  tags: [element-call, element_call]
+
+- name: "[element-call] Remover volume element-synapse-data (se solicitado)"
+  command: docker volume rm element-synapse-data
+  failed_when: false
+  when: remove_volumes | default(false) | bool
+  tags: [element-call, element_call]
+
+- name: "[element-call] Remover diretório de deploy do Element Call"
+  file:
+    path: "{{ element_call_path | default('/opt/element-call') }}"
+    state: absent
+  when: remove_volumes | default(false) | bool
+  tags: [element-call, element_call]
+
+- name: "[element-call] Remover configuração Caddy do Element Call"
+  file:
+    path: "{{ caddy_path | default('/opt/caddy') }}/conf.d/element-call.caddy"
+    state: absent
+  tags: [element-call, element_call]

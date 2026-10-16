@@ -46,6 +46,21 @@
     ec_admin_password: "{{ element_call_password | default((ec_secrets_raw.content | b64decode | from_yaml).admin_password if (ec_secrets_raw is defined and ec_secrets_raw.content is defined) else 'check_mode_placeholder_pass') }}"
   tags: [element-call, element_call]
 
+- name: "[element-call] Atualizar segredos persistidos com os valores ativos"
+  copy:
+    dest: "{{ element_call_path }}/secrets.yml"
+    content: |
+      livekit_key: "{{ ec_livekit_key }}"
+      livekit_secret: "{{ ec_livekit_secret }}"
+      synapse_registration_secret: "{{ ec_synapse_registration_secret }}"
+      synapse_macaroon_secret: "{{ ec_synapse_macaroon_secret }}"
+      synapse_form_secret: "{{ ec_synapse_form_secret }}"
+      admin_user: "{{ ec_admin_user }}"
+      admin_password: "{{ ec_admin_password }}"
+    mode: '0600'
+  when: not ansible_check_mode
+  tags: [element-call, element_call]
+
 - name: "[element-call] Renderizar config.json do Element Call"
   template:
     src: "{{ apps_dir }}/element-call/config/config.json.j2"

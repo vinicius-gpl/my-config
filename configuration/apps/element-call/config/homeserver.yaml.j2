@@ -53,7 +53,7 @@ experimental_features:
 # MSC4140: Delayed events para desconexão limpa de participantes (evita chamadas presas)
 max_event_delay_duration: 24h
 
-# Rate-limits ajustados para troca de chaves E2EE e heartbeats do MatrixRTC
+# Rate-limits ajustados para troca de chaves E2EE, heartbeats do MatrixRTC e login
 rc_message:
   per_second: 0.5
   burst_count: 30
@@ -61,6 +61,21 @@ rc_message:
 rc_delayed_event_mgmt:
   per_second: 1
   burst_count: 20
+
+rc_login:
+  address:
+    per_second: 5
+    burst_count: 100
+  account:
+    per_second: 5
+    burst_count: 100
+  failed_attempts:
+    per_second: 2
+    burst_count: 50
+
+rc_registration:
+  per_second: 2
+  burst_count: 50
 
 matrix_rtc:
   transports:

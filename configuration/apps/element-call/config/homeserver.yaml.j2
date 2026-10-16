@@ -13,6 +13,10 @@ report_stats: false
 # Isola o servidor contra federação externa pública
 federation_domain_whitelist: []
 
+# Element Call v0.28.x cria salas com power_levels incluindo o criador em content.users,
+# o que viola as regras estritas da versão 12. A versão 11 é compatível e estável.
+default_room_version: "11"
+
 listeners:
   - port: 8008
     tls: false

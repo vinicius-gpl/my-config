@@ -1,0 +1,23 @@
+grafana.{$DOMAIN} {
+    import vpn_only
+
+    header {
+        Strict-Transport-Security "max-age=31536000;"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "no-referrer"
+        X-Frame-Options "SAMEORIGIN"
+    }
+
+    reverse_proxy grafana:3000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote}
+        header_up X-Forwarded-For {remote}
+    }
+
+    encode zstd gzip
+
+    log {
+        output file /data/grafana-access.log
+        format json
+    }
+}

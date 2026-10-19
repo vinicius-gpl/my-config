@@ -34,6 +34,7 @@ on:
           - element-web
           - coolify
           - supabase
+          - monitoring
           - prune
       remove_volumes:
         description: 'Apagar volumes de dados persistentes?'

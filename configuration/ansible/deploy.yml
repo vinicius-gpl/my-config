@@ -17,6 +17,7 @@
     sure_path: "/opt/sure"
     element_call_path: "/opt/element-call"
     element_web_path: "/opt/element-web"
+    monitoring_path: "/opt/monitoring"
     netbird_proxy_token: ""
     netbird_proxy_domain: ""
     netbird_proxy_address: ""
@@ -103,6 +104,11 @@
       include_tasks: "{{ apps_dir }}/element-web/ansible/deploy.yml"
       when: (element_web_enabled is defined and element_web_enabled | bool) or ('element-web' in ansible_run_tags) or ('element_web' in ansible_run_tags)
       tags: [element-web, element_web]
+
+    - name: "[monitoring] Deploy Prometheus + Grafana"
+      include_tasks: "{{ apps_dir }}/monitoring/ansible/deploy.yml"
+      when: (monitoring_enabled is defined and monitoring_enabled | bool) or ('monitoring' in ansible_run_tags) or ('grafana' in ansible_run_tags) or ('prometheus' in ansible_run_tags)
+      tags: [monitoring, grafana, prometheus]
 
   handlers:
     - name: Restart cockpit

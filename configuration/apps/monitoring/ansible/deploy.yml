@@ -1,0 +1,69 @@
+---
+# =========================================================================
+# === MONITORING (PROMETHEUS + GRAFANA) ===
+# =========================================================================
+
+- name: "[monitoring] Criar diretório de deploy"
+  file:
+    path: "{{ monitoring_path | default('/opt/monitoring') }}"
+    state: directory
+    mode: '0755'
+  tags: [monitoring, grafana, prometheus]
+
+- name: "[monitoring] Copiar pasta de configurações (Prometheus e Grafana)"
+  copy:
+    src: "{{ apps_dir }}/monitoring/config/"
+    dest: "{{ monitoring_path | default('/opt/monitoring') }}/config/"
+    mode: '0644'
+  tags: [monitoring, grafana, prometheus]
+
+- name: "[monitoring] Copiar pasta de dashboards"
+  copy:
+    src: "{{ apps_dir }}/monitoring/dashboards/"
+    dest: "{{ monitoring_path | default('/opt/monitoring') }}/dashboards/"
+    mode: '0644'
+  tags: [monitoring, grafana, prometheus]
+
+- name: "[monitoring] Copiar docker-compose"
+  copy:
+    src: "{{ apps_dir }}/monitoring/compose.yml"
+    dest: "{{ monitoring_path | default('/opt/monitoring') }}/docker-compose.yml"
+    mode: '0644'
+  tags: [monitoring, grafana, prometheus]
+
+- name: "[monitoring] Criar arquivo .env do Grafana"
+  copy:
+    dest: "{{ monitoring_path | default('/opt/monitoring') }}/.env"
+    content: |
+      GRAFANA_ADMIN_USER={{ grafana_admin_user | default('admin') }}
+      GRAFANA_ADMIN_PASSWORD={{ grafana_admin_password | default(lookup('password', '/dev/null chars=ascii_letters,digits length=16')) }}
+    mode: '0600'
+  tags: [monitoring, grafana, prometheus]
+
+- name: "[monitoring] Abrir porta do Grafana no firewall (3000)"
+  firewalld:
+    port: 3000/tcp
+    permanent: yes
+    state: enabled
+    immediate: yes
+  failed_when: false
+  tags: [monitoring, grafana, prometheus]
+
+- name: "[monitoring] Implantar configuração grafana.caddy (se caddy existir)"
+  copy:
+    src: "{{ apps_dir }}/monitoring/config/grafana.caddy"
+    dest: "{{ caddy_path }}/conf.d/grafana.caddy"
+    mode: '0644'
+  failed_when: false
+  tags: [monitoring, grafana, prometheus]
+
+- name: "[monitoring] Recarregar Caddy para aplicar grafana.{{ domain | default('') }}"
+  command: docker exec caddy caddy reload --config /etc/caddy/Caddyfile
+  failed_when: false
+  tags: [monitoring, grafana, prometheus]
+
+- name: "[monitoring] Subir containers da stack de monitoramento"
+  command: docker compose up -d --remove-orphans
+  args:
+    chdir: "{{ monitoring_path | default('/opt/monitoring') }}"
+  tags: [monitoring, grafana, prometheus]

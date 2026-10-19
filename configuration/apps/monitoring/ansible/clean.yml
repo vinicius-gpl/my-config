@@ -1,0 +1,27 @@
+---
+# =========================================================================
+# === MONITORING (PROMETHEUS + GRAFANA) CLEAN / TEARDOWN ===
+# =========================================================================
+
+- name: "[monitoring] Parar e remover containers da stack de monitoramento"
+  command: docker rm -f grafana prometheus node-exporter cadvisor
+  failed_when: false
+  tags: [monitoring, grafana, prometheus]
+
+- name: "[monitoring] Remover diretório de deploy do monitoramento"
+  file:
+    path: "{{ monitoring_path | default('/opt/monitoring') }}"
+    state: absent
+  tags: [monitoring, grafana, prometheus]
+
+- name: "[monitoring] Remover volumes do Prometheus e Grafana (se solicitado)"
+  command: docker volume rm prometheus-data grafana-data
+  failed_when: false
+  when: remove_volumes | default(false) | bool
+  tags: [monitoring, grafana, prometheus]
+
+- name: "[monitoring] Remover configuração Caddy do Grafana"
+  file:
+    path: "{{ caddy_path | default('/opt/caddy') }}/conf.d/grafana.caddy"
+    state: absent
+  tags: [monitoring, grafana, prometheus]

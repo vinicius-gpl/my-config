@@ -35,6 +35,7 @@ on:
           - sure
           - element-call
           - element-web
+          - monitoring
       dry_run:
         description: 'Modo simulação (--check)?'
         required: false

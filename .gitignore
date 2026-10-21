@@ -18,3 +18,4 @@
 /configuration/linux/rocky/ansible/hosts.ini
 /configuration/servers/acerola/hosts.ini
 /configuration/servers/oracle/hosts.ini
+/configuration/servers/homo/hosts.ini

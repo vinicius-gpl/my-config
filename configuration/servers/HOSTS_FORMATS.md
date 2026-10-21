@@ -94,6 +94,8 @@ IP_DO_SERVIDOR ansible_user=root ansible_ssh_forward_agent=true \
   supabase_dashboard_password=GERE_BASE64_18 \
   supabase_secret_key_base=GERE_HEX_32 \
   supabase_realtime_enc_key=GERE_HEX_8 \
+  supabase_s3_access_key_id=GERE_HEX_16 \
+  supabase_s3_access_key_secret=GERE_HEX_32 \
   supabase_profiles=
 ```
 
@@ -208,6 +210,8 @@ IP_DO_SERVIDOR ansible_user=root ansible_ssh_forward_agent=true \
   supabase_dashboard_password=SenhaForteDashboardSupabase123! \
   supabase_secret_key_base=0123456789abcdef0123456789abcdef \
   supabase_realtime_enc_key=01234567 \
+  supabase_s3_access_key_id=0123456789abcdef0123456789abcdef \
+  supabase_s3_access_key_secret=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef \
   supabase_profiles=
 ```
 

@@ -11,10 +11,11 @@ vpn_routed_public_ip: "168.138.133.78"
 
 # Sites servidos pelo Caddy deste servidor (caminhos relativos a configuration/apps).
 caddy_sites:
-  - netbird/config/netbird.caddy        # netbird.<domain>   público
-  - portainer/config/portainer.caddy    # container.<domain> só VPN
-  - beszel/config/beszel.caddy          # monitor.<domain>   só VPN
-  - cockpit/cockpit.caddy               # cockpit.<domain>   só VPN
+  - netbird/config/netbird.caddy            # netbird.<domain>   público
+  - element-call/config/element-call.caddy  # call.<domain>      público (login por credencial)
+  - portainer/config/portainer.caddy        # container.<domain> só VPN
+  - beszel/config/beszel.caddy              # monitor.<domain>   só VPN
+  - cockpit/cockpit.caddy                   # cockpit.<domain>   só VPN
 
 # Hosts públicos que rodam em outro peer: TLS termina aqui e segue pelo túnel.
 caddy_tunnels:

@@ -1,0 +1,29 @@
+# =============================================================================
+#  element-web/compose.yml  --  CLIENTE WEB MATRIX (CHAT & MESSAGING)
+# -----------------------------------------------------------------------------
+#  Cliente web oficial do Matrix (alternativa self-hosted ao Slack / Discord):
+#    https://github.com/element-hq/element-web
+#
+#  Conecta-se ao Homeserver Synapse (compartilhado com o Element Call)
+#  e possui o Element Call embutido para chamadas de voz e vídeo em grupo.
+# =============================================================================
+name: element-web
+
+services:
+  element-web:
+    image: vectorim/element-web:${ELEMENT_WEB_VERSION:-v1.12.32}
+    container_name: element-web
+    restart: unless-stopped
+    volumes:
+      - ./config/config.json:/app/config.json:ro,z
+    networks:
+      - proxy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "2"
+
+networks:
+  proxy:
+    external: true

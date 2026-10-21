@@ -30,6 +30,8 @@ on:
           - caddy
           - cockpit
           - sure
+          - element-call
+          - element-web
           - coolify
           - supabase
           - prune

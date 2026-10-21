@@ -1,0 +1,34 @@
+{
+  "default_server_config": {
+    "m.homeserver": {
+      "base_url": "https://call.{{ domain }}",
+      "server_name": "call.{{ domain }}"
+    },
+    "m.identity_server": {
+      "base_url": ""
+    }
+  },
+  "brand": "Element",
+  "integrated_devices": true,
+  "element_call": {
+    "url": "https://call.{{ domain }}",
+    "use_exclusively": false,
+    "participant_limit": 100,
+    "brand": "Element Call"
+  },
+  "features": {
+    "feature_element_call_video_rooms": true,
+    "feature_group_calls": true
+  },
+  "room_directory": {
+    "servers": [
+      "call.{{ domain }}"
+    ]
+  },
+  "default_federate": false,
+  "default_theme": "dark",
+  "show_labs_settings": true,
+  "setting_defaults": {
+    "breadcrumbs": true
+  }
+}

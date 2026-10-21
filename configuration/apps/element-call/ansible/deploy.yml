@@ -1,0 +1,167 @@
+---
+# =========================================================================
+# === ELEMENT CALL (MATRIXRTC + LIVEKIT + SYNAPSE) ===
+# =========================================================================
+
+- name: "[element-call] Criar diretórios de deploy do Element Call"
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - "{{ element_call_path }}"
+    - "{{ element_call_path }}/config"
+  tags: [element-call, element_call]
+
+- name: "[element-call] Gerar e persistir segredos criptográficos (não sobrescrever se já existir)"
+  copy:
+    dest: "{{ element_call_path }}/secrets.yml"
+    force: false
+    content: |
+      livekit_key: "{{ element_call_livekit_key | default('lk_element_call') }}"
+      livekit_secret: "{{ element_call_livekit_secret | default(lookup('password', '/dev/null chars=ascii_letters,digits length=48')) }}"
+      synapse_registration_secret: "{{ element_call_registration_secret | default(lookup('password', '/dev/null chars=ascii_letters,digits length=48')) }}"
+      synapse_macaroon_secret: "{{ element_call_macaroon_secret | default(lookup('password', '/dev/null chars=ascii_letters,digits length=48')) }}"
+      synapse_form_secret: "{{ element_call_form_secret | default(lookup('password', '/dev/null chars=ascii_letters,digits length=48')) }}"
+      admin_user: "{{ element_call_user | default('admin') }}"
+      admin_password: "{{ element_call_password | default(lookup('password', '/dev/null chars=ascii_letters,digits length=20')) }}"
+    mode: '0600'
+  tags: [element-call, element_call]
+
+- name: "[element-call] Carregar segredos persistidos do servidor"
+  slurp:
+    src: "{{ element_call_path }}/secrets.yml"
+  register: ec_secrets_raw
+  when: not ansible_check_mode
+  tags: [element-call, element_call]
+
+- name: "[element-call] Definir fatos dos segredos do Element Call"
+  set_fact:
+    ec_livekit_key: "{{ element_call_livekit_key | default((ec_secrets_raw.content | b64decode | from_yaml).livekit_key if (ec_secrets_raw is defined and ec_secrets_raw.content is defined) else 'lk_element_call') }}"
+    ec_livekit_secret: "{{ element_call_livekit_secret | default((ec_secrets_raw.content | b64decode | from_yaml).livekit_secret if (ec_secrets_raw is defined and ec_secrets_raw.content is defined) else 'check_mode_placeholder_secret_32chars') }}"
+    ec_synapse_registration_secret: "{{ element_call_registration_secret | default((ec_secrets_raw.content | b64decode | from_yaml).synapse_registration_secret if (ec_secrets_raw is defined and ec_secrets_raw.content is defined) else 'check_mode_placeholder_secret_32chars') }}"
+    ec_synapse_macaroon_secret: "{{ element_call_macaroon_secret | default((ec_secrets_raw.content | b64decode | from_yaml).synapse_macaroon_secret if (ec_secrets_raw is defined and ec_secrets_raw.content is defined) else 'check_mode_placeholder_secret_32chars') }}"
+    ec_synapse_form_secret: "{{ element_call_form_secret | default((ec_secrets_raw.content | b64decode | from_yaml).synapse_form_secret if (ec_secrets_raw is defined and ec_secrets_raw.content is defined) else 'check_mode_placeholder_secret_32chars') }}"
+    ec_admin_user: "{{ element_call_user | default((ec_secrets_raw.content | b64decode | from_yaml).admin_user if (ec_secrets_raw is defined and ec_secrets_raw.content is defined) else 'admin') }}"
+    ec_admin_password: "{{ element_call_password | default((ec_secrets_raw.content | b64decode | from_yaml).admin_password if (ec_secrets_raw is defined and ec_secrets_raw.content is defined) else 'check_mode_placeholder_pass') }}"
+  tags: [element-call, element_call]
+
+- name: "[element-call] Atualizar segredos persistidos com os valores ativos"
+  copy:
+    dest: "{{ element_call_path }}/secrets.yml"
+    content: |
+      livekit_key: "{{ ec_livekit_key }}"
+      livekit_secret: "{{ ec_livekit_secret }}"
+      synapse_registration_secret: "{{ ec_synapse_registration_secret }}"
+      synapse_macaroon_secret: "{{ ec_synapse_macaroon_secret }}"
+      synapse_form_secret: "{{ ec_synapse_form_secret }}"
+      admin_user: "{{ ec_admin_user }}"
+      admin_password: "{{ ec_admin_password }}"
+    mode: '0600'
+  when: not ansible_check_mode
+  tags: [element-call, element_call]
+
+- name: "[element-call] Renderizar config.json do Element Call"
+  template:
+    src: "{{ apps_dir }}/element-call/config/config.json.j2"
+    dest: "{{ element_call_path }}/config/config.json"
+    mode: '0644'
+  tags: [element-call, element_call]
+
+- name: "[element-call] Renderizar homeserver.yaml do Synapse"
+  template:
+    src: "{{ apps_dir }}/element-call/config/homeserver.yaml.j2"
+    dest: "{{ element_call_path }}/config/homeserver.yaml"
+    mode: '0600'
+  tags: [element-call, element_call]
+
+- name: "[element-call] Renderizar livekit.yaml do LiveKit SFU"
+  template:
+    src: "{{ apps_dir }}/element-call/config/livekit.yaml.j2"
+    dest: "{{ element_call_path }}/config/livekit.yaml"
+    mode: '0600'
+  tags: [element-call, element_call]
+
+- name: "[element-call] Copiar docker-compose do Element Call"
+  copy:
+    src: "{{ apps_dir }}/element-call/compose.yml"
+    dest: "{{ element_call_path }}/docker-compose.yml"
+    mode: '0644'
+  tags: [element-call, element_call]
+
+- name: "[element-call] Criar arquivo .env do Element Call"
+  copy:
+    dest: "{{ element_call_path }}/.env"
+    content: |
+      DOMAIN={{ domain | default(ansible_host) }}
+      LIVEKIT_KEY={{ ec_livekit_key }}
+      LIVEKIT_SECRET={{ ec_livekit_secret }}
+    mode: '0600'
+  tags: [element-call, element_call]
+
+- name: "[element-call] Abrir portas WebRTC do LiveKit no firewall (7881/tcp e 50100-50200/udp)"
+  firewalld:
+    port: "{{ item }}"
+    permanent: yes
+    state: enabled
+    immediate: yes
+  loop:
+    - 7881/tcp
+    - 50100-50200/udp
+  failed_when: false
+  tags: [element-call, element_call]
+
+- name: "[element-call] Garantir que diretório conf.d do Caddy existe"
+  file:
+    path: "{{ caddy_path }}/conf.d"
+    state: directory
+    mode: '0755'
+  failed_when: false
+  tags: [element-call, element_call]
+
+- name: "[element-call] Implantar configuração element-call.caddy"
+  copy:
+    src: "{{ apps_dir }}/element-call/config/element-call.caddy"
+    dest: "{{ caddy_path }}/conf.d/element-call.caddy"
+    mode: '0644'
+  failed_when: false
+  tags: [element-call, element_call]
+
+- name: "[element-call] Subir containers do Element Call"
+  command: docker compose up -d --force-recreate
+  args:
+    chdir: "{{ element_call_path }}"
+  tags: [element-call, element_call]
+
+- name: "[element-call] Aguardar Synapse responder na porta 8008"
+  command: >
+    docker exec element-synapse python -c
+    "import urllib.request; urllib.request.urlopen('http://localhost:8008/_matrix/client/versions')"
+  register: synapse_ready
+  retries: 15
+  delay: 2
+  until: synapse_ready.rc == 0
+  changed_when: false
+  when: not ansible_check_mode
+  tags: [element-call, element_call]
+
+- name: "[element-call] Criar usuário inicial no Synapse ({{ ec_admin_user }})"
+  command: >
+    docker exec element-synapse register_new_matrix_user
+    -u "{{ ec_admin_user }}"
+    -p "{{ ec_admin_password }}"
+    -a
+    -c /etc/synapse/homeserver.yaml
+    http://localhost:8008
+  register: ec_register_user
+  failed_when:
+    - ec_register_user.rc != 0
+    - "'User ID already taken' not in (ec_register_user.stdout + ec_register_user.stderr)"
+  changed_when: "'New user localpart' in ec_register_user.stdout or ec_register_user.rc == 0"
+  when: not ansible_check_mode
+  tags: [element-call, element_call]
+
+- name: "[element-call] Recarregar Caddy para aplicar call.{{ domain | default('') }}"
+  command: docker exec caddy caddy reload --config /etc/caddy/Caddyfile
+  failed_when: false
+  tags: [element-call, element_call]

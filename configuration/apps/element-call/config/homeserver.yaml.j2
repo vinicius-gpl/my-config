@@ -1,0 +1,88 @@
+# =============================================================================
+#  Synapse Homeserver (dedicado ao Element Call / MatrixRTC)
+# =============================================================================
+server_name: "call.{{ domain }}"
+public_baseurl: "https://call.{{ domain }}/"
+
+pid_file: /data/homeserver.pid
+media_store_path: /data/media_store
+signing_key_path: "/data/signing.key"
+
+report_stats: false
+
+# Isola o servidor contra federação externa pública
+federation_domain_whitelist: []
+
+# Element Call v0.28.x cria salas com power_levels incluindo o criador em content.users,
+# o que viola as regras estritas da versão 12. A versão 11 é compatível e estável.
+default_room_version: "11"
+
+listeners:
+  - port: 8008
+    tls: false
+    type: http
+    x_forwarded: true
+    resources:
+      - names: [client, federation, openid]
+        compress: false
+
+database:
+  name: sqlite3
+  args:
+    database: /data/homeserver.db
+    cp_min: 1
+    cp_max: 1
+
+# Segredos criptográficos gerados pelo Ansible
+registration_shared_secret: "{{ ec_synapse_registration_secret }}"
+macaroon_secret_key: "{{ ec_synapse_macaroon_secret }}"
+form_secret: "{{ ec_synapse_form_secret }}"
+
+# Controle de registro no modo Standalone:
+# - Liberado para permitir criação de novas contas diretamente pela interface web do Element Call
+enable_registration: {{ (element_call_enable_registration | default(element_call_allow_guest | default(true)) | bool) | lower }}
+enable_registration_without_verification: {{ (element_call_enable_registration | default(element_call_allow_guest | default(true)) | bool) | lower }}
+
+# MSCs obrigatórias para o MatrixRTC / Element Call
+experimental_features:
+  # MSC3266: Room summary API (usado para preview/knocking em salas de chamada)
+  msc3266_enabled: true
+  # MSC4143: MatrixRTC e endpoint de descoberta de transportes (MSC4519)
+  msc4143_enabled: true
+  # MSC4222: state_after no sync v2 para rastreamento confiável do estado da sala
+  msc4222_enabled: true
+
+# MSC4140: Delayed events para desconexão limpa de participantes (evita chamadas presas)
+max_event_delay_duration: 24h
+
+# Rate-limits ajustados para troca de chaves E2EE, heartbeats do MatrixRTC e login
+rc_message:
+  per_second: 0.5
+  burst_count: 30
+
+rc_delayed_event_mgmt:
+  per_second: 1
+  burst_count: 20
+
+rc_login:
+  address:
+    per_second: 5
+    burst_count: 100
+  account:
+    per_second: 5
+    burst_count: 100
+  failed_attempts:
+    per_second: 2
+    burst_count: 50
+
+rc_registration:
+  per_second: 2
+  burst_count: 50
+
+matrix_rtc:
+  transports:
+    - type: livekit
+      livekit_service_url: "https://call.{{ domain }}/livekit/jwt"
+
+trusted_key_servers: []
+suppress_key_server_warning: true

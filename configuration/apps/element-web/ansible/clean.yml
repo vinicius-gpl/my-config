@@ -1,0 +1,22 @@
+---
+# =========================================================================
+# === ELEMENT WEB CLEAN / TEARDOWN ===
+# =========================================================================
+
+- name: "[element-web] Parar e remover container do Element Web"
+  command: docker rm -f element-web
+  failed_when: false
+  tags: [element-web, element_web]
+
+- name: "[element-web] Remover diretório de deploy do Element Web"
+  file:
+    path: "{{ element_web_path | default('/opt/element-web') }}"
+    state: absent
+  when: remove_volumes | default(false) | bool
+  tags: [element-web, element_web]
+
+- name: "[element-web] Remover configuração Caddy do Element Web"
+  file:
+    path: "{{ caddy_path | default('/opt/caddy') }}/conf.d/element-web.caddy"
+    state: absent
+  tags: [element-web, element_web]

@@ -10,8 +10,9 @@ Este é o documento central; os READMEs de cada servidor e app apontam para cá.
 2. **Quem decide o acesso é o Caddy da Oracle**, pelo IP de origem da conexão:
    - serviços privados só aceitam origem dentro da VPN (`100.96.0.0/16`);
    - serviços públicos aceitam qualquer origem.
-3. **Serviços do PLUTO são públicos**: o Caddy da Oracle termina o TLS e repassa pelo túnel da VPN
-   para o Caddy local do PLUTO.
+3. **Serviços do PLUTO são públicos por padrão**: o Caddy da Oracle termina o TLS e repassa pelo túnel
+   da VPN para o Caddy local do PLUTO. Um túnel com `vpn_only: true` em `caddy_tunnels` aplica o mesmo
+   filtro dos serviços privados.
 
 ## Mapa
 
@@ -38,6 +39,7 @@ Todos resolvem para `168.138.133.78`.
 | `monitor.vinicius-gpl.com` | Beszel Hub | Oracle | só VPN | `apps/beszel/config/beszel.caddy` |
 | `cockpit.vinicius-gpl.com` | Cockpit | Oracle | só VPN | `apps/cockpit/cockpit.caddy` |
 | `sure.host.vinicius-gpl.com` | Sure | PLUTO | público | Oracle: `caddy_tunnels` em `servers/oracle/vars.yml`; PLUTO: `apps/caddy/config/conf.d/sure.caddy` |
+| `ai-memory.host.vinicius-gpl.com` | ai-memory (web UI e MCP) | PLUTO | só VPN | Oracle: `caddy_tunnels` (`vpn_only: true`) em `servers/oracle/vars.yml`; PLUTO: `apps/caddy/config/conf.d/ai-memory.caddy` |
 
 `*.host.vinicius-gpl.com` tem registro wildcard no DNS, mas a Oracle só atende os nomes listados em
 `caddy_tunnels[].hosts`. Um nome não listado tem a conexão TLS recusada, e por isso ninguém consegue
@@ -164,6 +166,14 @@ NetBird; os clientes reconectam sozinhos.
    `docker exec caddy caddy reload --config /etc/caddy/Caddyfile`.
 2. Adicionar o nome em `caddy_tunnels[].hosts` de `servers/oracle/vars.yml` e rodar o deploy `caddy`.
    O DNS já cobre o nome pelo wildcard `*.host`.
+3. Para deixá-lo só na VPN, colocar o nome num túnel com `vpn_only: true`. No PLUTO, o `.caddy` do app
+   deve aceitar só `remote_ip 100.96.113.83` (a Oracle): a porta 80 do PLUTO é alcançável pela LAN, e
+   sem isso daria para contornar o filtro da Oracle (ver `conf.d/ai-memory.caddy`).
+
+O ai-memory roda no host (serviço systemd do usuário, ouvindo só em `127.0.0.1:49374`). O Caddy, no
+Docker, chega nele por `ai-memory-proxy.socket` (`~/.config/systemd/user/`), que escuta em
+`172.18.0.1:49374` (gateway da rede `proxy`) e repassa para o loopback. O nome também precisa estar em
+`allowed_hosts` de `~/.local/share/ai-memory/config.toml`.
 
 ## Diagnóstico
 

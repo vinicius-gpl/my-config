@@ -219,6 +219,13 @@ services:
       # ---- Transformacao de imagem (depende do imgproxy, profile extras) ----
       ENABLE_IMAGE_TRANSFORMATION: ${ENABLE_IMAGE_TRANSFORMATION}
       IMGPROXY_URL: http://imgproxy:5001
+
+      # ---- API S3 (http://<servidor>:<KONG_HTTP_PORT>/storage/v1/s3, regiao = REGION) ----
+      # O Kong corta /storage/v1 antes de repassar; o prefixo faz a assinatura SigV4
+      # do cliente (calculada com o caminho completo) bater.
+      S3_PROTOCOL_ACCESS_KEY_ID: ${S3_PROTOCOL_ACCESS_KEY_ID}
+      S3_PROTOCOL_ACCESS_KEY_SECRET: ${S3_PROTOCOL_ACCESS_KEY_SECRET}
+      S3_PROTOCOL_PREFIX: ${S3_PROTOCOL_PREFIX}
     volumes:
       - storage-data:/var/lib/storage
     networks: [supabase]

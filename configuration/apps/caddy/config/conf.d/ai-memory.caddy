@@ -1,0 +1,10 @@
+# Só VPN: a Oracle aplica `vpn_only` (vpn_only: true em caddy_tunnels) e aqui só se aceita
+# o túnel vindo dela, para ninguém da LAN contornar o filtro batendo direto na porta 80.
+# O ai-memory escuta no loopback; a ponte em 172.18.0.1 é o ai-memory-proxy.socket (systemd --user).
+http://ai-memory.{$DOMAIN} {
+    @fora_da_oracle not remote_ip 100.96.113.83
+    abort @fora_da_oracle
+
+    # host.docker.internal resolve para o docker0 (172.17.0.1); a ponte escuta no gateway da `proxy`.
+    reverse_proxy 172.18.0.1:49374
+}

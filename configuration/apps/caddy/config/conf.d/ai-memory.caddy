@@ -5,6 +5,9 @@ http://ai-memory.{$DOMAIN} {
     @fora_da_oracle not remote_ip 100.96.113.83
     abort @fora_da_oracle
 
+    # A interface web do ai-memory fica em /web; na raiz ele responde 404.
+    redir / /web
+
     # host.docker.internal resolve para o docker0 (172.17.0.1); a ponte escuta no gateway da `proxy`.
     reverse_proxy 172.18.0.1:49374
 }

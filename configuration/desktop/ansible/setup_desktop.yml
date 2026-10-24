@@ -13,7 +13,7 @@
 #  O "sudo -v" antes não é enfeite: o yay escala privilégios por conta própria
 #  e sudo não tem tty rodando por dentro do Ansible. Ver o bloco [yay].
 #
-#  Blocos (= tags): base, yay, pkgs, dotfiles, shell
+#  Blocos (= tags): base, yay, pkgs, dotfiles, ssh, shell
 #
 #  Diferente do fedora/ e do rocky/, este playbook NÃO usa "become: yes" no
 #  play inteiro: o makepkg se recusa a rodar como root e os dotfiles precisam
@@ -63,6 +63,8 @@
       # --- Shell e prompt ---
       - fish
       - starship
+      # agente SSH do keyring (gcr-ssh-agent): sobe pelo systemd no login, em qualquer compositor
+      - gcr-4
       # --- CLI que os dotfiles chamam ---
       - fastfetch
       - lazygit
@@ -268,6 +270,50 @@
       tags: [dotfiles]
 
     # =========================================================================
+    #  SSH — agente do keyring no login (Hyprland, niri ou qualquer sessão)
+    # =========================================================================
+    #  Fora do GNOME ninguém sobe agente SSH: o ssh-add responde "Error
+    #  connecting to agent". O gcr-ssh-agent (o mesmo do GNOME) passa a subir
+    #  pelo systemd, e o environment.d diz a todos os programas onde ele está.
+    - name: "[ssh] Ligar o gcr-ssh-agent no login"
+      systemd:
+        name: gcr-ssh-agent.socket
+        scope: user
+        enabled: yes
+        state: started
+      tags: [ssh]
+
+    - name: "[ssh] Garantir ~/.config/environment.d"
+      file:
+        path: "{{ ansible_user_dir }}/.config/environment.d"
+        state: directory
+        mode: "0755"
+      tags: [ssh]
+
+    - name: "[ssh] Linkar o endereço do agente (SSH_AUTH_SOCK)"
+      file:
+        src: "{{ (dotfiles_src ~ '/environment.d/10-ssh-agent.conf') | realpath }}"
+        dest: "{{ ansible_user_dir }}/.config/environment.d/10-ssh-agent.conf"
+        state: link
+        force: yes
+      tags: [ssh]
+
+    - name: "[ssh] Chave entra no agente no primeiro uso (topo do ~/.ssh/config)"
+      blockinfile:
+        path: "{{ ansible_user_dir }}/.ssh/config"
+        create: yes
+        mode: "0600"
+        insertbefore: BOF
+        marker: "# {mark} my-config: agente SSH"
+        block: "{{ lookup('file', dotfiles_src ~ '/ssh/agent.conf') }}"
+      tags: [ssh]
+
+    - name: "[ssh] Tirar o SSH_AUTH_SOCK velho preso no fish"
+      command: fish -c 'set -q -U SSH_AUTH_SOCK; and set -Ue SSH_AUTH_SOCK; or true'
+      changed_when: false
+      tags: [ssh]
+
+    # =========================================================================
     #  SHELL
     # =========================================================================
     - name: "[shell] Definir o fish como shell de login"
@@ -281,7 +327,7 @@
     - name: "[shell] Próximos passos"
       debug:
         msg:
-          - "Sessão: saia e entre de novo (o shell mudou), ou rode: dbus-launch Hyprland"
+          - "Sessão: saia e entre de novo (o shell mudou e o agente SSH passa a valer), ou rode: dbus-launch Hyprland"
           - "Plugin dynamic-cursors do autostart.conf precisa do hyprpm, de dentro de uma sessão Hyprland:"
           - "  hyprpm add https://github.com/VirtCode/hypr-dynamic-cursors && hyprpm enable dynamic-cursors && hyprpm reload -n"
           - "Configs antigas, se havia alguma, ficaram como *.bak-{{ ansible_date_time.epoch }} em ~/.config"

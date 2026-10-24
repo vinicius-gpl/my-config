@@ -54,6 +54,29 @@ ln -sf "$DOTFILES_DIR/starship.toml" "$HOME/.config/starship.toml"
 
 ---
 
+### 🔑 Agente SSH no login (Hyprland, niri ou qualquer sessão fora do GNOME)
+
+Fora do GNOME nenhum agente SSH sobe, e o `ssh-add` responde "Error connecting to agent". A solução
+é o `gcr-ssh-agent` (o mesmo agente do GNOME), ligado pelo systemd no login:
+
+| Arquivo | Destino | Para quê |
+|---|---|---|
+| `environment.d/10-ssh-agent.conf` | `~/.config/environment.d/` | `SSH_AUTH_SOCK` para todos os programas da sessão |
+| `ssh/agent.conf` | topo do `~/.ssh/config` | `AddKeysToAgent yes`: a chave entra no agente no primeiro uso |
+
+Automático: `ansible-playbook -i inventory.ini setup_desktop.yml --tags ssh`. Manual (fish):
+
+```fish
+systemctl --user enable --now gcr-ssh-agent.socket
+mkdir -p ~/.config/environment.d
+ln -sf (pwd)/configuration/desktop/dotfiles/linux/environment.d/10-ssh-agent.conf ~/.config/environment.d/
+set -q -U SSH_AUTH_SOCK; and set -Ue SSH_AUTH_SOCK   # caminho velho preso no fish
+```
+
+E ponha o conteúdo de `ssh/agent.conf` no topo do `~/.ssh/config`. Vale a partir do próximo login.
+
+---
+
 ## 🪟 2. Mapeamento Windows 11
 
 No Windows, as configurações ficam distribuídas entre `%APPDATA%`, `%USERPROFILE%` e a pasta de `Documents\PowerShell`.

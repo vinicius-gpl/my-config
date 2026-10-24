@@ -17,9 +17,15 @@ caddy_sites:
   - beszel/config/beszel.caddy              # monitor.<domain>   só VPN
   - cockpit/cockpit.caddy                   # cockpit.<domain>   só VPN
 
-# Hosts públicos que rodam em outro peer: TLS termina aqui e segue pelo túnel.
+# Hosts que rodam em outro peer: TLS termina aqui e segue pelo túnel.
+# Públicos por padrão; `vpn_only: true` restringe todos os hosts do túnel à VPN.
 caddy_tunnels:
   - domain: host.vinicius-gpl.com
     upstream: "100.96.62.172:80"        # Caddy local do PLUTO
     hosts:
       - sure
+  - domain: host.vinicius-gpl.com
+    upstream: "100.96.62.172:80"        # Caddy local do PLUTO
+    vpn_only: true
+    hosts:
+      - ai-memory

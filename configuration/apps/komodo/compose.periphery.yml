@@ -1,0 +1,36 @@
+# Komodo Periphery (agente): /opt/komodo-periphery nos servidores do Ansible e
+# direto desta pasta no PLUTO. Base: compose/periphery.compose.yaml oficial (v2).
+# Modo outbound: o agente abre a conexão até o Core, então não publica porta nenhuma.
+# Na rede proxy para alcançar o komodo-core direto quando roda no mesmo servidor (oracle).
+networks:
+  proxy:
+    external: true
+
+services:
+  periphery:
+    image: ghcr.io/moghtech/komodo-periphery:${KOMODO_VERSION:-2.3.3}
+    container_name: komodo-periphery
+    init: true
+    restart: unless-stopped
+    labels:
+      komodo.skip: ""
+    # Endereço do Core, nome do servidor e onboarding key (Ansible ou periphery.env.example)
+    env_file: ./periphery.env
+    environment:
+      # Chave pública do Core: gravada na primeira conexão e exigida nas seguintes
+      PERIPHERY_CORE_PUBLIC_KEYS: file:/config/keys/core.pub
+      PERIPHERY_ROOT_DIRECTORY: /etc/komodo
+      PERIPHERY_INCLUDE_DISK_MOUNTS: /etc/hostname
+      TZ: America/Sao_Paulo
+    volumes:
+      - komodo-periphery-keys:/config/keys
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /proc:/proc
+      # Stacks, repos e builds ficam aqui; o caminho precisa ser igual dentro e fora do container
+      - /etc/komodo:/etc/komodo
+    networks:
+      - proxy
+
+volumes:
+  komodo-periphery-keys:
+    name: komodo-periphery-keys

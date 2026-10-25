@@ -1,0 +1,83 @@
+---
+# =========================================================================
+# === KOMODO CORE (PAINEL) ===
+# =========================================================================
+# Painel em https://komodo.<domain>, só pela VPN (komodo.caddy). Só /listener/* é público.
+
+- name: "[komodo] Conferir senha do admin"
+  assert:
+    that: komodo_admin_password | default('') | length > 0
+    fail_msg: "Preencha komodo_admin_password no hosts.ini do servidor do Komodo Core"
+  tags: [komodo]
+
+- name: "[komodo] Criar diretórios"
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - "{{ komodo_path }}"
+    - /etc/komodo/backups
+  tags: [komodo]
+
+- name: "[komodo] Copiar docker-compose"
+  copy:
+    src: "{{ apps_dir }}/komodo/compose.core.yml"
+    dest: "{{ komodo_path }}/docker-compose.yml"
+    mode: '0644'
+  tags: [komodo]
+
+- name: "[komodo] Sortear senha do banco"
+  set_fact:
+    komodo_db_password: "{{ lookup('password', '/dev/null chars=ascii_letters,digits length=32') }}"
+  no_log: true
+  tags: [komodo]
+
+- name: "[komodo] Criar secrets.env (não sobrescrever se já existir)"
+  template:
+    src: "{{ apps_dir }}/komodo/config/secrets.env.j2"
+    dest: "{{ komodo_path }}/secrets.env"
+    force: false
+    mode: '0600'
+  no_log: true
+  tags: [komodo]
+
+- name: "[komodo] Criar .env (endereço e versões)"
+  copy:
+    dest: "{{ komodo_path }}/.env"
+    content: |
+      KOMODO_HOST={{ komodo_host | default('https://komodo.' ~ domain) }}
+      KOMODO_VERSION={{ komodo_version }}
+      MONGO_VERSION={{ komodo_mongo_version }}
+    mode: '0644'
+  tags: [komodo]
+
+- name: "[komodo] Subir Mongo e Komodo Core"
+  command: docker compose up -d --remove-orphans
+  args:
+    chdir: "{{ komodo_path }}"
+  tags: [komodo]
+
+- name: "[komodo] Implantar configuração komodo.caddy (se caddy existir)"
+  copy:
+    src: "{{ apps_dir }}/komodo/config/komodo.caddy"
+    dest: "{{ caddy_path }}/conf.d/komodo.caddy"
+    mode: '0644'
+  failed_when: false
+  tags: [komodo]
+
+- name: "[komodo] Recarregar Caddy para aplicar komodo.{{ domain | default('') }}"
+  command: docker exec caddy caddy reload --config /etc/caddy/Caddyfile
+  failed_when: false
+  tags: [komodo]
+
+- name: "[komodo] Conferir Core rodando"
+  command: docker compose ps --status running -q core
+  args:
+    chdir: "{{ komodo_path }}"
+  register: komodo_running
+  changed_when: false
+  retries: 20
+  delay: 3
+  until: komodo_running.stdout | length > 0
+  tags: [komodo]

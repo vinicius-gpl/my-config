@@ -1,0 +1,29 @@
+komodo.{$DOMAIN} {
+    # Webhooks do GitHub (deploy no push): só /listener fica público
+    handle /listener/* {
+        reverse_proxy komodo-core:9120
+    }
+
+    # Painel, API e a conexão dos agentes: só VPN
+    handle {
+        import vpn_only
+
+        header {
+            Strict-Transport-Security "max-age=31536000;"
+            X-Content-Type-Options "nosniff"
+            Referrer-Policy "no-referrer"
+            X-Frame-Options "DENY"
+        }
+
+        reverse_proxy komodo-core:9120 {
+            header_up X-Real-IP {remote}
+        }
+    }
+
+    encode zstd gzip
+
+    log {
+        output file /data/komodo-access.log
+        format json
+    }
+}

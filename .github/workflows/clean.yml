@@ -35,6 +35,8 @@ on:
           - coolify
           - supabase
           - monitoring
+          - komodo
+          - komodo-periphery
           - prune
       remove_volumes:
         description: 'Apagar volumes de dados persistentes?'

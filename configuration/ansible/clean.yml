@@ -17,6 +17,8 @@
     element_call_path: "/opt/element-call"
     element_web_path: "/opt/element-web"
     monitoring_path: "/opt/monitoring"
+    komodo_path: "/opt/komodo"
+    komodo_periphery_path: "/opt/komodo-periphery"
     remove_volumes: "{{ remove_volumes | default(false) }}"
 
   tasks:
@@ -133,12 +135,26 @@
       tags: [monitoring, grafana, prometheus]
 
     # =========================================================================
+    # === KOMODO CORE ===
+    # =========================================================================
+    - name: "[komodo] Teardown Komodo Core"
+      include_tasks: "{{ apps_dir }}/komodo/ansible/clean.core.yml"
+      tags: [komodo]
+
+    # =========================================================================
+    # === KOMODO PERIPHERY ===
+    # =========================================================================
+    - name: "[komodo-periphery] Teardown Komodo Periphery"
+      include_tasks: "{{ apps_dir }}/komodo/ansible/clean.periphery.yml"
+      tags: [komodo-periphery, komodo_periphery]
+
+    # =========================================================================
     # === RECARREGAR CADDY (SE CADDY ESTIVER ATIVO) ===
     # =========================================================================
     - name: "[caddy] Recarregar Caddy após remoção de serviços"
       command: docker exec caddy caddy reload --config /etc/caddy/Caddyfile
       failed_when: false
-      tags: [beszel-hub, beszel_hub, portainer, wireguard, netbird, cockpit, element-call, element_call, element-web, element_web, monitoring, grafana, dashboards]
+      tags: [beszel-hub, beszel_hub, portainer, wireguard, netbird, cockpit, element-call, element_call, element-web, element_web, monitoring, grafana, komodo, dashboards]
 
     # =========================================================================
     # === DOCKER PRUNE (LIMPEZA DE IMAGENS ÓRFÃS / SISTEMA) ===

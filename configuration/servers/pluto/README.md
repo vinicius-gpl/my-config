@@ -17,6 +17,7 @@ passa pela [Oracle](../oracle/README.md).
 |---|---|---|---|
 | NetBird Client | systemd | `wt0` | — |
 | Caddy local | `configuration/apps/caddy` | `:80` (HTTP, sem TLS) | via túnel da Oracle |
+| Komodo Periphery | `configuration/apps/komodo` | conecta em `komodo.vinicius-gpl.com` | — |
 | Sure (`sure-web`, `sure-worker`, `sure-db`, `sure-redis`) | `configuration/apps/sure` | `sure.host.vinicius-gpl.com` | público |
 
 ## Fluxo de um serviço público

@@ -18,6 +18,12 @@
     element_call_path: "/opt/element-call"
     element_web_path: "/opt/element-web"
     monitoring_path: "/opt/monitoring"
+    komodo_path: "/opt/komodo"
+    komodo_periphery_path: "/opt/komodo-periphery"
+    komodo_version: "2.3.3"
+    komodo_mongo_version: "8.0"
+    # Por onde os agentes chegam no Core (Caddy da Oracle, só VPN). A Oracle usa o container direto (vars.yml).
+    komodo_core_address: "wss://komodo.vinicius-gpl.com"
     netbird_proxy_token: ""
     netbird_proxy_domain: ""
     netbird_proxy_address: ""
@@ -109,6 +115,16 @@
       include_tasks: "{{ apps_dir }}/monitoring/ansible/deploy.yml"
       when: (monitoring_enabled is defined and monitoring_enabled | bool) or ('monitoring' in ansible_run_tags) or ('grafana' in ansible_run_tags) or ('prometheus' in ansible_run_tags)
       tags: [monitoring, grafana, prometheus]
+
+    - name: "[komodo] Deploy Komodo Core (painel)"
+      include_tasks: "{{ apps_dir }}/komodo/ansible/deploy.core.yml"
+      when: (komodo_enabled is defined and komodo_enabled | bool) or ('komodo' in ansible_run_tags)
+      tags: [komodo]
+
+    - name: "[komodo-periphery] Deploy Komodo Periphery (agente)"
+      include_tasks: "{{ apps_dir }}/komodo/ansible/deploy.periphery.yml"
+      when: (komodo_periphery_enabled is defined and komodo_periphery_enabled | bool) or ('komodo-periphery' in ansible_run_tags) or ('komodo_periphery' in ansible_run_tags)
+      tags: [komodo-periphery, komodo_periphery]
 
   handlers:
     - name: Restart cockpit

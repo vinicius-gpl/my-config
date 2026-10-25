@@ -1,0 +1,58 @@
+---
+# =========================================================================
+# === KOMODO PERIPHERY (AGENTE) ===
+# =========================================================================
+# Conecta no Core (komodo_core_address) e entra no painel com o nome
+# komodo_server_name (padrão: hostname do servidor).
+
+- name: "[komodo-periphery] Criar diretórios"
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - "{{ komodo_periphery_path }}"
+    - /etc/komodo
+  tags: [komodo-periphery]
+
+- name: "[komodo-periphery] Copiar docker-compose"
+  copy:
+    src: "{{ apps_dir }}/komodo/compose.periphery.yml"
+    dest: "{{ komodo_periphery_path }}/docker-compose.yml"
+    mode: '0644'
+  tags: [komodo-periphery]
+
+- name: "[komodo-periphery] Criar .env (versão)"
+  copy:
+    dest: "{{ komodo_periphery_path }}/.env"
+    content: |
+      KOMODO_VERSION={{ komodo_version }}
+    mode: '0644'
+  tags: [komodo-periphery]
+
+- name: "[komodo-periphery] Criar periphery.env (Core, nome e onboarding key)"
+  template:
+    src: "{{ apps_dir }}/komodo/config/periphery.env.j2"
+    dest: "{{ komodo_periphery_path }}/periphery.env"
+    mode: '0600'
+  vars:
+    komodo_server_name: "{{ komodo_server_name | default(ansible_hostname) }}"
+  no_log: true
+  tags: [komodo-periphery]
+
+- name: "[komodo-periphery] Subir agente"
+  command: docker compose up -d --remove-orphans
+  args:
+    chdir: "{{ komodo_periphery_path }}"
+  tags: [komodo-periphery]
+
+- name: "[komodo-periphery] Conferir agente rodando"
+  command: docker compose ps --status running -q periphery
+  args:
+    chdir: "{{ komodo_periphery_path }}"
+  register: periphery_running
+  changed_when: false
+  retries: 10
+  delay: 3
+  until: periphery_running.stdout | length > 0
+  tags: [komodo-periphery]

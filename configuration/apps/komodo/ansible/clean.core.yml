@@ -1,0 +1,19 @@
+---
+- name: "[komodo] Parar Komodo Core e Mongo (com -e remove_volumes=true, apaga o banco e as chaves)"
+  command: "docker compose down {{ '-v' if (remove_volumes | default(false) | bool) else '' }}"
+  args:
+    chdir: "{{ komodo_path }}"
+    removes: "{{ komodo_path }}/docker-compose.yml"
+  tags: [komodo]
+
+- name: "[komodo] Remover diretório de deploy (os backups em /etc/komodo/backups ficam)"
+  file:
+    path: "{{ komodo_path }}"
+    state: absent
+  tags: [komodo]
+
+- name: "[komodo] Remover komodo.caddy"
+  file:
+    path: "{{ caddy_path }}/conf.d/komodo.caddy"
+    state: absent
+  tags: [komodo]

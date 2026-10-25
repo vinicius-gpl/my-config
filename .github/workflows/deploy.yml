@@ -36,6 +36,8 @@ on:
           - element-call
           - element-web
           - monitoring
+          - komodo
+          - komodo-periphery
       dry_run:
         description: 'Modo simulação (--check)?'
         required: false

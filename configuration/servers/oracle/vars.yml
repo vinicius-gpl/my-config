@@ -16,6 +16,7 @@ caddy_sites:
   - portainer/config/portainer.caddy        # container.<domain> só VPN
   - beszel/config/beszel.caddy              # monitor.<domain>   só VPN
   - cockpit/cockpit.caddy                   # cockpit.<domain>   só VPN
+  - komodo/config/komodo.caddy              # komodo.<domain>    só VPN (/listener/* público)
 
 # Hosts que rodam em outro peer: TLS termina aqui e segue pelo túnel.
 # Públicos por padrão; `vpn_only: true` restringe todos os hosts do túnel à VPN.
@@ -29,3 +30,7 @@ caddy_tunnels:
     vpn_only: true
     hosts:
       - ai-memory
+
+# Komodo: o painel (Core) roda aqui; o agente deste servidor fala com o container direto.
+komodo_core_address: "ws://komodo-core:9120"
+komodo_server_name: oracle

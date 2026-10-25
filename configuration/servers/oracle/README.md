@@ -23,6 +23,7 @@ termina o TLS, hospeda o NetBird e encaminha os serviços públicos do [PLUTO](.
 | Portainer Edge Tunnel | Docker (`/opt/portainer`) | `:8000` | público (agentes Edge) |
 | Beszel Hub | Docker (`/opt/beszel-hub`) | `monitor.vinicius-gpl.com` | só VPN |
 | Cockpit | systemd (`cockpit.socket`, `:9090`) | `cockpit.vinicius-gpl.com` | só VPN |
+| Komodo Core + Periphery | Docker (`/opt/komodo`, `/opt/komodo-periphery`) | `komodo.vinicius-gpl.com` | só VPN (`/listener/*` público) |
 | Túnel para o PLUTO | Caddy (`conf.d/tunnel.caddy`) | hosts de `caddy_tunnels` em `*.host.vinicius-gpl.com` | público |
 
 Tudo que não é segredo fica em [`vars.yml`](vars.yml): sites do Caddy, túneis e rede da VPN.

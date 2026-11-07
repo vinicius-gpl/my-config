@@ -27,6 +27,7 @@
 
     # O que linkar em ~/.config. Nome = pasta/arquivo dentro de .dotfiles/.
     dotfiles_config_links:
+      - btop
       - fastfetch
       - fish
       - hypr
@@ -66,6 +67,7 @@
       # agente SSH do keyring (gcr-ssh-agent): sobe pelo systemd no login, em qualquer compositor
       - gcr-4
       # --- CLI que os dotfiles chamam ---
+      - btop
       - fastfetch
       - lazygit
       - fzf

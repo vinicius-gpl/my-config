@@ -651,3 +651,10 @@ default_mode "normal"
 // typically work best. Set to 0 to use the number of (physical) CPU cores.
 // Note: This only applies to web clients at the moment.
 // client_async_worker_tasks 4
+
+// Cantos retos na moldura dos paineis
+ui {
+    pane_frames {
+        rounded_corners false
+    }
+}

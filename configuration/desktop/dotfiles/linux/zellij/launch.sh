@@ -24,4 +24,4 @@ if ! command -v zellij >/dev/null 2>&1; then
   exec "$SHELL"
 fi
 
-exec zellij attach -c main options --default-shell "$SHELL"
+exec zellij -l welcome options --default-shell "$SHELL"
